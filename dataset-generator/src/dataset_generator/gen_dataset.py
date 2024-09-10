@@ -18,7 +18,7 @@ from dataset_generator.core.gen_dataset import generate_dataset
 @click.option("--workflow_count", default=3, help="Number of workflows", type=int)
 @click.option("--min_task_count", default=1, help="Minimum number of tasks per workflow", type=int)
 @click.option("--max_task_count", default=5, help="Maximum number of tasks per workflow", type=int)
-@click.option("--task_length_dist", default="uniform", help="Task length distribution", type=str)
+@click.option("--task_length_dist", default="normal", help="Task length distribution", type=str)
 @click.option("--min_task_length", default=500, help="Minimum task length", type=int)
 @click.option("--max_task_length", default=100_000, help="Maximum task length", type=int)
 @click.option("--arrival_rate", default=3, help="Arrival rate of workflows", type=int)
