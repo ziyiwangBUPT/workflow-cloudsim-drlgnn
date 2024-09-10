@@ -27,13 +27,18 @@ def generate_task_length(dist: str, low: float, high: float) -> float:
     mean = (low + high) / 2
     std = (high - low) / 6
     if dist == "normal":
-        return stats.norm.rvs(loc=mean, scale=std)
+        method = lambda: stats.norm.rvs(loc=mean, scale=std)
     elif dist == "left_skewed":
-        return stats.skewnorm.rvs(-5, loc=mean, scale=std)
+        method = lambda: stats.skewnorm.rvs(-5, loc=mean, scale=std)
     elif dist == "right_skewed":
-        return stats.skewnorm.rvs(5, loc=mean, scale=std)
+        method = lambda: stats.skewnorm.rvs(5, loc=mean, scale=std)
+    else:
+        raise ValueError(f"Invalid distribution: {dist}")
 
-    raise ValueError(f"Invalid distribution: {dist}")
+    value = low - 1
+    while value < low or value > high:
+        value = method()
+    return value
 
 
 def generate_dag(n: int, p: float | None = None) -> dict[int, set[int]]:
