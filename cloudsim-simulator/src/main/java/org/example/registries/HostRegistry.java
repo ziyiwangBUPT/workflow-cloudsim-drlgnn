@@ -14,7 +14,7 @@ public class HostRegistry {
     @Getter
     private static final HostRegistry instance = new HostRegistry();
 
-    private final Map<Integer, MonitoredHost> hosts = new HashMap<>();
+    private final Map<HostId, MonitoredHost> hosts = new HashMap<>();
 
     private HostRegistry() {
     }
@@ -26,12 +26,12 @@ public class HostRegistry {
 
     /// Register a new list of hosts.
     public void registerNewHosts(@NonNull List<MonitoredHost> newHosts) {
-        newHosts.forEach(host -> hosts.put(host.getId(), host));
+        newHosts.forEach(host -> hosts.put(new HostId(host.getId()), host));
     }
 
     /// Get a host by its ID.
     public MonitoredHost getHost(int id) {
-        return hosts.get(id);
+        return hosts.get(new HostId(id));
     }
 
     /// Get the total number of allocated VMs.
@@ -47,5 +47,9 @@ public class HostRegistry {
     /// Print a summary table of all hosts.
     public void printSummaryTable() {
         new HostTable(hosts.values()).print();
+    }
+
+    /// A private record to represent a Host ID.
+    public record HostId(int id) {
     }
 }
