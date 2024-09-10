@@ -13,27 +13,27 @@ def generate_poisson_delay(lam: float) -> float:
     return stats.expon.rvs(scale=1 / lam)
 
 
-def generate_task_length(method: str, low: float, high: float) -> float:
+def generate_task_length(dist: str, low: float, high: float) -> float:
     """
     Generate a random task length based on the specified method. <br/>
     Available methods: uniform, normal, left_skewed, right_skewed <br/>
     """
 
-    if method == "uniform":
+    if dist == "uniform":
         return stats.uniform.rvs(loc=low, scale=high - low)
 
     # 99.7% of the data is within 3 standard deviations (by empirical rule)
     # so we set the standard deviation to be 1/6 of the range
     mean = (low + high) / 2
     std = (high - low) / 6
-    if method == "normal":
+    if dist == "normal":
         return stats.norm.rvs(loc=mean, scale=std)
-    elif method == "left_skewed":
+    elif dist == "left_skewed":
         return stats.skewnorm.rvs(-5, loc=mean, scale=std)
-    elif method == "right_skewed":
+    elif dist == "right_skewed":
         return stats.skewnorm.rvs(5, loc=mean, scale=std)
 
-    raise ValueError(f"Invalid method: {method}")
+    raise ValueError(f"Invalid distribution: {dist}")
 
 
 def generate_dag(n: int, p: float | None = None) -> dict[int, set[int]]:

@@ -33,6 +33,7 @@ Options:
   --workflow_count INTEGER      Number of workflows
   --min_task_count INTEGER      Minimum number of tasks per workflow
   --max_task_count INTEGER      Maximum number of tasks per workflow
+  --task_length_dist TEXT       Task length distribution
   --min_task_length INTEGER     Minimum task length
   --max_task_length INTEGER     Maximum task length
   --arrival_rate INTEGER        Arrival rate of workflows

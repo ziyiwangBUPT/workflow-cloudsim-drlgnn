@@ -12,6 +12,7 @@ def generate_dataset(
     workflow_count: int,
     min_task_count: int,
     max_task_count: int,
+    task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
     arrival_rate: int,
@@ -28,6 +29,7 @@ def generate_dataset(
         workflow_count=workflow_count,
         min_task_count=min_task_count,
         max_task_count=max_task_count,
+        task_length_dist=task_length_dist,
         min_task_length=min_task_length,
         max_task_length=max_task_length,
         # Make sure that the problem is feasible

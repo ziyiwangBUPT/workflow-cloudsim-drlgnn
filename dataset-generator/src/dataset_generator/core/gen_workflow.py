@@ -8,6 +8,7 @@ def generate_workflows(
     workflow_count: int,
     min_task_count: int,
     max_task_count: int,
+    task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
     max_req_cores: int,
@@ -21,7 +22,7 @@ def generate_workflows(
         return int(generate_poisson_delay(arrival_rate))
 
     def task_length_gen() -> int:
-        return int(generate_task_length("uniform", min_task_length, max_task_length))
+        return int(generate_task_length(task_length_dist, min_task_length, max_task_length))
 
     def req_cores_gen() -> int:
         return random.randint(1, max_req_cores)
