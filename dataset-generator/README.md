@@ -65,3 +65,11 @@ $ python src/dataset_visualizer/solve_dataset.py < tmp/dataset.json
 ## Notes
 
 Hosts specs used to generate the datasets can be found in `data/host_specs.json`. Add more specs to generate more diverse datasets.
+
+## Example
+
+![Workflows](tmp/solve_datasets_sat_workflows.png)
+
+![Execution](tmp/solve_datasets_sat_execution.png)
+
+![Gantt](tmp/solve_datasets_sat_gantt.png)
