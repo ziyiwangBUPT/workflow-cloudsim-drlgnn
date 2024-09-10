@@ -3,12 +3,13 @@ package org.example.tables;
 import org.cloudbus.cloudsim.Host;
 import org.example.entities.MonitoredHost;
 
+import java.util.Collection;
 import java.util.List;
 
 public class HostTable extends AbstractTable<MonitoredHost> {
     private static final int K = 1024;
 
-    public HostTable(List<? extends MonitoredHost> list) {
+    public HostTable(Collection<? extends MonitoredHost> list) {
         super(list);
     }
 

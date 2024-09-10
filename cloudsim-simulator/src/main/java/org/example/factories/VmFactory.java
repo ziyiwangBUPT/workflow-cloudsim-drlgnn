@@ -1,18 +1,19 @@
 package org.example.factories;
 
 import lombok.Builder;
+import lombok.NonNull;
 import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
-import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
-import org.example.models.DatasetVm;
+import org.example.dataset.DatasetVm;
+import org.example.registries.HostRegistry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
+/// Factory for creating VMs.
 @Builder
 public class VmFactory {
-    private Vm createVm(int brokerId, DatasetVm datasetVm) {
+    private Vm createVm(int brokerId, @NonNull DatasetVm datasetVm) {
         var id = datasetVm.getId();
         var vmSpeed = datasetVm.getCpuSpeedMips(); // MIPS
         var vmCores = datasetVm.getCores(); // vCPUs
@@ -26,18 +27,16 @@ public class VmFactory {
                 vmRamMb, vmBwMbps, vmSizeMb, vmVmm, cloudletScheduler);
     }
 
-    public List<Vm> createVms(int brokerId, List<DatasetVm> datasetVms, List<? extends Host> hosts) {
-        // Create a map of vm id to mapped host
-        var hostMap = new HashMap<Integer, Host>();
-        for (var host : hosts) {
-            hostMap.put(host.getId(), host);
-        }
+    /// Create a list of VMs based on the dataset using registered hosts.
+    public List<Vm> createVms(int brokerId, @NonNull List<DatasetVm> datasetVms) {
+        var hostRegistry = HostRegistry.getInstance();
 
         var vmList = new ArrayList<Vm>();
         for (var datasetVm : datasetVms) {
             var vm = createVm(brokerId, datasetVm);
+            var host = hostRegistry.getHost(datasetVm.getHostId());
+            vm.setHost(host);
             vmList.add(vm);
-            vm.setHost(hostMap.get(datasetVm.getHostId()));
         }
         return vmList;
     }

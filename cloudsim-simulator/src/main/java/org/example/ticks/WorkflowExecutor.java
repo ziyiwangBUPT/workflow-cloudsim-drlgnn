@@ -2,16 +2,16 @@ package org.example.ticks;
 
 import lombok.Builder;
 import org.example.entities.ExecutionPlan;
-import org.example.entities.MonitoredDatacenterBroker;
+import org.example.entities.DynamicDatacenterBroker;
 
 public class WorkflowExecutor extends SimulationTickListener {
     private static final String NAME = "WORKFLOW_EXECUTOR";
 
-    private final MonitoredDatacenterBroker broker;
+    private final DynamicDatacenterBroker broker;
     private final ExecutionPlan executionPlan;
 
     @Builder
-    protected WorkflowExecutor(MonitoredDatacenterBroker broker, ExecutionPlan executionPlan) {
+    protected WorkflowExecutor(DynamicDatacenterBroker broker, ExecutionPlan executionPlan) {
         super(NAME);
         this.broker = broker;
         this.executionPlan = executionPlan;

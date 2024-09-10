@@ -8,8 +8,9 @@ import org.example.registries.CloudletRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MonitoredDatacenterBroker extends DatacenterBroker {
-    public MonitoredDatacenterBroker(String name) throws Exception {
+/// Datacenter that can schedule cloudlets dynamically.
+public class DynamicDatacenterBroker extends DatacenterBroker {
+    public DynamicDatacenterBroker(String name) throws Exception {
         super(name);
     }
 

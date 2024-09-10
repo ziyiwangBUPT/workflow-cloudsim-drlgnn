@@ -2,10 +2,11 @@ package org.example.tables;
 
 import org.cloudbus.cloudsim.Cloudlet;
 
+import java.util.Collection;
 import java.util.List;
 
 public class CloudletTable extends AbstractTable<Cloudlet> {
-    public CloudletTable(List<? extends Cloudlet> list) {
+    public CloudletTable(Collection<? extends Cloudlet> list) {
         super(list);
     }
 

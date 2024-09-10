@@ -29,7 +29,7 @@ public class ExecutionPlan {
         }
     }
 
-    public void submitReadyTasks(MonitoredDatacenterBroker broker) {
+    public void submitReadyTasks(DynamicDatacenterBroker broker) {
         for (var vmId : vmTaskQueues.keySet()) {
             if (!vmTaskQueues.get(vmId).isEmpty()) {
                 var task = vmTaskQueues.get(vmId).peek();

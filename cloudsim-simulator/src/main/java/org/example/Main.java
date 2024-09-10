@@ -1,8 +1,6 @@
 package org.example;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
-import org.example.models.Dataset;
+import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
 
@@ -10,19 +8,19 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        // Read input from stdin
         var scanner = new Scanner(System.in);
-        var input = scanner.nextLine();
+        var dataset = Dataset.fromJson(scanner.nextLine());
 
-        var gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        var datasetDto = gson.fromJson(input, Dataset.class);
-
+        // Configure simulation
         var config = SimulatedWorldConfig.builder()
-                .simulationDurationSeconds(1000) // Simulation runs for X seconds
-                .schedulingIntervalSeconds(1) // Scheduling happens every X seconds (batch scheduling)
-                .monitoringUpdateIntervalSeconds(5) // All host states are updated X seconds
+                .simulationDuration(1000)
+                .schedulingInterval(10)
+                .monitoringUpdateInterval(5)
                 .build();
 
-        var world = new SimulatedWorld(datasetDto, config);
+        // Run simulation
+        var world = new SimulatedWorld(dataset, config);
         world.runSimulation();
     }
 }

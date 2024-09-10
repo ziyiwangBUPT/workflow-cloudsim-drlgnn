@@ -3,8 +3,8 @@ package org.example.factories;
 import lombok.Builder;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.example.entities.WorkflowCloudlet;
-import org.example.models.DatasetTask;
-import org.example.models.DatasetWorkflow;
+import org.example.dataset.DatasetTask;
+import org.example.dataset.DatasetWorkflow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+// TODO: Remove?
 @Builder
 public class CloudletFactory {
     private static final AtomicInteger CLOUDLET_ID = new AtomicInteger(0);

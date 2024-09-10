@@ -1,6 +1,7 @@
 package org.example.tables;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -19,9 +20,9 @@ public abstract class AbstractTable<T> {
     protected static final String PERC_UNIT = "%%";
 
     private final List<TableColumn<T>> columns;
-    private final List<? extends T> rows;
+    private final Collection<? extends T> rows;
 
-    protected AbstractTable(List<? extends T> rows) {
+    protected AbstractTable(Collection<? extends T> rows) {
         this.columns = new ArrayList<>();
         this.rows = rows;
     }

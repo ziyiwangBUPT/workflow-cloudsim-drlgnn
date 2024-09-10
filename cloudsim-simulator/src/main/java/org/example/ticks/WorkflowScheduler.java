@@ -4,8 +4,8 @@ import lombok.Builder;
 import org.cloudbus.cloudsim.Vm;
 import org.example.entities.ExecutionPlan;
 import org.example.factories.CloudletFactory;
-import org.example.models.DatasetWorkflow;
-import org.example.entities.MonitoredDatacenterBroker;
+import org.example.dataset.DatasetWorkflow;
+import org.example.entities.DynamicDatacenterBroker;
 import org.example.schedulers.Scheduler;
 
 import java.util.ArrayDeque;
@@ -19,7 +19,7 @@ public class WorkflowScheduler extends SimulationTickListener {
     private static final String NAME = "WORKFLOW_SCHEDULER";
 
     private final long schedulingIntervalMs;
-    private final MonitoredDatacenterBroker broker;
+    private final DynamicDatacenterBroker broker;
     private final Queue<DatasetWorkflow> pendingWorkflows;
     private final CloudletFactory cloudletFactory;
     private final Scheduler scheduler;
@@ -29,7 +29,7 @@ public class WorkflowScheduler extends SimulationTickListener {
     private double nextScheduleAtMs = 0;
 
     @Builder
-    protected WorkflowScheduler(MonitoredDatacenterBroker broker,
+    protected WorkflowScheduler(DynamicDatacenterBroker broker,
                                 Scheduler scheduler,
                                 ExecutionPlan executionPlan,
                                 CloudletFactory cloudletFactory,

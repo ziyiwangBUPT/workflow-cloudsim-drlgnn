@@ -1,21 +1,23 @@
 package org.example.factories;
 
 import lombok.Builder;
+import lombok.NonNull;
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.power.models.PowerModelLinear;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
-import org.example.models.DatasetHost;
+import org.example.dataset.DatasetHost;
 import org.example.entities.MonitoredHost;
 import org.example.registries.HostRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/// Factory for creating hosts.
 @Builder
 public class HostFactory {
-    private MonitoredHost createHost(DatasetHost datasetHost) {
+    private MonitoredHost createHost(@NonNull DatasetHost datasetHost) {
         // Create PEs using the same MIPS
         var peList = new ArrayList<Pe>();
         var peSpeed = datasetHost.getCpuSpeedMips() / datasetHost.getCores(); // MIPS
@@ -41,14 +43,15 @@ public class HostFactory {
                 .build();
     }
 
-    public List<MonitoredHost> createHosts(List<DatasetHost> datasetHosts) {
+    /// Create a list of hosts based on the dataset.
+    public List<MonitoredHost> createHosts(@NonNull List<DatasetHost> datasetHosts) {
         var hostList = new ArrayList<MonitoredHost>();
-        var hostRegistry = HostRegistry.getInstance();
         for (var datasetHost : datasetHosts) {
             var host = createHost(datasetHost);
             hostList.add(host);
-            hostRegistry.registerNewHost(host);
         }
+        var hostRegistry = HostRegistry.getInstance();
+        hostRegistry.registerNewHosts(hostList);
         return hostList;
     }
 }

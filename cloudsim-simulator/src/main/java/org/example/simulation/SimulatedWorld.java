@@ -2,11 +2,11 @@ package org.example.simulation;
 
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.example.entities.ExecutionPlan;
-import org.example.models.Dataset;
+import org.example.dataset.Dataset;
 import org.example.schedulers.RoundRobinScheduler;
 import org.example.ticks.MonitoredHostsUpdater;
 import org.example.factories.*;
-import org.example.entities.MonitoredDatacenterBroker;
+import org.example.entities.DynamicDatacenterBroker;
 import org.example.ticks.WorkflowExecutor;
 import org.example.ticks.WorkflowScheduler;
 import org.example.registries.CloudletRegistry;
@@ -14,45 +14,47 @@ import org.example.registries.HostRegistry;
 
 import java.util.Calendar;
 
+/// Represents the simulated world.
 public class SimulatedWorld {
     private static final int NUM_USERS = 1;
     private static final boolean TRACE_FLAG = false;
 
-    private final MonitoredDatacenterBroker broker;
+    private final DynamicDatacenterBroker broker;
 
     public SimulatedWorld(Dataset dataset, SimulatedWorldConfig config) {
-        // Creates a CloudSimPlus object to initialize the simulation.
+        // Create a CloudSimPlus object to initialize the simulation.
         CloudSim.init(NUM_USERS, Calendar.getInstance(), TRACE_FLAG);
 
+        // Create factories for entities.
         var hostFactory = HostFactory.builder().build();
         var datacenterFactory = DatacenterFactory.builder().build();
         var vmFactory = VmFactory.builder().build();
         var brokerFactory = DatacenterBrokerFactory.builder().build();
         var cloudletFactory = CloudletFactory.builder().build();
 
-        // Creates entities
+        // Create entities.
         broker = brokerFactory.createBroker();
         var hosts = hostFactory.createHosts(dataset.getHosts());
-        var vms = vmFactory.createVms(broker.getId(), dataset.getVms(), hosts);
+        var vms = vmFactory.createVms(broker.getId(), dataset.getVms());
         var _ = datacenterFactory.createDatacenter(hosts);
 
         // Submits the VM list to the broker
         broker.submitGuestList(vms);
 
         var executionPlan = new ExecutionPlan();
-        CloudSim.terminateSimulation(config.getSimulationDurationSeconds());
+        CloudSim.terminateSimulation(config.getSimulationDuration());
         WorkflowScheduler.builder()
                 .broker(broker)
                 .scheduler(new RoundRobinScheduler())
                 .executionPlan(executionPlan)
                 .cloudletFactory(cloudletFactory)
-                .schedulingInterval(config.getSchedulingIntervalSeconds())
+                .schedulingInterval(config.getSchedulingInterval())
                 .datasetWorkflows(dataset.getWorkflows()).build();
         WorkflowExecutor.builder()
                 .broker(broker)
                 .executionPlan(executionPlan).build();
         MonitoredHostsUpdater.builder()
-                .monitoringUpdateInterval(config.getMonitoringUpdateIntervalSeconds()).build();
+                .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
     }
 
     public void runSimulation() {

@@ -1,11 +1,13 @@
 package org.example.factories;
 
 import lombok.Builder;
+import lombok.NonNull;
 import org.cloudbus.cloudsim.*;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/// Factory for creating Datacenter instances.
 @Builder
 public class DatacenterFactory {
     private static final AtomicInteger CURRENT_DC_ID = new AtomicInteger(0);
@@ -34,7 +36,8 @@ public class DatacenterFactory {
     @Builder.Default
     private final int schedulingInterval = 1;
 
-    public Datacenter createDatacenter(List<? extends Host> hosts) {
+    /// Creates a data center with the specified hosts.
+    public Datacenter createDatacenter(@NonNull List<? extends Host> hosts) {
         var name = String.format("DC-%d", CURRENT_DC_ID.getAndIncrement());
         var characteristics = new DatacenterCharacteristics(dcArchitecture, dcOperatingSystem, dcVmm, hosts, dcTimezone,
                 costPerCpu, costPerMem, costPerStorage, costPerBw);
