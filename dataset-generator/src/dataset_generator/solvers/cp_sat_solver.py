@@ -98,6 +98,11 @@ def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]
     model.minimize(makespan_var)
 
     solver = cp_model.CpSolver()
+    # Reproducibility: https://groups.google.com/g/or-tools-discuss/c/lPb1FzhTMt0
+    solver.parameters.interleave_search = True
+    solver.parameters.num_search_workers = 16
+    solver.parameters.share_binary_clauses = False
+
     status = solver.Solve(model)
     if status != cp_model.OPTIMAL:
         print("No optimal solution found.")
