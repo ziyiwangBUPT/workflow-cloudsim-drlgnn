@@ -1,7 +1,7 @@
 import json
 import random
 
-from dataset_generator.core.models import Host, Vm, VmAllocation
+from dataset_generator.core.models import Host, Vm
 
 
 def generate_hosts(n: int) -> list[Host]:
@@ -40,17 +40,16 @@ def generate_vms(n: int, max_cores: int, min_cpu_speed_mips: int, max_cpu_speed_
     for i in range(n):
         cores = random.randint(1, max_cores)
         cpu_speed = random.randint(min_cpu_speed_mips, max_cpu_speed_mips)
-        vms.append(Vm(i, cores, cpu_speed, memory_mb=512, disk_mb=1024, bandwidth_mbps=50, vmm="Xen"))
+        host_id = -1  # Unallocated
+        vms.append(Vm(i, host_id, cores, cpu_speed, memory_mb=512, disk_mb=1024, bandwidth_mbps=50, vmm="Xen"))
     return vms
 
 
-def allocate_vms(vms: list[Vm], hosts: list[Host]) -> list[VmAllocation]:
+def allocate_vms(vms: list[Vm], hosts: list[Host]):
     """
     Allocate VMs to hosts randomly.
     """
 
-    vm_allocations: list[VmAllocation] = []
     for vm in vms:
         host = random.choice(hosts)
-        vm_allocations.append(VmAllocation(vm.id, host.id))
-    return vm_allocations
+        vm.host_id = host.id

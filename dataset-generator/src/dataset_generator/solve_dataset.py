@@ -4,7 +4,7 @@ import json
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from dataset_generator.core.models import Dataset, Workflow, Vm, Host, VmAllocation, Task
+from dataset_generator.core.models import Dataset, Workflow, Vm, Host, Task
 from dataset_generator.solvers.solver import solve
 from dataset_generator.visualizers.utils import save_agraph
 from dataset_generator.visualizers.plotters import plot_gantt_chart, plot_workflow_graphs, plot_execution_graph
@@ -20,8 +20,7 @@ def dataset_from_json(data: dict) -> Dataset:
     workflows = [workflow_from_json(workflow) for workflow in data.pop("workflows")]
     vms = [Vm(**vm) for vm in data.pop("vms")]
     hosts = [Host(**host) for host in data.pop("hosts")]
-    vm_allocations = [VmAllocation(**vm_allocation) for vm_allocation in data.pop("vm_allocations")]
-    return Dataset(workflows=workflows, vms=vms, hosts=hosts, vm_allocations=vm_allocations)
+    return Dataset(workflows=workflows, vms=vms, hosts=hosts)
 
 
 @click.command()

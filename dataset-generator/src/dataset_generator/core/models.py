@@ -19,6 +19,7 @@ class Workflow:
 @dataclass
 class Vm:
     id: int
+    host_id: int
     cores: int
     cpu_speed_mips: int
     memory_mb: int
@@ -40,12 +41,6 @@ class Host:
 
 
 @dataclass
-class VmAllocation:
-    vm_id: int
-    host_id: int
-
-
-@dataclass
 class VmAssignment:
     workflow_id: int
     task_id: int
@@ -59,4 +54,3 @@ class Dataset:
     workflows: list[Workflow]
     vms: list[Vm]
     hosts: list[Host]
-    vm_allocations: list[VmAllocation]

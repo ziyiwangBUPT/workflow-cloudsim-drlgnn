@@ -23,7 +23,7 @@ def generate_dataset(
 
     hosts = generate_hosts(host_count)
     vms = generate_vms(vm_count, max_cores, min_cpu_speed_mips, max_cpu_speed_mips)
-    vm_allocations = allocate_vms(vms, hosts)
+    allocate_vms(vms, hosts)
 
     workflows = generate_workflows(
         workflow_count=workflow_count,
@@ -37,4 +37,4 @@ def generate_dataset(
         arrival_rate=arrival_rate,
     )
 
-    return Dataset(workflows=workflows, vms=vms, hosts=hosts, vm_allocations=vm_allocations)
+    return Dataset(workflows=workflows, vms=vms, hosts=hosts)
