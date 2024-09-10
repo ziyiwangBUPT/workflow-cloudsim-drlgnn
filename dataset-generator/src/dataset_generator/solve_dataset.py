@@ -1,15 +1,14 @@
 import click
 import json
-import random
-import numpy as np
 
 import networkx as nx
 import matplotlib.pyplot as plt
 
 from dataset_generator.core.models import Dataset, Workflow, Vm, Host, VmAllocation, Task
 from dataset_generator.solvers.solver import solve
-from dataset_generator.utils.plot_solutions import print_solution, plot_gantt_chart
-from dataset_generator.utils.plot_graphs import plot_workflows, plot_execution_graph, save_agraph
+from dataset_generator.visualizers.utils import save_agraph
+from dataset_generator.visualizers.plotters import plot_gantt_chart, plot_workflow_graphs, plot_execution_graph
+from dataset_generator.visualizers.printers import print_solution
 
 
 def workflow_from_json(data: dict) -> Workflow:
@@ -28,9 +27,6 @@ def dataset_from_json(data: dict) -> Dataset:
 @click.command()
 @click.option("--method", default="sat", help="Method to solve the dataset", type=click.Choice(["sat", "round_robin"]))
 def main(method: str):
-    random.seed(0)
-    np.random.seed(0)
-
     dataset_str = input()
     dataset_dict = json.loads(dataset_str)
     dataset = dataset_from_json(dataset_dict)
@@ -38,7 +34,7 @@ def main(method: str):
     # Workflow graph
     _, ax = plt.subplots()
     G_w: nx.DiGraph = nx.DiGraph()
-    A_w = plot_workflows(G_w, dataset.workflows)
+    A_w = plot_workflow_graphs(G_w, dataset.workflows)
     save_agraph(A_w, f"tmp/solve_datasets_{method}_workflows.png")
 
     # Solution
@@ -49,7 +45,7 @@ def main(method: str):
     _, ax = plt.subplots()
     G_e: nx.DiGraph = nx.DiGraph()
     A_e = plot_execution_graph(G_e, dataset.workflows, dataset.vms, result)
-    save_agraph(A_e, f"tmp/solve_datasets_{method}_execution.png", prog_args="-Grankdir=LR")
+    save_agraph(A_e, f"tmp/solve_datasets_{method}_execution.png", dir_lr=True)
 
     # Gantt chart
     _, ax = plt.subplots()

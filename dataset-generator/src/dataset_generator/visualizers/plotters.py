@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pygraphviz as pgv
 
-from dataset_generator.core.models import Workflow, Vm, VmAssignment
+from dataset_generator.core.models import Workflow, VmAssignment, Vm
+
+
+# -------------------------------------------------------------------------------------------------
+# Helper functions
 
 
 def color(id: int) -> str:
@@ -16,29 +20,11 @@ def get_node_id(workflow_id: int, task_id: int) -> str:
     return f"{workflow_id}-{task_id}"
 
 
-def draw_agraph(ax: plt.Axes, A: pgv.AGraph, prog_args: str = ""):
-    """
-    Draw the provided AGraph on the provided Axes.
-    """
-
-    A.layout(prog="dot", args=prog_args)
-    buffer = io.BytesIO()
-    buffer.write(A.draw(format="png"))
-    buffer.seek(0)
-    ax.imshow(plt.imread(buffer))
-    ax.axis("off")
+# -------------------------------------------------------------------------------------------------
+# Graphing functions for Workflow and Execution graphs
 
 
-def save_agraph(A: pgv.AGraph, path: str, prog_args: str = ""):
-    """
-    Save the provided AGraph to the provided path.
-    """
-
-    A.layout(prog="dot", args=prog_args)
-    A.draw(path)
-
-
-def plot_workflows(G: nx.DiGraph, workflows: list[Workflow]) -> pgv.AGraph:
+def plot_workflow_graphs(G: nx.DiGraph, workflows: list[Workflow]) -> pgv.AGraph:
     """
     Plot the workflows on the provided DiGraph.
     """
@@ -75,7 +61,7 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
             G.add_edge(vm_nodes[vm_id][i - 1], vm_nodes[vm_id][i], color="lightgray")
 
     # Add nodes and edges for tasks
-    A = plot_workflows(G, workflows)
+    A = plot_workflow_graphs(G, workflows)
 
     # Add subgraphs for each VM
     for vm in vms:
@@ -84,3 +70,28 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
             A.add_subgraph(vm_nodes[vm.id], name=f"cluster_{vm.id}", style="dashed", label=label)
 
     return A
+
+
+# -------------------------------------------------------------------------------------------------
+# Graphing functions for Gantt chart
+
+
+def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], result: list[VmAssignment]):
+    result_map: dict[tuple[int, int], VmAssignment] = {
+        (assignment.workflow_id, assignment.task_id): assignment for assignment in result
+    }
+
+    for workflow in workflows:
+        for task in workflow.tasks:
+            assigned_task = result_map[(workflow.id, task.id)]
+            ax.broken_barh(
+                [(assigned_task.start, assigned_task.end - assigned_task.start)],
+                (int(assigned_task.vm_id) - 0.3, 0.6),
+                color=color(workflow.id),
+                edgecolor="black",
+                linewidth=0.5,
+            )
+
+    ax.set_yticks(range(len(vms)))
+    ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU" for vm in vms])
+    ax.set_xlabel("Time")
