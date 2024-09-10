@@ -20,7 +20,7 @@ $ uv run mypy src
 ### Generate Dataset
 
 ```bash
-$ python src/dataset_visualizer/gen_dataset.py --help
+$ uv run src/dataset_generator/gen_dataset.py --help
 Usage: gen_dataset.py [OPTIONS]
 
 Options:
@@ -39,7 +39,7 @@ Options:
   --help                        Show this message and exit.
 
 # Usage
-$ python src/dataset_visualizer/gen_dataset.py > tmp/dataset.json
+$ uv run src/dataset_generator/gen_dataset.py > tmp/dataset.json
 ```
 
 ### Solve Dataset
@@ -51,7 +51,7 @@ This will solve using the CP-SAT solver (or round robin) and generate some chart
 - `gantt.png` - Shows the Gantt chart.
 
 ```bash
-$ python src/dataset_visualizer/solve_dataset.py --help
+$ uv run src/dataset_generator/solve_dataset.py --help
 Usage: solve_dataset.py [OPTIONS]
 
 Options:
@@ -59,7 +59,7 @@ Options:
   --help                      Show this message and exit.
 
 # Usage
-$ python src/dataset_visualizer/solve_dataset.py < tmp/dataset.json
+$ uv run src/dataset_generator/solve_dataset.py < tmp/dataset.json
 ```
 
 ## Notes

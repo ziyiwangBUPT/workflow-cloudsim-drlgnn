@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pygraphviz as pgv
 
-from dataset_generator.models import Workflow, Vm, VmAssignment
+from dataset_generator.core.models import Workflow, Vm, VmAssignment
 
 
 def color(id: int) -> str:

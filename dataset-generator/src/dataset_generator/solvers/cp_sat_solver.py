@@ -3,7 +3,7 @@ import collections
 from typing import Any
 from ortools.sat.python import cp_model
 
-from dataset_generator.models import VmAssignment, Task, Vm, Workflow
+from dataset_generator.core.models import VmAssignment, Task, Vm, Workflow
 
 
 def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]:

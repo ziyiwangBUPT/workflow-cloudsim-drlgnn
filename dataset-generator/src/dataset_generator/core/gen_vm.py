@@ -1,7 +1,7 @@
 import json
 import random
 
-from dataset_generator.models import Host, Vm, VmAllocation
+from dataset_generator.core.models import Host, Vm, VmAllocation
 
 
 def generate_hosts(n: int) -> list[Host]:

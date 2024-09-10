@@ -1,8 +1,7 @@
 import random
-import math
 
-from dataset_generator.models import Task, Workflow
-from dataset_generator.gen_task import generate_task_length, generate_dag, generate_poisson_delay
+from dataset_generator.core.models import Task, Workflow
+from dataset_generator.core.gen_task import generate_task_length, generate_dag, generate_poisson_delay
 
 
 def generate_workflows(

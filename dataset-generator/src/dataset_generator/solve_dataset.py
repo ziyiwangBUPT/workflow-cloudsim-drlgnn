@@ -6,10 +6,10 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from dataset_generator.models import Dataset, Workflow, Vm, Host, VmAllocation, Task
-from dataset_visualizer.solvers.solver import solve
-from dataset_visualizer.utils.plot_solutions import print_solution, plot_gantt_chart
-from dataset_visualizer.utils.plot_graphs import plot_workflows, plot_execution_graph, save_agraph
+from dataset_generator.core.models import Dataset, Workflow, Vm, Host, VmAllocation, Task
+from dataset_generator.solvers.solver import solve
+from dataset_generator.utils.plot_solutions import print_solution, plot_gantt_chart
+from dataset_generator.utils.plot_graphs import plot_workflows, plot_execution_graph, save_agraph
 
 
 def workflow_from_json(data: dict) -> Workflow:

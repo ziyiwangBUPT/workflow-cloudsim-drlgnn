@@ -1,6 +1,6 @@
-from dataset_generator.models import Dataset, VmAssignment
-from dataset_visualizer.solvers.cp_sat_solver import solve_cp_sat
-from dataset_visualizer.solvers.round_robin_solver import solve_round_robin
+from dataset_generator.core.models import Dataset, VmAssignment
+from dataset_generator.solvers.cp_sat_solver import solve_cp_sat
+from dataset_generator.solvers.round_robin_solver import solve_round_robin
 
 
 def solve(method: str, dataset: Dataset) -> list[VmAssignment]:

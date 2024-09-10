@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pygraphviz as pgv
 
-from dataset_generator.models import Workflow, VmAssignment, Vm
-from dataset_visualizer.utils.plot_graphs import color, plot_workflows
+from dataset_generator.core.models import Workflow, VmAssignment, Vm
+from dataset_generator.utils.plot_graphs import color, plot_workflows
 
 
 def print_solution(workflows: list[Workflow], result: list[VmAssignment]):

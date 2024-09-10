@@ -1,6 +1,6 @@
 import collections
 
-from dataset_generator.models import VmAssignment, Task, Vm, Workflow
+from dataset_generator.core.models import VmAssignment, Task, Vm, Workflow
 
 
 def solve_round_robin(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]:
