@@ -6,6 +6,7 @@ import org.example.api.impl.LocalWorkflowExecutor;
 import org.example.api.impl.PeriodicWorkflowReleaser;
 import org.example.api.impl.RoundRobinWorkflowScheduler;
 import org.example.dataset.Dataset;
+import org.example.dataset.DatasetSolution;
 import org.example.ticks.Coordinator;
 import org.example.ticks.MonitoredHostsUpdater;
 import org.example.factories.*;
@@ -20,9 +21,12 @@ public class SimulatedWorld {
     private static final int NUM_USERS = 1;
     private static final boolean TRACE_FLAG = false;
 
+    private final Dataset dataset;
     private final DynamicDatacenterBroker broker;
 
     public SimulatedWorld(@NonNull Dataset dataset, @NonNull SimulatedWorldConfig config) {
+        this.dataset = dataset;
+
         // Create a CloudSimPlus object to initialize the simulation.
         CloudSim.init(NUM_USERS, Calendar.getInstance(), TRACE_FLAG);
 
@@ -34,7 +38,7 @@ public class SimulatedWorld {
         var cloudletFactory = CloudletFactory.builder().build();
 
         // Create entities.
-        broker = brokerFactory.createBroker();
+        this.broker = brokerFactory.createBroker();
         var hosts = hostFactory.createHosts(dataset.getHosts());
         var vms = vmFactory.createVms(broker.getId(), dataset.getVms());
         var _ = datacenterFactory.createDatacenter(hosts);
@@ -57,7 +61,7 @@ public class SimulatedWorld {
 
     /// Starts the simulation and waits all cloudlets to be executed,
     /// automatically stopping when there is no more events to process
-    public void runSimulation() {
+    public DatasetSolution runSimulation() {
         CloudSim.startSimulation();
         CloudSim.stopSimulation();
 
@@ -66,11 +70,13 @@ public class SimulatedWorld {
 
         // Prints the results when the simulation is over
         cloudletRegistry.printSummaryTable();
-        System.out.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getTotalMakespan());
-        System.out.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
-        System.out.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), broker.getGuestList().size());
-        System.out.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
-        System.out.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
-        System.out.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
+        System.err.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getTotalMakespan());
+        System.err.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
+        System.err.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), broker.getGuestList().size());
+        System.err.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
+        System.err.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
+        System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
+
+        return new DatasetSolution(dataset, cloudletRegistry.getDatasetExecutions());
     }
 }

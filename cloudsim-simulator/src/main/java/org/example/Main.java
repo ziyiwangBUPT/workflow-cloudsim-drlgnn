@@ -1,5 +1,6 @@
 package org.example;
 
+import org.cloudbus.cloudsim.Log;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -8,6 +9,8 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        Log.disable();
+
         // Read input from stdin
         var scanner = new Scanner(System.in);
         var dataset = Dataset.fromJson(scanner.nextLine());
@@ -21,6 +24,7 @@ public class Main {
 
         // Run simulation
         var world = new SimulatedWorld(dataset, config);
-        world.runSimulation();
+        var solution = world.runSimulation();
+        System.out.println(solution.toJson());
     }
 }

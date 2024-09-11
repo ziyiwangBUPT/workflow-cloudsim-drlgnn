@@ -36,7 +36,7 @@ public class CloudletFactory {
 
             // Register cloudlet
             var cloudletRegistry = CloudletRegistry.getInstance();
-            cloudletRegistry.registerNewCloudlets(List.of(cloudlet));
+            cloudletRegistry.registerNewCloudlet(cloudlet, datasetTask);
 
             return cloudlet;
         } catch (Exception e) {

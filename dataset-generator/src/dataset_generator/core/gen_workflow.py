@@ -36,7 +36,13 @@ def generate_workflows(
         task_count = random.randint(min_task_count, max_task_count)
         dag = dag_gen(task_count)
         tasks: list[Task] = [
-            Task(id=task_id, length=task_length_gen(), req_cores=req_cores_gen(), child_ids=list(child_ids))
+            Task(
+                id=task_id,
+                workflow_id=workflow_id,
+                length=task_length_gen(),
+                req_cores=req_cores_gen(),
+                child_ids=list(child_ids),
+            )
             for task_id, child_ids in dag.items()
         ]
         arrival_time += delay_gen()

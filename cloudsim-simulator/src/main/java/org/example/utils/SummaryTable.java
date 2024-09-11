@@ -39,14 +39,14 @@ public class SummaryTable<T> {
 
     /// Print the table to the console.
     public void print() {
-        System.out.println();
-        System.out.println(separatedData(TableColumn::title));
-        System.out.println(separatedData(TableColumn::subtitle));
-        System.out.println(separatedData(c -> "-".repeat(c.columnWidth())));
+        System.err.println();
+        System.err.println(separatedData(TableColumn::title));
+        System.err.println(separatedData(TableColumn::subtitle));
+        System.err.println(separatedData(c -> "-".repeat(c.columnWidth())));
         for (T row : rows) {
-            System.out.println(separatedData(c -> String.format(c.format(), c.dataFunction().apply(row))));
+            System.err.println(separatedData(c -> String.format(c.format(), c.dataFunction().apply(row))));
         }
-        System.out.println();
+        System.err.println();
     }
 
     private String separatedData(Function<TableColumn<T>, String> mapper) {

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class Task:
     id: int
+    workflow_id: int
     length: int
     req_cores: int
     child_ids: list[int]
