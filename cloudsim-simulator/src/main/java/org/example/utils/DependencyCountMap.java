@@ -1,16 +1,21 @@
 package org.example.utils;
 
+import lombok.NonNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
+/// A map that keeps track of the number of dependencies for each key.
 public class DependencyCountMap<T> {
     private final Map<T, Integer> countMap = new HashMap<>();
 
-    public void addNewDependency(T key) {
+    /// Adds a new dependency for the given key.
+    public void addNewDependency(@NonNull T key) {
         countMap.put(key, countMap.getOrDefault(key, 0) + 1);
     }
 
-    public void removeOneDependency(T key) {
+    /// Removes one dependency for the given key.
+    public void removeOneDependency(@NonNull T key) {
         var currentCount = countMap.get(key);
         if (currentCount == null) {
             throw new IllegalArgumentException("The key does not have any dependency: " + key);
@@ -23,7 +28,8 @@ public class DependencyCountMap<T> {
         }
     }
 
-    public boolean hasNoDependency(T key) {
+    /// Returns true if the given key has no dependency.
+    public boolean hasNoDependency(@NonNull T key) {
         return !countMap.containsKey(key);
     }
 
