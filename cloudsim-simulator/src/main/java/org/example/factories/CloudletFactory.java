@@ -1,19 +1,17 @@
 package org.example.factories;
 
 import lombok.Builder;
+import lombok.NonNull;
+import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.UtilizationModelFull;
-import org.example.entities.WorkflowCloudlet;
 import org.example.dataset.DatasetTask;
-import org.example.dataset.DatasetWorkflow;
+import org.example.registries.CloudletRegistry;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-// TODO: Remove?
+/// Factory for creating Cloudlets.
 @Builder
 public class CloudletFactory {
     private static final AtomicInteger CLOUDLET_ID = new AtomicInteger(0);
@@ -23,60 +21,26 @@ public class CloudletFactory {
     @Builder.Default
     private final int cloudletOutputSize = 300;
 
-    private int getCloudletId(Map<Integer, Integer> taskIdToCloudletId, int taskId) {
-        if (!taskIdToCloudletId.containsKey(taskId)) {
-            taskIdToCloudletId.put(taskId, CLOUDLET_ID.getAndIncrement());
-        }
-        return taskIdToCloudletId.get(taskId);
-    }
-
-    private WorkflowCloudlet createCloudlet(int brokerId, HashMap<Integer, Integer> taskIdToCloudletId, DatasetTask task) {
+    /// Create a Cloudlet from a DatasetTask.
+    public Cloudlet createCloudlet(int brokerId, @NonNull DatasetTask datasetTask) {
         try {
-            // Map task IDs to cloudlet IDs
-            var id = getCloudletId(taskIdToCloudletId, task.getId());
-            var childIds = new ArrayList<Integer>();
-            for (var i : task.getChildIds()) {
-                var cloudletId = getCloudletId(taskIdToCloudletId, i);
-                childIds.add(cloudletId);
-            }
+            var cloudletId = CLOUDLET_ID.getAndIncrement();
+            var cloudletLength = datasetTask.getLength();
+            var pesNumber = datasetTask.getReqCores();
+            var utilizationModel = new UtilizationModelFull();
 
             // Create cloudlet
-            var cloudlet = WorkflowCloudlet.builder()
-                    .cloudletId(id)
-                    .childCloudletIds(childIds)
-                    .isStartNode(task.getId() == 0) // 0 is the start node
-                    .cloudletLength(task.getLength())
-                    .pesNumber(task.getReqCores())
-                    .cloudletFileSize(cloudletFileSize)
-                    .cloudletOutputSize(cloudletOutputSize)
-                    .utilizationModelCpu(new UtilizationModelFull())
-                    .utilizationModelRam(new UtilizationModelFull())
-                    .utilizationModelBw(new UtilizationModelFull())
-                    .build();
+            var cloudlet = new Cloudlet(cloudletId, cloudletLength, pesNumber, cloudletFileSize, cloudletOutputSize,
+                    utilizationModel, utilizationModel, utilizationModel);
             cloudlet.setUserId(brokerId);
+
+            // Register cloudlet
+            var cloudletRegistry = CloudletRegistry.getInstance();
+            cloudletRegistry.registerNewCloudlets(List.of(cloudlet));
+
             return cloudlet;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private List<WorkflowCloudlet> createCloudlets(int brokerId, DatasetWorkflow datasetWorkflow) {
-        var cloudlets = new ArrayList<WorkflowCloudlet>();
-        var tasks = datasetWorkflow.getTasks();
-        var taskIdToCloudletId = new HashMap<Integer, Integer>();
-        for (var task : tasks) {
-            var cloudlet = createCloudlet(brokerId, taskIdToCloudletId, task);
-            cloudlets.add(cloudlet);
-        }
-        return cloudlets;
-    }
-
-    public List<List<WorkflowCloudlet>> createCloudlets(int brokerId, List<DatasetWorkflow> datasetWorkflows) {
-        var cloudlets = new ArrayList<List<WorkflowCloudlet>>();
-        for (var datasetWorkflow : datasetWorkflows) {
-            var cloudlet = createCloudlets(brokerId, datasetWorkflow);
-            cloudlets.add(cloudlet);
-        }
-        return cloudlets;
     }
 }

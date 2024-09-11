@@ -3,6 +3,7 @@ package org.example.ticks;
 import lombok.Builder;
 import org.example.registries.HostRegistry;
 
+/// Tick listener that updates the utilization of monitored hosts.
 public class MonitoredHostsUpdater extends SimulationTickListener {
     private static final String NAME = "MONITORED_HOSTS_UPDATER";
 
@@ -17,11 +18,11 @@ public class MonitoredHostsUpdater extends SimulationTickListener {
     }
 
     @Override
-    protected void onTick(double timeMs) {
-        if (nextScheduleAtMs <= timeMs) {
+    protected void onTick(double time) {
+        if (nextScheduleAtMs <= time) {
             nextScheduleAtMs += monitoringUpdateInterval;
             var hostRegistry = HostRegistry.getInstance();
-            hostRegistry.updateUtilizationOfHosts(timeMs);
+            hostRegistry.updateUtilizationOfHosts(time);
         }
     }
 }

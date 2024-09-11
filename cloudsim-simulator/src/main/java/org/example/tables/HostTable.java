@@ -1,15 +1,17 @@
 package org.example.tables;
 
+import lombok.NonNull;
 import org.cloudbus.cloudsim.Host;
 import org.example.entities.MonitoredHost;
 
 import java.util.Collection;
 import java.util.List;
 
+/// Visualizes the data of a list of monitored hosts.
 public class HostTable extends AbstractTable<MonitoredHost> {
     private static final int K = 1024;
 
-    public HostTable(Collection<? extends MonitoredHost> list) {
+    public HostTable(@NonNull Collection<? extends MonitoredHost> list) {
         super(list);
     }
 

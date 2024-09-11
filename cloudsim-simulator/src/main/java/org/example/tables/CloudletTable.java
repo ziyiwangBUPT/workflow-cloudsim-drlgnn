@@ -1,12 +1,14 @@
 package org.example.tables;
 
+import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
 
 import java.util.Collection;
 import java.util.List;
 
+/// Visualizes a table of cloudlets.
 public class CloudletTable extends AbstractTable<Cloudlet> {
-    public CloudletTable(Collection<? extends Cloudlet> list) {
+    public CloudletTable(@NonNull Collection<? extends Cloudlet> list) {
         super(list);
     }
 

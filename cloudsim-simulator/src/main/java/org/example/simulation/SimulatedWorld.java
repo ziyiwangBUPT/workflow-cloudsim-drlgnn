@@ -1,14 +1,15 @@
 package org.example.simulation;
 
+import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
-import org.example.entities.ExecutionPlan;
+import org.example.api.impl.LocalWorkflowExecutor;
+import org.example.api.impl.PeriodicWorkflowReleaser;
+import org.example.api.impl.RoundRobinWorkflowScheduler;
 import org.example.dataset.Dataset;
-import org.example.schedulers.RoundRobinScheduler;
+import org.example.ticks.Coordinator;
 import org.example.ticks.MonitoredHostsUpdater;
 import org.example.factories.*;
 import org.example.entities.DynamicDatacenterBroker;
-import org.example.ticks.WorkflowExecutor;
-import org.example.ticks.WorkflowScheduler;
 import org.example.registries.CloudletRegistry;
 import org.example.registries.HostRegistry;
 
@@ -21,7 +22,7 @@ public class SimulatedWorld {
 
     private final DynamicDatacenterBroker broker;
 
-    public SimulatedWorld(Dataset dataset, SimulatedWorldConfig config) {
+    public SimulatedWorld(@NonNull Dataset dataset, @NonNull SimulatedWorldConfig config) {
         // Create a CloudSimPlus object to initialize the simulation.
         CloudSim.init(NUM_USERS, Calendar.getInstance(), TRACE_FLAG);
 
@@ -41,25 +42,22 @@ public class SimulatedWorld {
         // Submits the VM list to the broker
         broker.submitGuestList(vms);
 
-        var executionPlan = new ExecutionPlan();
+        var releaser = new PeriodicWorkflowReleaser();
+        var scheduler = new RoundRobinWorkflowScheduler();
+        var executor = new LocalWorkflowExecutor();
+
         CloudSim.terminateSimulation(config.getSimulationDuration());
-        WorkflowScheduler.builder()
-                .broker(broker)
-                .scheduler(new RoundRobinScheduler())
-                .executionPlan(executionPlan)
-                .cloudletFactory(cloudletFactory)
-                .schedulingInterval(config.getSchedulingInterval())
-                .datasetWorkflows(dataset.getWorkflows()).build();
-        WorkflowExecutor.builder()
-                .broker(broker)
-                .executionPlan(executionPlan).build();
+        Coordinator.builder()
+                .broker(broker).cloudletFactory(cloudletFactory)
+                .releaser(releaser).scheduler(scheduler).executor(executor)
+                .workflows(dataset.getWorkflows()).build();
         MonitoredHostsUpdater.builder()
                 .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
     }
 
+    /// Starts the simulation and waits all cloudlets to be executed,
+    /// automatically stopping when there is no more events to process
     public void runSimulation() {
-        // Starts the simulation and waits all cloudlets to be executed,
-        // automatically stopping when there is no more events to process
         CloudSim.startSimulation();
         CloudSim.stopSimulation();
 

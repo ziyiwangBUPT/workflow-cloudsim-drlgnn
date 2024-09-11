@@ -6,8 +6,9 @@ import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 
+/// A listener that emits a tick event every second.
 public abstract class SimulationTickListener extends SimEntity {
-    private static final int TICK_EMIT_PERIOD_S = 1;
+    private static final int ONE_SECOND = 1;
 
     protected SimulationTickListener(String name) {
         super(name);
@@ -18,7 +19,7 @@ public abstract class SimulationTickListener extends SimEntity {
         if (ev.getTag() == Tags.TICK) {
             CloudSim.pauseSimulation();
             onTick(ev.eventTime());
-            schedule(getId(), TICK_EMIT_PERIOD_S, Tags.TICK);
+            schedule(getId(), ONE_SECOND, Tags.TICK);
             CloudSim.resumeSimulation();
         } else {
             Log.println("Unknown event received by " + getName() + ". Tag: " + ev.getTag());
@@ -28,10 +29,11 @@ public abstract class SimulationTickListener extends SimEntity {
     @Override
     public void startEntity() {
         super.startEntity();
-        schedule(getId(), TICK_EMIT_PERIOD_S, Tags.TICK);
+        schedule(getId(), ONE_SECOND, Tags.TICK);
     }
 
-    protected abstract void onTick(double timeMs);
+    /// Called every second.
+    protected abstract void onTick(double time);
 
     protected enum Tags implements CloudSimTags {
         TICK

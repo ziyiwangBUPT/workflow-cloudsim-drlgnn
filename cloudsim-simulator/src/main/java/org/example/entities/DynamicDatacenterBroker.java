@@ -3,10 +3,6 @@ package org.example.entities;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.DatacenterBroker;
 import org.cloudbus.cloudsim.core.SimEvent;
-import org.example.registries.CloudletRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /// Datacenter that can schedule cloudlets dynamically.
 public class DynamicDatacenterBroker extends DatacenterBroker {
@@ -14,14 +10,8 @@ public class DynamicDatacenterBroker extends DatacenterBroker {
         super(name);
     }
 
-    @Override
-    public void submitCloudletList(List<? extends Cloudlet> list) {
-        // Add cloudlets to the registry
-        var cloudletRegistry = CloudletRegistry.getInstance();
-        cloudletRegistry.registerNewCloudlets(new ArrayList<>(list));
-        super.submitCloudletList(list);
-    }
-
+    /// Schedules all submitted cloudlets. (Dynamic scheduling)
+    /// Note that this will throw an exception if any cloudlet has not been scheduled.
     public void scheduleSubmittedCloudlets() {
         // No cloudlet should have -1 as the guest (unscheduled)
         for (var cloudlet : getCloudletList()) {

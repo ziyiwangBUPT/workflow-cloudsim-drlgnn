@@ -1,6 +1,7 @@
 package org.example.entities;
 
 import lombok.Builder;
+import lombok.Getter;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Pe;
 import org.cloudbus.cloudsim.VmScheduler;
@@ -10,7 +11,9 @@ import org.cloudbus.cloudsim.provisioners.RamProvisioner;
 
 import java.util.List;
 
+/// Represents a host that can be monitored for power consumption.
 public class MonitoredHost extends Host {
+    @Getter
     private final PowerModel powerModel;
     private double currentAllocatedMips = 0.0;
     private double allocatedMipsRecordSum = 0.0;
@@ -23,6 +26,8 @@ public class MonitoredHost extends Host {
         this.powerModel = powerModel;
     }
 
+    /// Update the utilization of the host.
+    /// This method should be called periodically to update the host's utilization.
     public void updateUtilization(double timeMs) {
         var totalAllocationMips = 0d;
         for (var vm : getGuestList()) {
@@ -34,19 +39,23 @@ public class MonitoredHost extends Host {
         this.allocatedMipsRecordCount++;
     }
 
+    /// Get the total MIPS of the host.
     public double getCurrentCpuUtilization() {
         return currentAllocatedMips / getTotalMips();
     }
 
+    /// Get the current power consumption of the host.
     public double getCurrentPowerConsumption() {
         return powerModel.getPower(getCurrentCpuUtilization());
     }
 
+    /// Get the average CPU utilization of the host.
     public double getAverageCpuUtilization() {
         if (allocatedMipsRecordCount == 0) return 0.0;
         return allocatedMipsRecordSum / (allocatedMipsRecordCount * getTotalMips());
     }
 
+    /// Get the average power consumption of the host.
     public double getAveragePowerConsumption() {
         if (getAverageCpuUtilization() == 0) return 0.0;
         return powerModel.getPower(getAverageCpuUtilization());

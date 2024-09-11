@@ -1,10 +1,14 @@
 package org.example.tables;
 
+import lombok.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+/// Class that represents a table with columns and rows.
+/// Inspired from CloudSim Plus table classes.
 public abstract class AbstractTable<T> {
     protected static final String STRING_FORMAT = "%s";
     protected static final String DECIMAL_FORMAT = "%.2f";
@@ -19,17 +23,17 @@ public abstract class AbstractTable<T> {
     protected static final String S_UNIT = "s";
     protected static final String PERC_UNIT = "%%";
 
-    private final List<TableColumn<T>> columns;
+    private final List<TableColumn<T>> columns = new ArrayList<>();
     private final Collection<? extends T> rows;
 
-    protected AbstractTable(Collection<? extends T> rows) {
-        this.columns = new ArrayList<>();
+    protected AbstractTable(@NonNull Collection<? extends T> rows) {
         this.rows = rows;
     }
 
     protected abstract void createTableColumns();
 
-    protected void addColumn(String title, String subtitle, String format, Function<T, Object> dataFunction) {
+    protected void addColumn(@NonNull String title, @NonNull String subtitle,
+                             @NonNull String format, @NonNull Function<T, Object> dataFunction) {
         columns.add(new TableColumn<>(title, subtitle, format, dataFunction));
     }
 
