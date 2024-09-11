@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class DatasetExecution {
+public class DatasetVmAssignment {
     private final int workflowId;
     private final int taskId;
     private final int vmId;

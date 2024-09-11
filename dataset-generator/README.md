@@ -45,11 +45,7 @@ $ uv run src/dataset_generator/gen_dataset.py > tmp/dataset.json
 
 ### Solve Dataset
 
-This will solve using the CP-SAT solver (or round robin) and generate some charts in a tmp directory in current directory. (directory must exist)
-
-- `workflows.png` - Shows the workflow graphs.
-- `execution.png` - Shows the execution graph.
-- `gantt.png` - Shows the Gantt chart.
+This will solve using the CP-SAT solver (or round robin) and generate the execution solution.
 
 ```bash
 $ uv run src/dataset_generator/solve_dataset.py --help
@@ -60,7 +56,27 @@ Options:
   --help                      Show this message and exit.
 
 # Usage
-$ uv run src/dataset_generator/solve_dataset.py < tmp/dataset.json
+$ uv run src/dataset_generator/solve_dataset.py < tmp/dataset.json > tmp/solution.json
+```
+
+### Solve Dataset
+
+This will generate some charts current directory with a prefix given. (directories in prefix must exist)
+
+- `PREFIX_workflows.png` - Shows the workflow graphs.
+- `PREFIX_execution.png` - Shows the execution graph.
+- `PREFIX_gantt.png` - Shows the Gantt chart.
+
+```bash
+$ uv run src/dataset_generator/viz_solution.py --help
+Usage: viz_solution.py [OPTIONS]
+
+Options:
+  --prefix TEXT  File prefix to use (with directory)
+  --help         Show this message and exit.
+
+# Usage
+$ uv run src/dataset_generator/viz_solution.py < tmp/solution.json
 ```
 
 ## Notes

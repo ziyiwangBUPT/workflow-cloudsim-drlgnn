@@ -37,7 +37,7 @@ def solve_round_robin(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssign
             index += 1
 
         my_dependencies = [dep.id for dep in workflow.tasks if task_id in dep.child_ids]
-        dependency_end_times = [assigned_task_dict[(workflow_id, dep)].end for dep in my_dependencies]
+        dependency_end_times = [assigned_task_dict[(workflow_id, dep)].end_time for dep in my_dependencies]
         start_time = max([vm_available_time[best_vm.id], *dependency_end_times])
         end_time = start_time + runtime(task.length, best_vm.cpu_speed_mips)
 

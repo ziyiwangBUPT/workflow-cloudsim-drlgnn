@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class DatasetSolution {
     private final Dataset dataset;
-    private final List<DatasetExecution> executions;
+    private final List<DatasetVmAssignment> vmAssignments;
 
     /// Convert to a JSON string.
     public String toJson() {

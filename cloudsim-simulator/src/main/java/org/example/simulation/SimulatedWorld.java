@@ -77,6 +77,6 @@ public class SimulatedWorld {
         System.err.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
         System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
 
-        return new DatasetSolution(dataset, cloudletRegistry.getDatasetExecutions());
+        return new DatasetSolution(dataset, cloudletRegistry.getVmAssignments());
     }
 }

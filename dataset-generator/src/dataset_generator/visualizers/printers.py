@@ -1,3 +1,4 @@
+import sys
 from dataset_generator.core.models import Workflow, VmAssignment
 
 
@@ -7,10 +8,10 @@ def print_solution(workflows: list[Workflow], result: list[VmAssignment]):
 
     for assignment in result:
         workflow_id = assignment.workflow_id
-        makespan_start[workflow_id] = min(makespan_start[workflow_id], assignment.start)
-        makespan_end[workflow_id] = max(makespan_end[workflow_id], assignment.end)
-        print(assignment)
+        makespan_start[workflow_id] = min(makespan_start[workflow_id], assignment.start_time)
+        makespan_end[workflow_id] = max(makespan_end[workflow_id], assignment.end_time)
+        print(assignment, file=sys.stderr)
     total_makespan = sum(makespan_end[workflow_id] - makespan_start[workflow_id] for workflow_id in makespan_start)
 
-    print()
-    print(f"Total makespan: {total_makespan}")
+    print(file=sys.stderr)
+    print(f"Total makespan: {total_makespan}", file=sys.stderr)

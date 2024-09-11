@@ -3,7 +3,7 @@ package org.example.registries;
 import lombok.Getter;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
-import org.example.dataset.DatasetExecution;
+import org.example.dataset.DatasetVmAssignment;
 import org.example.dataset.DatasetTask;
 import org.example.utils.SummaryTable;
 
@@ -65,8 +65,8 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
         return summaryTable;
     }
 
-    public List<DatasetExecution> getDatasetExecutions() {
-        return itemStream().map(cloudlet -> DatasetExecution.builder()
+    public List<DatasetVmAssignment> getVmAssignments() {
+        return itemStream().map(cloudlet -> DatasetVmAssignment.builder()
                         .workflowId(cloudletMap.get(cloudlet.getCloudletId()).workflowId())
                         .taskId(cloudletMap.get(cloudlet.getCloudletId()).taskId())
                         .vmId(cloudlet.getGuestId())

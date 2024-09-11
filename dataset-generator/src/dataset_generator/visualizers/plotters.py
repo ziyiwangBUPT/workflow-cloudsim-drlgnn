@@ -52,7 +52,7 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
     for assignment in result:
         node_id = get_node_id(assignment.workflow_id, assignment.task_id)
         vm_nodes[assignment.vm_id].append(node_id)
-        start_times[node_id] = assignment.start
+        start_times[node_id] = assignment.start_time
 
     # Add edges between tasks executed on the same VM
     for vm_id in vm_nodes:
@@ -85,7 +85,7 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
         for task in workflow.tasks:
             assigned_task = result_map[(workflow.id, task.id)]
             ax.broken_barh(
-                [(assigned_task.start, assigned_task.end - assigned_task.start)],
+                [(assigned_task.start_time, assigned_task.end_time - assigned_task.start_time)],
                 (int(assigned_task.vm_id) - 0.3, 0.6),
                 color=color(workflow.id),
                 edgecolor="black",
