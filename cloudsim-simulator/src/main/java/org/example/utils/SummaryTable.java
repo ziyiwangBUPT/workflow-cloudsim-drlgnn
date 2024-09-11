@@ -26,15 +26,18 @@ public class SummaryTable<T> {
     private final List<TableColumn<T>> columns = new ArrayList<>();
     private final List<T> rows = new ArrayList<>();
 
+    /// Add a new column to the table.
     public void addColumn(@NonNull String title, @NonNull String subtitle,
                           @NonNull String format, @NonNull Function<T, Object> dataFunction) {
         columns.add(new TableColumn<>(title, subtitle, format, dataFunction));
     }
 
+    /// Add a new row to the table.
     public void addRows(@NonNull Collection<? extends T> newRows) {
         this.rows.addAll(newRows);
     }
 
+    /// Print the table to the console.
     public void print() {
         System.out.println();
         System.out.println(separatedData(TableColumn::title));
