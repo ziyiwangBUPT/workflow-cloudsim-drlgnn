@@ -10,12 +10,14 @@ import org.example.utils.SummaryTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /// A singleton class that holds a list of Cloudlets.
 public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
     @Getter
     private static final CloudletRegistry instance = new CloudletRegistry();
 
+    // Cloudlet ID -> (Workflow ID + Task ID)
     private final Map<Integer, WorkflowTaskId> cloudletMap = new HashMap<>();
 
     private CloudletRegistry() {
@@ -38,9 +40,17 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
     }
 
     /// Calculates the total makespan of completed Cloudlets
+    /// Makespan is the difference between start time and end time of 2 workflows.
+    /// Total makespan is the sum of makespan of all workflows.
     public double getTotalMakespan() {
-        return itemStream().filter(c -> Cloudlet.CloudletStatus.SUCCESS.equals(c.getStatus()))
-                .mapToDouble(c -> (c.getExecFinishTime() - c.getExecStartTime())).sum();
+        var totalMakespan = 0d;
+        var groupedCloudlets = itemStream().collect(Collectors.groupingBy(c -> cloudletMap.get(c.getCloudletId()).workflowId()));
+        for (var cloudlets : groupedCloudlets.values()) {
+            var startTime = cloudlets.stream().mapToDouble(Cloudlet::getExecStartTime).min().orElse(0);
+            var endTime = cloudlets.stream().mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
+            totalMakespan += (endTime - startTime);
+        }
+        return totalMakespan;
     }
 
     /// Gets the finish time of the last completed Cloudlet.
