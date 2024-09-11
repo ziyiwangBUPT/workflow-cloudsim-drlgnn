@@ -2,54 +2,56 @@ package org.example.registries;
 
 import lombok.Getter;
 import lombok.NonNull;
+import org.cloudbus.cloudsim.Host;
 import org.example.entities.MonitoredHost;
-import org.example.tables.HostTable;
+import org.example.utils.SummaryTable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /// A registry of all hosts in the simulation.
-public class HostRegistry {
+public class HostRegistry extends AbstractRegistry<MonitoredHost> {
+    private static final int K = 1024;
+
     @Getter
     private static final HostRegistry instance = new HostRegistry();
-
-    private final Map<HostId, MonitoredHost> hosts = new HashMap<>();
 
     private HostRegistry() {
     }
 
     /// Update the utilization of all hosts in the registry.
     public void updateUtilizationOfHosts(double timeMs) {
-        hosts.values().forEach(host -> host.updateUtilization(timeMs));
+        itemStream().forEach(host -> host.updateUtilization(timeMs));
     }
 
     /// Register a new list of hosts.
     public void registerNewHosts(@NonNull List<MonitoredHost> newHosts) {
-        newHosts.forEach(host -> hosts.put(new HostId(host.getId()), host));
-    }
-
-    /// Get a host by its ID.
-    public MonitoredHost getHost(int id) {
-        return hosts.get(new HostId(id));
+        newHosts.forEach(host -> register(host.getId(), host));
     }
 
     /// Get the total number of allocated VMs.
     public int getTotalAllocatedVms() {
-        return hosts.values().stream().mapToInt(h -> h.getGuestList().size()).sum();
+        return itemStream().mapToInt(h -> h.getGuestList().size()).sum();
     }
 
     /// Get the total power consumption of all hosts.
     public double getTotalPowerConsumptionW() {
-        return hosts.values().stream().mapToDouble(MonitoredHost::getAveragePowerConsumption).sum();
+        return itemStream().mapToDouble(MonitoredHost::getAveragePowerConsumption).sum();
     }
 
-    /// Print a summary table of all hosts.
-    public void printSummaryTable() {
-        new HostTable(hosts.values()).print();
-    }
+    @Override
+    protected SummaryTable<MonitoredHost> buildSummaryTable() {
+        var summaryTable = new SummaryTable<MonitoredHost>();
 
-    /// A private record to represent a Host ID.
-    public record HostId(int id) {
+        summaryTable.addColumn("DC", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, host -> host.getDatacenter().getId());
+        summaryTable.addColumn("Host", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, Host::getId);
+        summaryTable.addColumn("PES", SummaryTable.COUNT_UNIT, SummaryTable.INTEGER_FORMAT, Host::getNumberOfPes);
+        summaryTable.addColumn("Speed ", SummaryTable.GIPS_UNIT, SummaryTable.DECIMAL_FORMAT, host -> host.getTotalMips() / K);
+        summaryTable.addColumn("Ram", SummaryTable.GB_UNIT, SummaryTable.INTEGER_FORMAT, host -> host.getRam() / K);
+        summaryTable.addColumn(" BW  ", SummaryTable.GB_S_UNIT, SummaryTable.DECIMAL_FORMAT, host -> (double) host.getBw() / K);
+        summaryTable.addColumn("Storage", SummaryTable.GB_UNIT, SummaryTable.INTEGER_FORMAT, host -> host.getStorage() / 1000);
+        summaryTable.addColumn("VMs", SummaryTable.COUNT_UNIT, SummaryTable.INTEGER_FORMAT, host -> host.getGuestList().size());
+        summaryTable.addColumn("CPU Usage", SummaryTable.PERC_UNIT, SummaryTable.DECIMAL_FORMAT, host -> host.getAverageCpuUtilization() * 100);
+
+        return summaryTable;
     }
 }

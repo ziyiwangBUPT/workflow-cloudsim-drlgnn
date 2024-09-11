@@ -1,4 +1,4 @@
-package org.example.tables;
+package org.example.utils;
 
 import lombok.NonNull;
 
@@ -9,36 +9,33 @@ import java.util.function.Function;
 
 /// Class that represents a table with columns and rows.
 /// Inspired from CloudSim Plus table classes.
-public abstract class AbstractTable<T> {
-    protected static final String STRING_FORMAT = "%s";
-    protected static final String DECIMAL_FORMAT = "%.2f";
-    protected static final String INTEGER_FORMAT = "%d";
+public class SummaryTable<T> {
+    public static final String STRING_FORMAT = "%s";
+    public static final String DECIMAL_FORMAT = "%.2f";
+    public static final String INTEGER_FORMAT = "%d";
 
-    protected static final String ID_UNIT = "ID";
-    protected static final String COUNT_UNIT = "#";
-    protected static final String GIPS_UNIT = "GIPS";
-    protected static final String GB_UNIT = "GB";
-    protected static final String GB_S_UNIT = "GB/s";
-    protected static final String MI_UNIT = "MI";
-    protected static final String S_UNIT = "s";
-    protected static final String PERC_UNIT = "%%";
+    public static final String ID_UNIT = "ID";
+    public static final String COUNT_UNIT = "#";
+    public static final String GIPS_UNIT = "GIPS";
+    public static final String GB_UNIT = "GB";
+    public static final String GB_S_UNIT = "GB/s";
+    public static final String MI_UNIT = "MI";
+    public static final String S_UNIT = "s";
+    public static final String PERC_UNIT = "%%";
 
     private final List<TableColumn<T>> columns = new ArrayList<>();
-    private final Collection<? extends T> rows;
+    private final List<T> rows = new ArrayList<>();
 
-    protected AbstractTable(@NonNull Collection<? extends T> rows) {
-        this.rows = rows;
-    }
-
-    protected abstract void createTableColumns();
-
-    protected void addColumn(@NonNull String title, @NonNull String subtitle,
-                             @NonNull String format, @NonNull Function<T, Object> dataFunction) {
+    public void addColumn(@NonNull String title, @NonNull String subtitle,
+                          @NonNull String format, @NonNull Function<T, Object> dataFunction) {
         columns.add(new TableColumn<>(title, subtitle, format, dataFunction));
     }
 
+    public void addRows(@NonNull Collection<? extends T> newRows) {
+        this.rows.addAll(newRows);
+    }
+
     public void print() {
-        createTableColumns();
         System.out.println();
         System.out.println(separatedData(TableColumn::title));
         System.out.println(separatedData(TableColumn::subtitle));

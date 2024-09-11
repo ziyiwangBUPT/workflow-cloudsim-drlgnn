@@ -34,7 +34,7 @@ public class VmFactory {
         var vmList = new ArrayList<Vm>();
         for (var datasetVm : datasetVms) {
             var vm = createVm(brokerId, datasetVm);
-            var host = hostRegistry.getHost(datasetVm.getHostId());
+            var host = hostRegistry.findRegistered(datasetVm.getHostId());
             vm.setHost(host);
             vmList.add(vm);
         }

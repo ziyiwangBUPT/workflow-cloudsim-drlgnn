@@ -69,7 +69,7 @@ public class SimulatedWorld {
         System.out.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getTotalMakespan());
         System.out.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
         System.out.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), broker.getGuestList().size());
-        System.out.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getCloudletCount());
+        System.out.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
         System.out.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
         System.out.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
     }
