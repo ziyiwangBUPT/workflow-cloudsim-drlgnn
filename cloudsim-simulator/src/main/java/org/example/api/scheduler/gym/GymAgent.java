@@ -20,7 +20,8 @@ public class GymAgent<TObservation, TAction> {
 
     /// Resets the environment.
     /// Must be called as the first method, before step.
-    public AgentResult<TObservation> reset() {
-        return queue.getObservation();
+    public TObservation reset() {
+        var observation = queue.getObservation();
+        return observation.getObservation();
     }
 }

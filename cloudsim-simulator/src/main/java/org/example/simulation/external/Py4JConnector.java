@@ -2,7 +2,7 @@ package org.example.simulation.external;
 
 import org.example.api.scheduler.gym.GymAgent;
 import org.example.api.scheduler.gym.GymSharedQueue;
-import org.example.api.scheduler.gym.types.AgentResult;
+import org.example.utils.GsonHelper;
 import py4j.GatewayServer;
 
 /// Represents a connector between Python and Java via Py4J.
@@ -16,13 +16,19 @@ public class Py4JConnector<TObservation, TAction> implements Runnable {
     }
 
     /// Takes a step in the environment.
-    public AgentResult<TObservation> step(TAction action) {
-        return agent.step(action);
+    /// Returned type is `AgentResult<TObservation>` serialized to JSON.
+    public String step(TAction action) {
+        var result = agent.step(action);
+        var gson = GsonHelper.getGson();
+        return gson.toJson(result);
     }
 
     /// Resets the environment.
-    public AgentResult<TObservation> reset() {
-        return agent.reset();
+    /// Returned type is `TObservation` serialized to JSON.
+    public String reset() {
+        var result = agent.reset();
+        var gson = GsonHelper.getGson();
+        return gson.toJson(result);
     }
 
     @Override

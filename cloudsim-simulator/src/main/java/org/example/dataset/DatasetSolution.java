@@ -1,8 +1,7 @@
 package org.example.dataset;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
 import lombok.Data;
+import org.example.utils.GsonHelper;
 
 import java.util.List;
 
@@ -13,7 +12,7 @@ public class DatasetSolution {
 
     /// Convert to a JSON string.
     public String toJson() {
-        var gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        var gson = GsonHelper.getGson();
         return gson.toJson(this);
     }
 }
