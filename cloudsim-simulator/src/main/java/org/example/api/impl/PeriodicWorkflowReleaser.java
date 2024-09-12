@@ -6,8 +6,6 @@ import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
 import org.example.api.WorkflowReleaser;
 
-import java.util.List;
-
 /// A simple workflow releaser that releases workflows every T seconds.
 public class PeriodicWorkflowReleaser implements WorkflowReleaser {
     private static final int RELEASE_INTERVAL = 25;
@@ -16,12 +14,12 @@ public class PeriodicWorkflowReleaser implements WorkflowReleaser {
     private boolean hasNewWorkflows = false;
 
     @Override
-    public void submitVms(@NonNull List<VmDto> newVms) {
+    public void notifyNewVm(@NonNull VmDto newVm) {
         // Do nothing
     }
 
     @Override
-    public void submitWorkflows(@NonNull List<WorkflowDto> newWorkflows) {
+    public void notifyNewWorkflow(@NonNull WorkflowDto newWorkflow) {
         hasNewWorkflows = true;
     }
 

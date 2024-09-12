@@ -4,19 +4,17 @@ import lombok.NonNull;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
 
-import java.util.List;
-
 /// The interface for releasing workflows depending on the current state of the system.
 public interface WorkflowReleaser {
-    /// Submit a list of VMs to the system.
-    /// This is most likely called when the system is initialized.
-    void submitVms(@NonNull List<VmDto> newVms);
+    /// Submit a new VM to the system.
+    /// This is called from the coordinator when it discovers a new VM.
+    void notifyNewVm(@NonNull VmDto newVm);
 
-    /// Submit a list of workflows to the system.
-    /// This is most likely called when the broker receives new workflows.
-    void submitWorkflows(@NonNull List<WorkflowDto> newWorkflows);
+    /// Submit a new workflow to the system.
+    /// This is called from the workflow buffer when a new workflow arrives.
+    void notifyNewWorkflow(@NonNull WorkflowDto newWorkflow);
 
     /// Check if the system should release workflows.
-    /// This is called periodically.
+    /// This is called periodically from the workflow buffer to decide if the system should release workflows.
     boolean shouldRelease();
 }

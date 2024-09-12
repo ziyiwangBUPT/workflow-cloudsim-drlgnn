@@ -7,12 +7,14 @@ import org.example.api.impl.PeriodicWorkflowReleaser;
 import org.example.api.impl.RoundRobinWorkflowScheduler;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
-import org.example.ticks.Coordinator;
-import org.example.ticks.MonitoredHostsUpdater;
+import org.example.ticks.WorkflowBuffer;
+import org.example.ticks.WorkflowCoordinator;
+import org.example.ticks.UtilizationUpdater;
 import org.example.factories.*;
 import org.example.entities.DynamicDatacenterBroker;
 import org.example.registries.CloudletRegistry;
 import org.example.registries.HostRegistry;
+import org.example.ticks.WorkflowSubmitter;
 
 import java.util.Calendar;
 
@@ -51,11 +53,16 @@ public class SimulatedWorld {
         var executor = new LocalWorkflowExecutor();
 
         CloudSim.terminateSimulation(config.getSimulationDuration());
-        Coordinator.builder()
+
+        // Create tick listeners
+        var coordinator = WorkflowCoordinator.builder()
                 .broker(broker).cloudletFactory(cloudletFactory)
-                .releaser(releaser).scheduler(scheduler).executor(executor)
-                .workflows(dataset.getWorkflows()).build();
-        MonitoredHostsUpdater.builder()
+                .releaser(releaser).scheduler(scheduler).executor(executor).build();
+        var buffer = WorkflowBuffer.builder()
+                .coordinator(coordinator).releaser(releaser).build();
+        var _ = WorkflowSubmitter.builder()
+                .buffer(buffer).workflows(dataset.getWorkflows()).build();
+        var _ = UtilizationUpdater.builder()
                 .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
     }
 
