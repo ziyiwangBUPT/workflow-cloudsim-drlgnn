@@ -1,10 +1,11 @@
 package org.example.simulation;
 
+import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
-import org.example.api.scheduler.impl.LocalWorkflowExecutor;
-import org.example.api.scheduler.impl.PeriodicWorkflowReleaser;
-import org.example.api.scheduler.impl.RoundRobinWorkflowScheduler;
+import org.example.api.scheduler.WorkflowExecutor;
+import org.example.api.scheduler.WorkflowReleaser;
+import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
@@ -26,7 +27,12 @@ public class SimulatedWorld {
     private final Dataset dataset;
     private final DynamicDatacenterBroker broker;
 
-    public SimulatedWorld(@NonNull Dataset dataset, @NonNull SimulatedWorldConfig config) {
+    @Builder
+    public SimulatedWorld(@NonNull Dataset dataset,
+                          @NonNull WorkflowReleaser releaser,
+                          @NonNull WorkflowScheduler scheduler,
+                          @NonNull WorkflowExecutor executor,
+                          @NonNull SimulatedWorldConfig config) {
         this.dataset = dataset;
 
         // Create a CloudSimPlus object to initialize the simulation.
@@ -47,10 +53,6 @@ public class SimulatedWorld {
 
         // Submits the VM list to the broker
         broker.submitGuestList(vms);
-
-        var releaser = new PeriodicWorkflowReleaser();
-        var scheduler = new RoundRobinWorkflowScheduler();
-        var executor = new LocalWorkflowExecutor();
 
         CloudSim.terminateSimulation(config.getSimulationDuration());
 
