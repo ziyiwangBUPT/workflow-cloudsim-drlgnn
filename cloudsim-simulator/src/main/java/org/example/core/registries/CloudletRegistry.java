@@ -10,6 +10,7 @@ import org.example.utils.SummaryTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /// A singleton class that holds a list of Cloudlets.
@@ -57,6 +58,31 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
     public double getLastCloudletFinishedAt() {
         return itemStream().filter(c -> Cloudlet.CloudletStatus.SUCCESS.equals(c.getStatus()))
                 .mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
+    }
+
+    public double getCompletionTimeVariance() {
+        // Loop through each item and determine the maximum finish time per workflow
+        var maxCompletionTimes = new HashMap<Integer, Double>();
+        for (var cloudlet : itemStream().toList()) {
+            var workflowId = cloudletMap.get(cloudlet.getCloudletId()).workflowId();
+            var execFinishTime = cloudlet.getExecFinishTime(); // -1 if not finished
+            if (execFinishTime > -1) {
+                var completionTime = cloudlet.getExecStartTime() - cloudlet.getExecFinishTime();
+                var currMaxCompletionTime = maxCompletionTimes.getOrDefault(workflowId, completionTime);
+                maxCompletionTimes.put(workflowId, Math.max(currMaxCompletionTime, execFinishTime));
+            }
+        }
+
+        if (maxCompletionTimes.isEmpty()) {
+            return 0.0;
+        }
+
+        // Calculate the variance
+        double sum = maxCompletionTimes.values().stream().mapToDouble(time -> time).sum();
+        double mean = sum / maxCompletionTimes.size();
+        double varianceSum = maxCompletionTimes.values().stream()
+                .mapToDouble(time -> time).map(time -> Math.pow(time - mean, 2)).sum();
+        return varianceSum / maxCompletionTimes.size();
     }
 
     @Override

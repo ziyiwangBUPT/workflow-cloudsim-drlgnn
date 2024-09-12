@@ -9,6 +9,7 @@ import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.ReleaserAction;
 import org.example.api.scheduler.gym.types.ReleaserObservation;
+import org.example.core.registries.CloudletRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +37,15 @@ public class GymWorkflowReleaser implements WorkflowReleaser {
 
     @Override
     public boolean shouldRelease() {
-        // Observation is all the vms and workflows
-        var observation = new ReleaserObservation(vms, workflows);
-        // Reward is negative reward of workflows remaining
-        // TODO: Calculate a better reward
-        var reward = -workflows.size();
+        // Observation
+        var cloudletRegistry = CloudletRegistry.getInstance();
+        var completionTimeVariance = cloudletRegistry.getCompletionTimeVariance();
+        var observation = new ReleaserObservation(workflows.size(), vms.size(), completionTimeVariance);
 
-        // Get the action from the agent
+        // Reward
+        var reward = (completionTimeVariance < 0.1) ? 1 : 0;
+
+        // Action
         var action = environment.step(AgentResult.reward(observation, reward));
         var shouldRelease = action.shouldRelease();
 

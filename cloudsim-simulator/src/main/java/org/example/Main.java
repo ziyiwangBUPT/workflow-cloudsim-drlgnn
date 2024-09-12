@@ -2,6 +2,7 @@ package org.example;
 
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
+import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.ReleaserAction;
 import org.example.api.scheduler.gym.types.ReleaserObservation;
 import org.example.api.scheduler.impl.GymWorkflowReleaser;
@@ -51,6 +52,7 @@ public class Main {
         System.out.println(solution.toJson());
 
         // Stop Py4J connector
+        sharedReleaseQueue.setObservation(AgentResult.truncated());
         releaserThread.interrupt();
         releaserThread.join();
     }

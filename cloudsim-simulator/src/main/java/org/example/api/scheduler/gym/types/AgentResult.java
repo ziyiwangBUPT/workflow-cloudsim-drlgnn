@@ -13,4 +13,8 @@ public final class AgentResult<TObservation> {
     public static <TObservation> AgentResult<TObservation> reward(TObservation observation, double reward) {
         return new AgentResult<>(observation, reward, false, false);
     }
+
+    public static <TObservation> AgentResult<TObservation> truncated() {
+        return new AgentResult<>(null, 0, false, true);
+    }
 }

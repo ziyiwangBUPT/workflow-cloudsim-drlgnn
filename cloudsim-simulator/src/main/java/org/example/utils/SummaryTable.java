@@ -5,6 +5,7 @@ import lombok.NonNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
 /// Class that represents a table with columns and rows.
@@ -39,14 +40,15 @@ public class SummaryTable<T> {
 
     /// Print the table to the console.
     public void print() {
-        System.err.println();
-        System.err.println(separatedData(TableColumn::title));
-        System.err.println(separatedData(TableColumn::subtitle));
-        System.err.println(separatedData(c -> "-".repeat(c.columnWidth())));
-        for (T row : rows) {
-            System.err.println(separatedData(c -> String.format(c.format(), c.dataFunction().apply(row))));
-        }
-        System.err.println();
+        var joiner = new StringJoiner("\n");
+
+        joiner.add("").add(separatedData(TableColumn::title))
+                .add(separatedData(TableColumn::subtitle))
+                .add(separatedData(c -> "-".repeat(c.columnWidth())));
+        rows.stream().map(row -> separatedData(c -> String.format(c.format(), c.dataFunction().apply(row)))).forEach(joiner::add);
+        joiner.add("");
+
+        System.err.println(joiner);
     }
 
     private String separatedData(Function<TableColumn<T>, String> mapper) {
