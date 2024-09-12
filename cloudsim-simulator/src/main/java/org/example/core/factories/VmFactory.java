@@ -1,11 +1,11 @@
-package org.example.factories;
+package org.example.core.factories;
 
 import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
 import org.cloudbus.cloudsim.Vm;
 import org.example.dataset.DatasetVm;
-import org.example.registries.HostRegistry;
+import org.example.core.registries.HostRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

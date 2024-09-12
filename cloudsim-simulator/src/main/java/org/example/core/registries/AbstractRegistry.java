@@ -1,4 +1,4 @@
-package org.example.registries;
+package org.example.core.registries;
 
 import org.example.utils.SummaryTable;
 

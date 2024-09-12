@@ -1,4 +1,4 @@
-package org.example.factories;
+package org.example.core.factories;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -8,8 +8,8 @@ import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 import org.example.dataset.DatasetHost;
-import org.example.entities.MonitoredHost;
-import org.example.registries.HostRegistry;
+import org.example.core.entities.MonitoredHost;
+import org.example.core.registries.HostRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

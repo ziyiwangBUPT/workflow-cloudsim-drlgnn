@@ -1,9 +1,9 @@
-package org.example.registries;
+package org.example.core.registries;
 
 import lombok.Getter;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Host;
-import org.example.entities.MonitoredHost;
+import org.example.core.entities.MonitoredHost;
 import org.example.utils.SummaryTable;
 
 import java.util.List;

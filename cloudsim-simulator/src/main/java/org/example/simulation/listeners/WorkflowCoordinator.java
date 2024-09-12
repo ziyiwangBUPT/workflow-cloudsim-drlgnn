@@ -1,18 +1,18 @@
-package org.example.ticks;
+package org.example.simulation.listeners;
 
 import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Vm;
-import org.example.api.WorkflowExecutor;
-import org.example.api.WorkflowReleaser;
-import org.example.api.WorkflowScheduler;
+import org.example.api.scheduler.WorkflowExecutor;
+import org.example.api.scheduler.WorkflowReleaser;
+import org.example.api.scheduler.WorkflowScheduler;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
 import org.example.dataset.DatasetTask;
 import org.example.dataset.DatasetWorkflow;
-import org.example.entities.DynamicDatacenterBroker;
-import org.example.factories.CloudletFactory;
+import org.example.core.entities.DynamicDatacenterBroker;
+import org.example.core.factories.CloudletFactory;
 
 import java.util.*;
 
@@ -53,10 +53,7 @@ public class WorkflowCoordinator extends SimulationTickListener {
 
         // Schedule tasks to VMs
         var scheduling = scheduler.schedule();
-        while (scheduling.isPresent()) {
-            executor.notifyScheduling(scheduling.get());
-            scheduling = scheduler.schedule();
-        }
+        scheduling.ifPresent(executor::notifyScheduling);
 
         submitAndExecuteCloudlets();
     }

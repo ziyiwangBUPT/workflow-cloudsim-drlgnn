@@ -1,8 +1,8 @@
-package org.example.ticks;
+package org.example.simulation.listeners;
 
 import lombok.Builder;
 import lombok.NonNull;
-import org.example.api.WorkflowReleaser;
+import org.example.api.scheduler.WorkflowReleaser;
 import org.example.api.dtos.WorkflowDto;
 import org.example.dataset.DatasetWorkflow;
 

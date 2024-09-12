@@ -1,4 +1,4 @@
-package org.example.factories;
+package org.example.core.factories;
 
 import lombok.Builder;
 import lombok.NonNull;

@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Vm;
-import org.example.entities.MonitoredHost;
+import org.example.core.entities.MonitoredHost;
 
 @Data
 @Builder

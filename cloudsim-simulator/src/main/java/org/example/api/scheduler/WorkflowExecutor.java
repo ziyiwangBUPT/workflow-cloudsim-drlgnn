@@ -1,4 +1,4 @@
-package org.example.api;
+package org.example.api.scheduler;
 
 import lombok.NonNull;
 import org.example.api.dtos.TaskAssignmentDto;

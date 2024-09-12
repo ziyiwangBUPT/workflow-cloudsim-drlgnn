@@ -1,10 +1,10 @@
-package org.example.api.impl;
+package org.example.api.scheduler.impl;
 
 import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
-import org.example.api.WorkflowReleaser;
+import org.example.api.scheduler.WorkflowReleaser;
 
 /// A simple workflow releaser that releases workflows every T seconds.
 public class PeriodicWorkflowReleaser implements WorkflowReleaser {

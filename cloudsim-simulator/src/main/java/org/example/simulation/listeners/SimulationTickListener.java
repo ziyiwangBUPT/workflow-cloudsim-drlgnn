@@ -1,4 +1,4 @@
-package org.example.ticks;
+package org.example.simulation.listeners;
 
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;

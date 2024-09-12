@@ -1,7 +1,7 @@
-package org.example.ticks;
+package org.example.simulation.listeners;
 
 import lombok.Builder;
-import org.example.registries.HostRegistry;
+import org.example.core.registries.HostRegistry;
 
 /// Tick listener that updates the utilization of monitored hosts.
 public class UtilizationUpdater extends SimulationTickListener {

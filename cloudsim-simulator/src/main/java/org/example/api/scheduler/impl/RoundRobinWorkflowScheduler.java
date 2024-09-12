@@ -1,7 +1,7 @@
-package org.example.api.impl;
+package org.example.api.scheduler.impl;
 
 import lombok.NonNull;
-import org.example.api.WorkflowScheduler;
+import org.example.api.scheduler.WorkflowScheduler;
 import org.example.api.dtos.TaskDto;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;

@@ -1,13 +1,12 @@
-package org.example.factories;
+package org.example.core.factories;
 
 import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.example.dataset.DatasetTask;
-import org.example.registries.CloudletRegistry;
+import org.example.core.registries.CloudletRegistry;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 

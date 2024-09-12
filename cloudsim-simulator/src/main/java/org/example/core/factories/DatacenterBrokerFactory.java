@@ -1,7 +1,7 @@
-package org.example.factories;
+package org.example.core.factories;
 
 import lombok.Builder;
-import org.example.entities.DynamicDatacenterBroker;
+import org.example.core.entities.DynamicDatacenterBroker;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
