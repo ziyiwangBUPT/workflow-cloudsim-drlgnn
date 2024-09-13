@@ -32,4 +32,9 @@ public class Dataset {
             throw new RuntimeException(e);
         }
     }
+
+    public static Dataset fromStdin() {
+        var scanner = new Scanner(System.in);
+        return fromJson(scanner.useDelimiter("\\A").next());
+    }
 }

@@ -4,17 +4,27 @@ This project is a project depending on CloudSim project adding following capabil
 
 ## Building
 
-First install the CloudSim jar into the local maven repository.
+First you have to have submodules initialized.
 
 ```bash
-$ mvn install:install-file -Dfile=cloudsim/cloudsim-7.0.0-alpha.jar -DgroupId=org.cloudbus -DartifactId=cloudsim -Dversion=7.0.0-alpha -Dpackaging=jar
+$ git submodule update --init
 ```
 
-Then you can build the project by running the following command.
+Then install the cloudsim jar into the local maven repository.
 
 ```bash
+$ cd cloudsim
+$ mvn clean install
+```
+
+Then you can build the parent project by running the following command.
+
+```bash
+$ cd .. # go back from cloudsim directory
 $ mvn clean package
 ```
+
+The jar file will be generated in the target directory.
 
 ## Running
 

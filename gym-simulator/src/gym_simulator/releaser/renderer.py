@@ -13,16 +13,47 @@ class ReleaserRenderer(abc.ABC):
     def update(self, obs: tuple[int, int, int, int, int, int]):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def close(self):
+        raise NotImplementedError
+
 
 class ReleaserPlotRenderer(ReleaserRenderer):
     width: int = 800
     height: int = 600
+    render_fps: int
+    _window: pygame.Surface | None
+    _clock: pygame.time.Clock | None
 
-    def __init__(self):
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        self.clock = pygame.time.Clock()
+    def __init__(self, render_fps: int):
+        self._window = None
+        self._clock = None
+        self.render_fps = render_fps
 
     def update(self, obs: ObsType):
+        """Update the renderer with the given observation"""
+        if self._window is None:
+            pygame.init()
+            pygame.display.init()
+            self._window = pygame.display.set_mode((self.width, self.height))
+        if self._clock is None:
+            self._clock = pygame.time.Clock()
+
+        buf = self._draw(obs)
+        self._window.blit(pygame.image.load(buf), (0, 0))
+
+        pygame.event.pump()
+        pygame.display.update()
+        self._clock.tick(self.render_fps)
+
+    def close(self):
+        """Close the renderer"""
+        if self._window is not None:
+            pygame.display.quit()
+            pygame.quit()
+
+    def _draw(self, obs: ObsType) -> io.BytesIO:
+        """Draw the observation on the screen"""
         buffered, released, scheduled, executed, completed, vm_count = obs
         inBuffering = buffered - released
         inReleasing = released - scheduled
@@ -42,6 +73,4 @@ class ReleaserPlotRenderer(ReleaserRenderer):
         plt.close(fig)
         buf.seek(0)
 
-        self.screen.blit(pygame.image.load(buf), (0, 0))
-        pygame.display.flip()
-        self.clock.tick(10)
+        return buf

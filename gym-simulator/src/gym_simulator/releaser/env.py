@@ -10,18 +10,22 @@ from gym_simulator.core.runner import SimulatorRunner
 
 
 class CloudSimReleaserEnv(gym.Env):
+    metadata = {"render_modes": ["human"], "render_fps": 60}
+
     action_space: spaces.Discrete
     observation_space: spaces.Tuple
-    _gateway: JavaGateway
+    render_mode: str
 
+    _gateway: JavaGateway
     _connector: Any
-    _last_observation: ObsType | None
-    _renderer: ReleaserRenderer
+    _last_observation: ObsType | None = None
+    _human_renderer: ReleaserRenderer
     _runner: SimulatorRunner
 
-    def __init__(self, simulator: str, dataset: str):
-        super().__init__()
+    # --------------------- Initialization ------------------------------------
 
+    def __init__(self, runner: SimulatorRunner, render_mode=None):
+        super().__init__()
         self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
         self.observation_space = spaces.Tuple(
             [
@@ -35,13 +39,74 @@ class CloudSimReleaserEnv(gym.Env):
         )
 
         # Initialize the Java Gateway
+        self._runner = runner
         self._gateway = JavaGateway()
         self._connector = self._gateway.entry_point
 
-        # Renderer
-        self._last_observation = None
-        self._renderer = ReleaserPlotRenderer()
-        self._runner = SimulatorRunner(simulator, dataset)
+        # Set the render mode
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+        self._human_renderer = ReleaserPlotRenderer(self.metadata["render_fps"])
+
+    # --------------------- Reset ---------------------------------------------
+
+    def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
+        super().reset(seed=seed)
+
+        # Restart the simulator
+        if self._runner.is_running():
+            self._runner.stop()
+        self._runner.run()
+
+        # Get the initial observation
+        result = self._connector.reset()
+        observation = self._parse_obs(result)
+        info: dict[str, Any] = {}
+
+        # Render the frame
+        self._last_observation = observation
+        if self.render_mode == "human":
+            self._render_frame()
+
+        return observation, info
+
+    # --------------------- Step ----------------------------------------------
+
+    def step(self, action: ActionType) -> tuple[ObsType, float, bool, bool, dict[str, Any]]:
+        # Step the environment
+        action_obj = self._create_action(action)
+        result = self._connector.step(action_obj)
+        observation = self._parse_obs(result.getObservation())
+        reward = float(result.getReward())
+        terminated = bool(result.isTerminated())
+        truncated = bool(result.isTruncated())
+        info: dict[str, Any] = {}
+
+        # Render the frame
+        self._last_observation = observation
+        if self.render_mode == "human":
+            self._render_frame()
+
+        return observation, reward, terminated, truncated, info
+
+    # --------------------- Rendering -----------------------------------------
+
+    def render(self):
+        # Rendering is hadled by the environment
+        pass
+
+    # --------------------- Close ----------------------------------------------
+
+    def close(self):
+        # Stop the simulator
+        if self._runner.is_running():
+            self._runner.stop()
+        self._gateway.close()
+
+        # Close the renderer
+        self._human_renderer.close()
+
+    # --------------------- Private methods -----------------------------------
 
     def _parse_obs(self, observation: Any) -> ObsType:
         if observation is None:
@@ -55,42 +120,9 @@ class CloudSimReleaserEnv(gym.Env):
             int(observation.vmCount()),
         )
 
-    def step(self, action: ActionType) -> tuple[ObsType, float, bool, bool, dict[str, Any]]:
-        # Step the environment
-        action_obj = self._gateway.jvm.org.example.api.scheduler.gym.types.ReleaserAction(bool(action == 1))
-        result = self._connector.step(action_obj)
+    def _create_action(self, action: ActionType) -> Any:
+        return self._gateway.jvm.org.example.api.scheduler.gym.types.ReleaserAction(bool(action == 1))
 
-        # Parse the result
-        observation = self._parse_obs(result.getObservation())
-        reward = float(result.getReward())
-        terminated = bool(result.isTerminated())
-        truncated = bool(result.isTruncated())
-        info: dict[str, Any] = {}
-
-        self._last_observation = observation
-        self.render()
-
-        return observation, reward, terminated, truncated, info
-
-    def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
-        if self._runner.is_running():
-            self._runner.stop()
-        self._runner.run()
-
-        # Reset the environment
-        result = self._connector.reset()
-
-        # Parse the result
-        observation = self._parse_obs(result)
-        info: dict[str, Any] = {}
-
-        self.render()
-
-        return observation, info
-
-    def render(self):
-        if self._last_observation is not None:
-            self._renderer.update(self._last_observation)
-
-    def close(self):
-        self._gateway.shutdown()
+    def _render_frame(self):
+        assert self._last_observation is not None
+        self._human_renderer.update(self._last_observation)

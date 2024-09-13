@@ -13,8 +13,8 @@ public class GymEnvironment<TObservation, TAction> {
 
     /// Takes a step in the environment.
     /// This will set the observation and block, waiting for the agent to return an action.
-    public TAction step(AgentResult<TObservation> action) {
-        queue.setObservation(action);
+    public TAction step(AgentResult<TObservation> observation) {
+        queue.setObservation(observation);
         return queue.getAction();
     }
 }

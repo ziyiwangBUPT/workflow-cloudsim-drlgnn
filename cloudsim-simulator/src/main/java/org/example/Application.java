@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
 @Command(name = "CloudSim Simulator", mixinStandardHelpOptions = true, version = "1.0",
         description = "Runs a simulation of a workflow scheduling algorithm.")
 public class Application implements Callable<Integer> {
-    @Option(names = {"-f", "--file"}, description = "Dataset file", required = true)
+    @Option(names = {"-f", "--file"}, description = "Dataset file")
     private File datasetFile;
 
     @Option(names = {"-d", "--duration"}, description = "Duration of the simulation")
@@ -33,10 +33,12 @@ public class Application implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         System.err.println("Running simulation...");
-        Log.disable();
+         Log.disable();
 
-        // Read input file
-        var dataset = Dataset.fromFile(datasetFile);
+        // Read input file or stdin
+        var dataset = datasetFile != null
+                ? Dataset.fromFile(datasetFile)
+                : Dataset.fromStdin();
 
         // Configure simulation
         var config = SimulatedWorldConfig.builder()

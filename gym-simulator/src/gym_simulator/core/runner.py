@@ -15,12 +15,12 @@ class SimulatorRunner:
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator, "-f", self.dataset],
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.PIPE,
             universal_newlines=True,
         )
 
         time.sleep(5)
-        if self.simulator_process.poll() is not None:
+        if not self.is_running():
             print("Simulator failed to start")
             sys.exit(1)
 
@@ -28,7 +28,7 @@ class SimulatorRunner:
 
     def stop(self):
         """Stop the simulator"""
-        if self.simulator_process is not None:
+        if self.is_running():
             self.simulator_process.terminate()
             self.simulator_process.wait()
             self.simulator_process = None
@@ -38,3 +38,9 @@ class SimulatorRunner:
     def is_running(self) -> bool:
         """Check if the simulator is running"""
         return self.simulator_process is not None and self.simulator_process.poll() is None
+
+    def get_output(self):
+        """Get the simulator's output"""
+        if self.simulator_process is not None:
+            with open(self.simulator_process.stdout.fileno(), "r") as f:
+                return f.read()

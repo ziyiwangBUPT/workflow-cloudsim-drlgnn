@@ -9,7 +9,8 @@ import java.util.concurrent.TimeUnit;
 /// Represents a shared queue between the Gym environment and the Gym agent.
 /// This is used to communicate between the Java and Python sides.
 public class GymSharedQueue<TObservation, TAction> {
-    private static final int MAX_WAIT_TIME_MS = 1000;
+    private static final int MAX_WAIT_FOR_OBS = 1000; // Seconds
+    private static final int MAX_WAIT_FOR_ACTION = 10; // Seconds
 
     private final BlockingQueue<AgentResult<TObservation>> observationQueue = new ArrayBlockingQueue<>(1);
     private final BlockingQueue<TAction> actionQueue = new ArrayBlockingQueue<>(1);
@@ -18,7 +19,7 @@ public class GymSharedQueue<TObservation, TAction> {
     /// This will block until an observation is available.
     public AgentResult<TObservation> getObservation() {
         try {
-            var result = observationQueue.poll(MAX_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+            var result = observationQueue.poll(MAX_WAIT_FOR_OBS, TimeUnit.SECONDS);
             if (result == null) throw new InterruptedException("Timeout on getting observation");
             return result;
         } catch (InterruptedException e) {
@@ -42,7 +43,7 @@ public class GymSharedQueue<TObservation, TAction> {
     /// If there is no action for some time, this will return
     public TAction getAction() {
         try {
-            var result = actionQueue.poll(MAX_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+            var result = actionQueue.poll(MAX_WAIT_FOR_ACTION, TimeUnit.SECONDS);
             if (result == null) throw new InterruptedException("Timeout on getting action");
             return result;
         } catch (InterruptedException e) {
