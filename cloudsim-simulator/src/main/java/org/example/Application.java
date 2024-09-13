@@ -33,7 +33,7 @@ public class Application implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         System.err.println("Running simulation...");
-         Log.disable();
+        Log.disable();
 
         // Read input file or stdin
         var dataset = datasetFile != null
@@ -65,11 +65,10 @@ public class Application implements Callable<Integer> {
                 .releaser(releaser).scheduler(scheduler).executor(executor)
                 .config(config).build();
         var solution = world.runSimulation();
-        System.out.println(solution.toJson());
+         System.out.println(solution.toJson());
 
         // Stop Py4J connector
         sharedReleaseQueue.setObservation(AgentResult.truncated());
-        releaserThread.interrupt();
         releaserThread.join();
         return 0;
     }

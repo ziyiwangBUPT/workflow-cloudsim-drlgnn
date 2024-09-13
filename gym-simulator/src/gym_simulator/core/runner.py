@@ -37,12 +37,12 @@ class CloudSimSimulatorRunner(SimulatorRunner):
     def run(self):
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator, "-f", self.dataset],
-            stdout=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             universal_newlines=True,
         )
 
-        time.sleep(5)
+        time.sleep(1)
         if not self.is_running():
             raise Exception("Simulator failed to start")
         print(f"Simulator started with PID: {self.simulator_process.pid}")
