@@ -1,5 +1,6 @@
 package org.example;
 
+import lombok.Setter;
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
@@ -12,21 +13,34 @@ import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
 import org.example.simulation.external.Py4JConnector;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-import java.util.Scanner;
+import java.io.File;
+import java.util.concurrent.Callable;
 
-public class Main {
-    public static void main(String[] args) throws InterruptedException {
+@Setter
+@Command(name = "CloudSim Simulator", mixinStandardHelpOptions = true, version = "1.0",
+        description = "Runs a simulation of a workflow scheduling algorithm.")
+public class Application implements Callable<Integer> {
+    @Option(names = {"-f", "--file"}, description = "Dataset file", required = true)
+    private File datasetFile;
+
+    @Option(names = {"-d", "--duration"}, description = "Duration of the simulation")
+    private int simulationDuration = 1000;
+
+    @Override
+    public Integer call() throws Exception {
+        System.err.println("Running simulation...");
         Log.disable();
 
-        // Read input from stdin
-        var scanner = new Scanner(System.in);
-        var dataset = Dataset.fromJson(scanner.nextLine());
+        // Read input file
+        var dataset = Dataset.fromFile(datasetFile);
 
         // Configure simulation
         var config = SimulatedWorldConfig.builder()
-                .simulationDuration(1000)
-                .schedulingInterval(10)
+                .simulationDuration(simulationDuration)
                 .monitoringUpdateInterval(5)
                 .build();
 
@@ -55,5 +69,11 @@ public class Main {
         sharedReleaseQueue.setObservation(AgentResult.truncated());
         releaserThread.interrupt();
         releaserThread.join();
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Application()).execute(args);
+        System.exit(exitCode);
     }
 }
