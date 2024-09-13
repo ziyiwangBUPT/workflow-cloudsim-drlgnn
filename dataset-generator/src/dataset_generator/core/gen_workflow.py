@@ -12,7 +12,7 @@ def generate_workflows(
     min_task_length: int,
     max_task_length: int,
     max_req_cores: int,
-    arrival_rate: int,
+    arrival_rate: float,
 ) -> list[Workflow]:
     """
     Generate a list of workflows.

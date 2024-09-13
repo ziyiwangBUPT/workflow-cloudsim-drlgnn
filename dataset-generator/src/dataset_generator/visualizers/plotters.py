@@ -1,4 +1,4 @@
-import io
+import sys
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -24,7 +24,7 @@ def get_node_id(workflow_id: int, task_id: int) -> str:
 # Graphing functions for Workflow and Execution graphs
 
 
-def plot_workflow_graphs(G: nx.DiGraph, workflows: list[Workflow], **node_attr) -> pgv.AGraph:
+def plot_workflow_graphs(G: nx.DiGraph, workflows: list[Workflow]) -> pgv.AGraph:
     """
     Plot the workflows on the provided DiGraph.
     """
@@ -34,7 +34,7 @@ def plot_workflow_graphs(G: nx.DiGraph, workflows: list[Workflow], **node_attr) 
             node_id = get_node_id(workflow.id, task.id)
             node_label = f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_cores} vCPU"
             node_color = color(workflow.id)
-            G.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial", **node_attr)
+            G.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial")
             for child_id in task.child_ids:
                 G.add_edge(node_id, get_node_id(workflow.id, child_id), color=node_color)
 
@@ -61,13 +61,32 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
             G.add_edge(vm_nodes[vm_id][i - 1], vm_nodes[vm_id][i], color="lightgray")
 
     # Add nodes and edges for tasks
-    A = plot_workflow_graphs(G, workflows, shape="box")
+    task_map = {(task.workflow_id, task.id): task for workflow in workflows for task in workflow.tasks}
+    processing: set[tuple[int, int]] = {(assignment.workflow_id, assignment.task_id) for assignment in result}
+    no_vm_nodes: list[str] = []
+    while processing:
+        workflow_id, task_id = processing.pop()
+        task = task_map[(workflow_id, task_id)]
+        node_id = get_node_id(workflow_id, task_id)
+        node_label = f"W{workflow_id} T{task_id}\n{task.length} MI\n{task.req_cores} vCPU"
+        node_color = color(workflow_id)
+        G.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial", shape="box")
+        for child_id in task.child_ids:
+            child_node_id = get_node_id(workflow_id, child_id)
+            G.add_edge(node_id, child_node_id, color=node_color)
+            if (workflow_id, child_id) not in processing:
+                no_vm_nodes.append(child_node_id)
+                processing.add((workflow_id, child_id))
+
+    A = nx.nx_agraph.to_agraph(G)
 
     # Add subgraphs for each VM
     for vm in vms:
         if vm_nodes[vm.id]:
             label = f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU"
             A.add_subgraph(vm_nodes[vm.id], name=f"cluster_{vm.id}", style="dashed", fontname="Arial", label=label)
+    for node_id in no_vm_nodes:
+        A.add_subgraph(node_id, name="cluster_no_vm", style="dashed", fontname="Arial", label="Unscheduled")
 
     return A
 
@@ -76,14 +95,20 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
 # Graphing functions for Gantt chart
 
 
-def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], result: list[VmAssignment]):
+def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], result: list[VmAssignment], label=True):
     result_map: dict[tuple[int, int], VmAssignment] = {
         (assignment.workflow_id, assignment.task_id): assignment for assignment in result
     }
 
     for workflow in workflows:
         for task in workflow.tasks:
+            if (workflow.id, task.id) not in result_map:
+                continue
+
             assigned_task = result_map[(workflow.id, task.id)]
+            if assigned_task.end_time < 0:
+                continue
+
             ax.broken_barh(
                 [(assigned_task.start_time, assigned_task.end_time - assigned_task.start_time)],
                 (int(assigned_task.vm_id) - 0.3, 0.6),
@@ -91,14 +116,14 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
                 edgecolor="black",
                 linewidth=0.5,
             )
-            # Put text in middle
-            ax.text(
-                x=assigned_task.start_time + (assigned_task.end_time - assigned_task.start_time) / 2,
-                y=int(assigned_task.vm_id),
-                s=f"W{workflow.id}\nT{task.id}",
-                ha="center",
-                va="center",
-            )
+            if label:
+                ax.text(
+                    x=assigned_task.start_time + (assigned_task.end_time - assigned_task.start_time) / 2,
+                    y=int(assigned_task.vm_id),
+                    s=f"W{workflow.id}\nT{task.id}",
+                    ha="center",
+                    va="center",
+                )
 
     ax.set_yticks(range(len(vms)))
     ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU" for vm in vms])

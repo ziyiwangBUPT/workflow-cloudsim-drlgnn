@@ -21,7 +21,7 @@ from dataset_generator.core.gen_dataset import generate_dataset
 @click.option("--task_length_dist", default="normal", help="Task length distribution", type=str)
 @click.option("--min_task_length", default=500, help="Minimum task length", type=int)
 @click.option("--max_task_length", default=100_000, help="Maximum task length", type=int)
-@click.option("--arrival_rate", default=3, help="Arrival rate of workflows", type=int)
+@click.option("--arrival_rate", default=3, help="Arrival rate of workflows (per second)", type=float)
 def main(
     seed: int,
     host_count: int,
@@ -35,7 +35,7 @@ def main(
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
-    arrival_rate: int,
+    arrival_rate: float,
 ):
     random.seed(seed)
     np.random.seed(seed)

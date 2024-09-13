@@ -15,7 +15,7 @@ def generate_dataset(
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
-    arrival_rate: int,
+    arrival_rate: float,
 ) -> Dataset:
     """
     Generate a dataset.

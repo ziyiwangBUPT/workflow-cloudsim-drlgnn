@@ -34,7 +34,7 @@ def main(prefix: str):
 
     # Gantt chart
     _, ax = plt.subplots()
-    plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments)
+    plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=False)
     plt.savefig(f"{prefix}_gantt.png")
 
 
