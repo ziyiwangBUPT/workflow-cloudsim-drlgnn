@@ -1,0 +1,3 @@
+[submodule "cloudsim-simulator/cloudsim"]
+	path = cloudsim-simulator/cloudsim
+	url = https://github.com/Cloudslab/cloudsim
