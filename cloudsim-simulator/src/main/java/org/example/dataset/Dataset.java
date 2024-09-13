@@ -34,7 +34,8 @@ public class Dataset {
     }
 
     public static Dataset fromStdin() {
+        System.err.print("Enter the dataset JSON: ");
         var scanner = new Scanner(System.in);
-        return fromJson(scanner.useDelimiter("\\A").next());
+        return fromJson(scanner.nextLine());
     }
 }
