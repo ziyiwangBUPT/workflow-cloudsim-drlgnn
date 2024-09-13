@@ -5,7 +5,7 @@ from typing import Any
 from py4j.java_gateway import JavaGateway
 
 from gym_simulator.releaser.types import ActionType, ObsType
-from gym_simulator.releaser.renderer import ReleaserRenderer, ReleaserConsoleRenderer
+from gym_simulator.releaser.renderer import ReleaserRenderer, ReleaserPlotRenderer
 
 
 class CloudSimReleaserEnv(gym.Env):
@@ -38,11 +38,11 @@ class CloudSimReleaserEnv(gym.Env):
 
         # Renderer
         self._last_observation = None
-        self._renderer = ReleaserConsoleRenderer()
+        self._renderer = ReleaserPlotRenderer()
 
     def _parse_obs(self, observation: Any) -> ObsType:
         if observation is None:
-            return self._last_observation
+            return self._last_observation or (0, 0, 0, 0, 0, 0)
         return (
             int(observation.bufferedTasks()),
             int(observation.releasedTasks()),

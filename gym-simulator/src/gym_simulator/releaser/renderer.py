@@ -14,7 +14,7 @@ class ReleaserRenderer(abc.ABC):
         raise NotImplementedError
 
 
-class ReleaserConsoleRenderer(ReleaserRenderer):
+class ReleaserPlotRenderer(ReleaserRenderer):
     width: int = 800
     height: int = 600
 
