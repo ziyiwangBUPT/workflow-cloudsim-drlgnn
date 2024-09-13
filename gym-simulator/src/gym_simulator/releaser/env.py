@@ -54,8 +54,7 @@ class CloudSimReleaserEnv(gym.Env):
         super().reset(seed=seed)
 
         # Restart the simulator
-        if self._runner.is_running():
-            self._runner.stop()
+        self._stop_simulator()
         self._runner.run()
 
         # Get the initial observation
@@ -98,12 +97,7 @@ class CloudSimReleaserEnv(gym.Env):
     # --------------------- Close ----------------------------------------------
 
     def close(self):
-        # Stop the simulator
-        if self._runner.is_running():
-            self._runner.stop()
-        self._gateway.close()
-
-        # Close the renderer
+        self._stop_simulator()
         self._human_renderer.close()
 
     # --------------------- Private methods -----------------------------------
@@ -126,3 +120,8 @@ class CloudSimReleaserEnv(gym.Env):
     def _render_frame(self):
         assert self._last_observation is not None
         self._human_renderer.update(self._last_observation)
+
+    def _stop_simulator(self):
+        if self._runner.is_running():
+            self._runner.stop()
+        self._gateway.close()
