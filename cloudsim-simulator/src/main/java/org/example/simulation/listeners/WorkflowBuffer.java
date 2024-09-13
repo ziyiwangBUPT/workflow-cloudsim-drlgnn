@@ -5,6 +5,7 @@ import lombok.NonNull;
 import org.example.api.scheduler.WorkflowReleaser;
 import org.example.api.dtos.WorkflowDto;
 import org.example.dataset.DatasetWorkflow;
+import org.example.sensors.TaskStateSensor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,10 @@ public class WorkflowBuffer extends SimulationTickListener {
 
         // Check if we should release the workflows
         if (releaser.shouldRelease()) {
+            var taskStateSensor = TaskStateSensor.getInstance();
+            var taskCount = workflowCache.stream().mapToInt(w -> w.getTasks().size()).sum();
+            taskStateSensor.releaseTasks(taskCount);
+
             coordinator.submitWorkflowsToSystem(workflowCache);
             workflowCache.clear();
         }
@@ -39,6 +44,9 @@ public class WorkflowBuffer extends SimulationTickListener {
 
     /// Submit a workflow from the user to the buffer.
     public void submitWorkflowFromUser(@NonNull DatasetWorkflow workflow) {
+        var taskStateSensor = TaskStateSensor.getInstance();
+        taskStateSensor.bufferTasks(workflow.getTasks().size());
+
         workflowCache.add(workflow);
         releaser.notifyNewWorkflow(WorkflowDto.from(workflow));
     }

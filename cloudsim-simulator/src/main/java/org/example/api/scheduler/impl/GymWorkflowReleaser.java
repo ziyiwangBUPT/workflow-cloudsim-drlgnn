@@ -9,7 +9,7 @@ import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.ReleaserAction;
 import org.example.api.scheduler.gym.types.ReleaserObservation;
-import org.example.core.registries.CloudletRegistry;
+import org.example.sensors.TaskStateSensor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,6 @@ public class GymWorkflowReleaser implements WorkflowReleaser {
     private final GymEnvironment<ReleaserObservation, ReleaserAction> environment;
 
     private final List<VmDto> vms = new ArrayList<>();
-    private final List<WorkflowDto> workflows = new ArrayList<>();
 
     public GymWorkflowReleaser(GymSharedQueue<ReleaserObservation, ReleaserAction> queue) {
         this.environment = new GymEnvironment<>(queue);
@@ -32,25 +31,29 @@ public class GymWorkflowReleaser implements WorkflowReleaser {
 
     @Override
     public void notifyNewWorkflow(@NonNull WorkflowDto newWorkflow) {
-        workflows.add(newWorkflow);
     }
 
     @Override
     public boolean shouldRelease() {
+        var taskStateSensor = TaskStateSensor.getInstance();
+
         // Observation
-        var cloudletRegistry = CloudletRegistry.getInstance();
-        var completionTimeVariance = cloudletRegistry.getCompletionTimeVariance();
-        var observation = new ReleaserObservation(workflows.size(), vms.size(), completionTimeVariance);
+        var observation = ReleaserObservation.builder()
+                .bufferedTasks(taskStateSensor.getBufferedTasks())
+                .releasedTasks(taskStateSensor.getReleasedTasks())
+                .scheduledTasks(taskStateSensor.getScheduledTasks())
+                .runningTasks(taskStateSensor.getExecutedTasks())
+                .completedTasks(taskStateSensor.getCompletedTasks())
+                .vmCount(vms.size()).build();
 
         // Reward
-        var reward = (completionTimeVariance < 0.1) ? 1 : 0;
+        var tasksInRunning = taskStateSensor.getExecutedTasks() - taskStateSensor.getCompletedTasks();
+        var positiveReward = (vms.size() - tasksInRunning) / (double) vms.size();
+        var negativeReward = (taskStateSensor.getBufferedTasks() - taskStateSensor.getReleasedTasks()) / (double) taskStateSensor.getBufferedTasks();
+        var reward = positiveReward - 2 * negativeReward;
 
         // Action
         var action = environment.step(AgentResult.reward(observation, reward));
-        var shouldRelease = action.shouldRelease();
-
-        // The state changes if releasing
-        if (shouldRelease) workflows.clear();
-        return shouldRelease;
+        return action.shouldRelease();
     }
 }

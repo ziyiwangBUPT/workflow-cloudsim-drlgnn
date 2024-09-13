@@ -13,10 +13,16 @@ import org.example.dataset.DatasetTask;
 import org.example.dataset.DatasetWorkflow;
 import org.example.core.entities.DynamicDatacenterBroker;
 import org.example.core.factories.CloudletFactory;
+import org.example.sensors.TaskStateSensor;
 
 import java.util.*;
 
 /// The coordinator is responsible for coordinating the simulation.
+/// In each tick it does:
+/// 1. Discover new VMs from the broker and notify components
+/// 2. Discover completed cloudlets from the broker and notify components
+/// 3. Schedule tasks
+/// 4. Submit and execute cloudlets using the broker
 public class WorkflowCoordinator extends SimulationTickListener {
     private static final String NAME = "COORDINATOR";
 
@@ -50,11 +56,7 @@ public class WorkflowCoordinator extends SimulationTickListener {
     protected void onTick(double time) {
         discoverNewVmsFromCloudSim();
         discoverCompletedCloudletsFromCloudSim();
-
-        // Schedule tasks to VMs
-        var scheduling = scheduler.schedule();
-        scheduling.ifPresent(executor::notifyScheduling);
-
+        scheduleTasks();
         submitAndExecuteCloudlets();
     }
 
@@ -101,10 +103,23 @@ public class WorkflowCoordinator extends SimulationTickListener {
             }
         }
 
+        var taskStateSensor = TaskStateSensor.getInstance();
+        taskStateSensor.completeTasks(finishedTasks.size());
+
         // Removing later to avoid concurrent modification
         for (var workflowTaskId : finishedTasks) {
             executor.notifyCompletion(workflowTaskId.workflowId(), workflowTaskId.taskId());
             executingTasks.remove(workflowTaskId);
+        }
+    }
+
+    /// Schedule tasks to VMs.
+    private void scheduleTasks() {
+        var scheduling = scheduler.schedule();
+        if (scheduling.isPresent()) {
+            var taskStateSensor = TaskStateSensor.getInstance();
+            taskStateSensor.scheduleTasks(1);
+            executor.notifyScheduling(scheduling.get());
         }
     }
 
@@ -126,6 +141,8 @@ public class WorkflowCoordinator extends SimulationTickListener {
         }
 
         // Submit and schedule the cloudlets
+        var taskStateSensor = TaskStateSensor.getInstance();
+        taskStateSensor.executeTasks(newCloudlets.size());
         broker.submitCloudletList(newCloudlets.values().stream().toList());
         broker.scheduleSubmittedCloudlets();
         executingTasks.putAll(newCloudlets);

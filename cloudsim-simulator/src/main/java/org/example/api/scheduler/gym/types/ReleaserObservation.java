@@ -1,5 +1,15 @@
 package org.example.api.scheduler.gym.types;
 
 
-public record ReleaserObservation(int cachedJobs, int vmCount, double completionTimeVariance) {
+import lombok.Builder;
+
+@Builder
+public record ReleaserObservation(
+        int bufferedTasks,
+        int releasedTasks,
+        int scheduledTasks,
+        int runningTasks,
+        int completedTasks,
+        int vmCount
+) {
 }

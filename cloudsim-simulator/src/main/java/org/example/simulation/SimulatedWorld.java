@@ -9,6 +9,7 @@ import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
+import org.example.sensors.TaskStateSensor;
 import org.example.simulation.listeners.WorkflowBuffer;
 import org.example.simulation.listeners.WorkflowCoordinator;
 import org.example.simulation.listeners.UtilizationUpdater;
@@ -25,6 +26,7 @@ public class SimulatedWorld {
     private static final boolean TRACE_FLAG = false;
 
     private final Dataset dataset;
+    private final WorkflowSubmitter submitter;
     private final DynamicDatacenterBroker broker;
 
     @Builder
@@ -62,7 +64,7 @@ public class SimulatedWorld {
                 .releaser(releaser).scheduler(scheduler).executor(executor).build();
         var buffer = WorkflowBuffer.builder()
                 .coordinator(coordinator).releaser(releaser).build();
-        var _ = WorkflowSubmitter.builder()
+        submitter = WorkflowSubmitter.builder()
                 .buffer(buffer).workflows(dataset.getWorkflows()).build();
         var _ = UtilizationUpdater.builder()
                 .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
@@ -76,6 +78,7 @@ public class SimulatedWorld {
 
         var cloudletRegistry = CloudletRegistry.getInstance();
         var hostRegistry = HostRegistry.getInstance();
+        var taskStateSensor = TaskStateSensor.getInstance();
 
         // Prints the results when the simulation is over
         cloudletRegistry.printSummaryTable();
@@ -86,6 +89,13 @@ public class SimulatedWorld {
         System.err.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
         System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
 
-        return new DatasetSolution(dataset, cloudletRegistry.getVmAssignments());
+        System.err.printf("Buffered Tasks               : %d%n", taskStateSensor.getBufferedTasks());
+        System.err.printf("Released Tasks               : %d%n", taskStateSensor.getReleasedTasks());
+        System.err.printf("Scheduled Tasks              : %d%n", taskStateSensor.getScheduledTasks());
+        System.err.printf("Executed Tasks               : %d%n", taskStateSensor.getExecutedTasks());
+        System.err.printf("Finished Tasks               : %d%n", taskStateSensor.getCompletedTasks());
+
+        var solutionDataset = new Dataset(submitter.getSubmittedWorkflows(), dataset.getVms(), dataset.getHosts());
+        return new DatasetSolution(solutionDataset, cloudletRegistry.getVmAssignments());
     }
 }

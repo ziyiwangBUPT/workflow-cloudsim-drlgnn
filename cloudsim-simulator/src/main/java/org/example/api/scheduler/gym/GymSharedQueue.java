@@ -15,10 +15,7 @@ public class GymSharedQueue<TObservation, TAction> {
     /// This will block until an observation is available.
     public AgentResult<TObservation> getObservation() {
         try {
-            System.err.println("Waiting for observation...");
-            var observation = observationQueue.take();
-            System.err.println("Got observation: " + observation);
-            return observation;
+            return observationQueue.take();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -28,7 +25,6 @@ public class GymSharedQueue<TObservation, TAction> {
     /// Sets the observation in the queue.
     public void setObservation(AgentResult<TObservation> observation) {
         try {
-            System.err.println("Setting observation: " + observation);
             observationQueue.put(observation);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -40,10 +36,7 @@ public class GymSharedQueue<TObservation, TAction> {
     /// This will block until an action is available.
     public TAction getAction() {
         try {
-            System.err.println("Waiting for action...");
-            var action = actionQueue.take();
-            System.err.println("Got action: " + action);
-            return action;
+            return actionQueue.take();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -54,7 +47,6 @@ public class GymSharedQueue<TObservation, TAction> {
     /// This will block until the action is available.
     public void setAction(TAction action) {
         try {
-            System.err.println("Setting action: " + action);
             actionQueue.put(action);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

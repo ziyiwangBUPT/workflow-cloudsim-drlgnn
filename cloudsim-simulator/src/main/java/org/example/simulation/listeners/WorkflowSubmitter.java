@@ -1,6 +1,7 @@
 package org.example.simulation.listeners;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import org.example.dataset.DatasetWorkflow;
 
@@ -13,6 +14,8 @@ public class WorkflowSubmitter extends SimulationTickListener {
 
     private final WorkflowBuffer buffer;
     private final Queue<DatasetWorkflow> workflowBacklog = new LinkedList<>();
+    @Getter
+    private final List<DatasetWorkflow> submittedWorkflows = new ArrayList<>();
 
     @Builder
     public WorkflowSubmitter(@NonNull List<DatasetWorkflow> workflows, @NonNull WorkflowBuffer buffer) {
@@ -39,6 +42,7 @@ public class WorkflowSubmitter extends SimulationTickListener {
             // Workflow arrived, submit it
             var workflow = workflowBacklog.poll();
             buffer.submitWorkflowFromUser(workflow);
+            submittedWorkflows.add(workflow);
         }
     }
 }
