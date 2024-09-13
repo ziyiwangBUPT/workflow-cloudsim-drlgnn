@@ -6,6 +6,7 @@ from py4j.java_gateway import JavaGateway
 
 from gym_simulator.releaser.types import ActionType, ObsType
 from gym_simulator.releaser.renderer import ReleaserRenderer, ReleaserPlotRenderer
+from gym_simulator.core.runner import SimulatorRunner
 
 
 class CloudSimReleaserEnv(gym.Env):
@@ -16,8 +17,9 @@ class CloudSimReleaserEnv(gym.Env):
     _connector: Any
     _last_observation: ObsType | None
     _renderer: ReleaserRenderer
+    _runner: SimulatorRunner
 
-    def __init__(self):
+    def __init__(self, simulator: str, dataset: str):
         super().__init__()
 
         self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
@@ -39,6 +41,7 @@ class CloudSimReleaserEnv(gym.Env):
         # Renderer
         self._last_observation = None
         self._renderer = ReleaserPlotRenderer()
+        self._runner = SimulatorRunner(simulator, dataset)
 
     def _parse_obs(self, observation: Any) -> ObsType:
         if observation is None:
@@ -70,6 +73,10 @@ class CloudSimReleaserEnv(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
+        if self._runner.is_running():
+            self._runner.stop()
+        self._runner.run()
+
         # Reset the environment
         result = self._connector.reset()
 

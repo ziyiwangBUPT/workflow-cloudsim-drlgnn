@@ -9,6 +9,7 @@ dependencies = [
     "py4j>=0.10.9.7",
     "matplotlib>=3.9.2",
     "pygame>=2.6.0",
+    "click>=8.1.7",
 ]
 
 [build-system]
