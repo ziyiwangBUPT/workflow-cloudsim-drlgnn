@@ -9,6 +9,7 @@ import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.ReleaserAction;
 import org.example.api.scheduler.gym.types.ReleaserObservation;
+import org.example.core.registries.CloudletRegistry;
 import org.example.sensors.TaskStateSensor;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class GymWorkflowReleaser implements WorkflowReleaser {
     @Override
     public boolean shouldRelease() {
         var taskStateSensor = TaskStateSensor.getInstance();
+        var cloudletRegistry = CloudletRegistry.getInstance();
 
         // Observation
         var observation = ReleaserObservation.builder()
@@ -44,6 +46,7 @@ public class GymWorkflowReleaser implements WorkflowReleaser {
                 .scheduledTasks(taskStateSensor.getScheduledTasks())
                 .runningTasks(taskStateSensor.getExecutedTasks())
                 .completedTasks(taskStateSensor.getCompletedTasks())
+                .completionTimeVariance(cloudletRegistry.getCompletionTimeVarianceInCurrentTimestep())
                 .vmCount(vms.size()).build();
 
         // Reward

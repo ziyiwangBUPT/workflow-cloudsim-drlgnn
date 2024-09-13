@@ -10,6 +10,7 @@ public record ReleaserObservation(
         int scheduledTasks,
         int runningTasks,
         int completedTasks,
+        double completionTimeVariance,
         int vmCount
 ) {
 }

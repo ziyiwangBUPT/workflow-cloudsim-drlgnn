@@ -1,5 +1,6 @@
 package org.example.core.registries;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import lombok.Getter;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
@@ -7,9 +8,11 @@ import org.example.dataset.DatasetVmAssignment;
 import org.example.dataset.DatasetTask;
 import org.example.utils.SummaryTable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /// A singleton class that holds a list of Cloudlets.
@@ -19,6 +22,7 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
 
     // Cloudlet ID -> (Workflow ID + Task ID)
     private final Map<Integer, WorkflowTaskId> cloudletMap = new HashMap<>();
+    private final AtomicDouble timestepStartAt = new AtomicDouble(0);
 
     private CloudletRegistry() {
     }
@@ -57,6 +61,19 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
     public double getLastCloudletFinishedAt() {
         return itemStream().filter(c -> Cloudlet.CloudletStatus.SUCCESS.equals(c.getStatus()))
                 .mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
+    }
+
+    /// Gets the variance of completion times of all Cloudlets in the current timestep.
+    public double getCompletionTimeVarianceInCurrentTimestep() {
+        // Collect completion times of all cloudlets in the current timestep
+        var completionTimes = itemStream().filter(c -> c.getExecFinishTime() > -1)
+                .filter(c -> c.getSubmissionTime() >= timestepStartAt.get())
+                .map(cloudlet -> cloudlet.getExecFinishTime() - cloudlet.getExecStartTime()).toList();
+
+        // Calculate mean = sum(x) / n
+        var mean = completionTimes.stream().mapToDouble(v -> v).average().orElse(0);
+        // Calculate variance = sum((x - mean)^2) / n
+        return completionTimes.stream().mapToDouble(v -> v).map(time -> Math.pow(time - mean, 2)).average().orElse(0);
     }
 
     @Override

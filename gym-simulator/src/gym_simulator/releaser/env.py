@@ -34,6 +34,7 @@ class CloudSimReleaserEnv(gym.Env):
                 spaces.Discrete(1000),  # Scheduled tasks
                 spaces.Discrete(1000),  # Running tasks
                 spaces.Discrete(1000),  # Completed tasks
+                spaces.Box(low=0, high=1000, shape=(1,), dtype=float),  # Completion time variance
                 spaces.Discrete(1000),  # VM count
             ]
         )
@@ -111,6 +112,7 @@ class CloudSimReleaserEnv(gym.Env):
             int(observation.scheduledTasks()),
             int(observation.runningTasks()),
             int(observation.completedTasks()),
+            float(observation.completionTimeVariance()),
             int(observation.vmCount()),
         )
 

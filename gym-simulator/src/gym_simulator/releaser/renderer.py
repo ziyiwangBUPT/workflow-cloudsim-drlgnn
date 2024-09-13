@@ -54,7 +54,7 @@ class ReleaserPlotRenderer(ReleaserRenderer):
 
     def _draw(self, obs: ObsType) -> io.BytesIO:
         """Draw the observation on the screen"""
-        buffered, released, scheduled, executed, completed, vm_count = obs
+        buffered, released, scheduled, executed, completed, _, __ = obs
         inBuffering = buffered - released
         inReleasing = released - scheduled
         inScheduling = scheduled - executed

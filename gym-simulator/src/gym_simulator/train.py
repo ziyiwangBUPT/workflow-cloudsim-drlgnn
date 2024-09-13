@@ -9,7 +9,7 @@ from gym_simulator.core.runner import CloudSimSimulatorRunner
 @click.option("--dataset", help="Path to the dataset JSON file", required=True, type=click.Path(exists=True))
 def main(simulator: str, dataset: str):
     runner = CloudSimSimulatorRunner(simulator, dataset)
-    env = CloudSimReleaserEnv(runner=runner, render_mode=None)
+    env = CloudSimReleaserEnv(runner=runner, render_mode="human")
 
     try:
         obs, _ = env.reset()
@@ -17,8 +17,10 @@ def main(simulator: str, dataset: str):
             action = 1 if obs[0] - obs[1] > 100 else 0
             print("Taking action:", action)
             obs, reward, terminated, truncated, info = env.step(action)
-            print("Reward:", reward)
+            print("Received observation:", obs)
+            print("Received reward:", reward)
             if terminated or truncated:
+                print("Episode terminated")
                 break
     except Exception as e:
         print("An error occurred:", e)
