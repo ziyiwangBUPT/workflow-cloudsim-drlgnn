@@ -1,2 +1,5 @@
-ObsType = tuple[int, int, int, int, int, float, int]
+from typing import Any
+import numpy as np
+
+ObsType = tuple[np.int64, np.int64, np.int64, np.int64, np.int64, np.ndarray[Any, Any], np.int64]
 ActionType = int

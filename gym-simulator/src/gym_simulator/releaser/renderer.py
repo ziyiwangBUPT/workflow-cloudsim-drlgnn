@@ -10,7 +10,7 @@ from gym_simulator.releaser.types import ObsType
 
 class ReleaserRenderer(abc.ABC):
     @abc.abstractmethod
-    def update(self, obs: tuple[int, int, int, int, int, int]):
+    def update(self, obs: ObsType):
         raise NotImplementedError
 
     @abc.abstractmethod

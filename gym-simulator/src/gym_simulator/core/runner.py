@@ -48,7 +48,7 @@ class CloudSimSimulatorRunner(SimulatorRunner):
         print(f"Simulator started with PID: {self.simulator_process.pid}")
 
     def stop(self):
-        if self.is_running():
+        if self.is_running() and self.simulator_process is not None:
             self.simulator_process.terminate()
             self.simulator_process.wait()
             self.simulator_process = None
@@ -59,7 +59,6 @@ class CloudSimSimulatorRunner(SimulatorRunner):
         return self.simulator_process is not None and self.simulator_process.poll() is None
 
     def get_output(self):
-        if self.simulator_process is None:
-            return ""
-        with open(self.simulator_process.stdout.fileno(), "r") as f:
-            return f.read()
+        if self.simulator_process is not None and self.simulator_process.stdout is not None:
+            with open(self.simulator_process.stdout.fileno(), "r") as f:
+                return f.read()

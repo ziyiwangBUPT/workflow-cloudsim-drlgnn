@@ -5,11 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "gymnasium>=0.29.1",
+    "gymnasium>=0.28.1",
     "py4j>=0.10.9.7",
     "matplotlib>=3.9.2",
     "pygame>=2.6.0",
     "click>=8.1.7",
+    "ray[rllib]>=2.35.0",
+    "torch>=2.4.1",
 ]
 
 [build-system]

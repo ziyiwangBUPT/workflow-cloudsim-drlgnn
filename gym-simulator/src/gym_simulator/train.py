@@ -1,5 +1,7 @@
 import click
 
+from ray.rllib.algorithms.ppo import PPOConfig
+
 from gym_simulator.releaser.env import CloudSimReleaserEnv
 from gym_simulator.core.runner import CloudSimSimulatorRunner
 
@@ -8,26 +10,20 @@ from gym_simulator.core.runner import CloudSimSimulatorRunner
 @click.option("--simulator", help="Path to the simulator JAR file", required=True, type=click.Path(exists=True))
 @click.option("--dataset", help="Path to the dataset JSON file", required=True, type=click.Path(exists=True))
 def main(simulator: str, dataset: str):
-    runner = CloudSimSimulatorRunner(simulator, dataset)
-    env = CloudSimReleaserEnv(runner=runner, render_mode="human")
+    config = (
+        PPOConfig()
+        .environment(
+            CloudSimReleaserEnv,
+            env_config={"runner": CloudSimSimulatorRunner(simulator, dataset), "render_mode": "human"},
+        )
+        .framework("torch")
+        .env_runners(num_env_runners=1)
+    )
+    algo = config.build()
 
-    try:
-        obs, _ = env.reset()
-        for _ in range(1000):
-            action = 1 if obs[0] - obs[1] > 100 else 0
-            print("Taking action:", action)
-            obs, reward, terminated, truncated, info = env.step(action)
-            print("Received observation:", obs)
-            print("Received reward:", reward)
-            if terminated or truncated:
-                print("Episode terminated")
-                break
-    except Exception as e:
-        print("An error occurred:", e)
-    finally:
-        env.close()
-
-    print("Exiting")
+    for i in range(5):
+        results = algo.train()
+        print(f"Iter: {i}; avg. return={results['env_runners']['episode_return_mean']}")
 
 
 if __name__ == "__main__":

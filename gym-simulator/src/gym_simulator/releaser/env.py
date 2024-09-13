@@ -1,6 +1,7 @@
 import gymnasium as gym
 from gymnasium import spaces
 from typing import Any
+import numpy as np
 
 from py4j.java_gateway import JavaGateway
 
@@ -24,7 +25,7 @@ class CloudSimReleaserEnv(gym.Env):
 
     # --------------------- Initialization ------------------------------------
 
-    def __init__(self, runner: SimulatorRunner | None = None, render_mode=None):
+    def __init__(self, env_config: dict[str, Any]):
         super().__init__()
         self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
         self.observation_space = spaces.Tuple(
@@ -34,17 +35,18 @@ class CloudSimReleaserEnv(gym.Env):
                 spaces.Discrete(1000),  # Scheduled tasks
                 spaces.Discrete(1000),  # Running tasks
                 spaces.Discrete(1000),  # Completed tasks
-                spaces.Box(low=0, high=1000, shape=(1,), dtype=float),  # Completion time variance
+                spaces.Box(low=0, high=1000, shape=(1,), dtype=np.float64),  # Completion time variance
                 spaces.Discrete(1000),  # VM count
             ]
         )
 
         # Initialize the Java Gateway
-        self._runner = runner or NoOpSimulatorRunner()
+        self._runner = env_config.get("runner", NoOpSimulatorRunner())
         self._gateway = JavaGateway()
         self._connector = self._gateway.entry_point
 
         # Set the render mode
+        render_mode = env_config.get("render_mode", None)
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         self._human_renderer = ReleaserPlotRenderer(self.metadata["render_fps"])
@@ -105,15 +107,15 @@ class CloudSimReleaserEnv(gym.Env):
 
     def _parse_obs(self, observation: Any) -> ObsType:
         if observation is None:
-            return self._last_observation or (0, 0, 0, 0, 0, 0)
+            return self._last_observation or self.observation_space.sample()
         return (
-            int(observation.bufferedTasks()),
-            int(observation.releasedTasks()),
-            int(observation.scheduledTasks()),
-            int(observation.runningTasks()),
-            int(observation.completedTasks()),
-            float(observation.completionTimeVariance()),
-            int(observation.vmCount()),
+            np.int64(observation.bufferedTasks()),
+            np.int64(observation.releasedTasks()),
+            np.int64(observation.scheduledTasks()),
+            np.int64(observation.runningTasks()),
+            np.int64(observation.completedTasks()),
+            np.array([observation.completionTimeVariance()], dtype=np.float64),
+            np.int64(observation.vmCount()),
         )
 
     def _create_action(self, action: ActionType) -> Any:
