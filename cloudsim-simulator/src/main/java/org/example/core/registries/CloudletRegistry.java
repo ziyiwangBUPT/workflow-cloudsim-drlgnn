@@ -8,11 +8,9 @@ import org.example.dataset.DatasetVmAssignment;
 import org.example.dataset.DatasetTask;
 import org.example.utils.SummaryTable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /// A singleton class that holds a list of Cloudlets.

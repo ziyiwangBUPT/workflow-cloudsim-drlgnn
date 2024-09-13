@@ -14,7 +14,7 @@ def main(simulator: str, dataset: str):
     try:
         obs, _ = env.reset()
         for _ in range(1000):
-            action = 1 if obs[0] - obs[1] > 100 else 0
+            action = 1 if obs[0] > 100 else 0
             print("Taking action:", action)
             obs, reward, terminated, truncated, info = env.step(action)
             print("Received observation:", obs)
