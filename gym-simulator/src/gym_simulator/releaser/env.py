@@ -6,7 +6,7 @@ from py4j.java_gateway import JavaGateway
 
 from gym_simulator.releaser.types import ActionType, ObsType
 from gym_simulator.releaser.renderer import ReleaserRenderer, ReleaserPlotRenderer
-from gym_simulator.core.runner import SimulatorRunner
+from gym_simulator.core.runner import NoOpSimulatorRunner, SimulatorRunner
 
 
 class CloudSimReleaserEnv(gym.Env):
@@ -24,7 +24,7 @@ class CloudSimReleaserEnv(gym.Env):
 
     # --------------------- Initialization ------------------------------------
 
-    def __init__(self, runner: SimulatorRunner, render_mode=None):
+    def __init__(self, runner: SimulatorRunner | None = None, render_mode=None):
         super().__init__()
         self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
         self.observation_space = spaces.Tuple(
@@ -39,7 +39,7 @@ class CloudSimReleaserEnv(gym.Env):
         )
 
         # Initialize the Java Gateway
-        self._runner = runner
+        self._runner = runner or NoOpSimulatorRunner()
         self._gateway = JavaGateway()
         self._connector = self._gateway.entry_point
 

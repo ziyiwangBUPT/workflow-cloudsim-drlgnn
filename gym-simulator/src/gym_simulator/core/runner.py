@@ -1,9 +1,33 @@
+import abc
 import sys
 import time
 import subprocess
 
 
-class SimulatorRunner:
+class SimulatorRunner(abc.ABC):
+    def run(self):
+        pass
+
+    def stop(self):
+        pass
+
+    @abc.abstractmethod
+    def is_running(self) -> bool:
+        raise NotImplementedError
+
+
+# --------------------- NoOpSimulatorRunner --------------------------------
+
+
+class NoOpSimulatorRunner(SimulatorRunner):
+    def is_running(self) -> bool:
+        return True
+
+
+# --------------------- CloudSimSimulatorRunner -----------------------------
+
+
+class CloudSimSimulatorRunner(SimulatorRunner):
     simulator_process: subprocess.Popen | None = None
 
     def __init__(self, simulator: str, dataset: str):
@@ -11,7 +35,6 @@ class SimulatorRunner:
         self.dataset = dataset
 
     def run(self):
-        """Run the simulator parallely"""
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator, "-f", self.dataset],
             stdout=subprocess.PIPE,
@@ -21,13 +44,10 @@ class SimulatorRunner:
 
         time.sleep(5)
         if not self.is_running():
-            print("Simulator failed to start")
-            sys.exit(1)
-
+            raise Exception("Simulator failed to start")
         print(f"Simulator started with PID: {self.simulator_process.pid}")
 
     def stop(self):
-        """Stop the simulator"""
         if self.is_running():
             self.simulator_process.terminate()
             self.simulator_process.wait()
@@ -36,11 +56,10 @@ class SimulatorRunner:
             print("Simulator stopped")
 
     def is_running(self) -> bool:
-        """Check if the simulator is running"""
         return self.simulator_process is not None and self.simulator_process.poll() is None
 
     def get_output(self):
-        """Get the simulator's output"""
-        if self.simulator_process is not None:
-            with open(self.simulator_process.stdout.fileno(), "r") as f:
-                return f.read()
+        if self.simulator_process is None:
+            return ""
+        with open(self.simulator_process.stdout.fileno(), "r") as f:
+            return f.read()

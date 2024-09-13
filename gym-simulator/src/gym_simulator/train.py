@@ -1,15 +1,15 @@
 import click
 
 from gym_simulator.releaser.env import CloudSimReleaserEnv
-from gym_simulator.core.runner import SimulatorRunner
+from gym_simulator.core.runner import CloudSimSimulatorRunner
 
 
 @click.command()
 @click.option("--simulator", help="Path to the simulator JAR file", required=True, type=click.Path(exists=True))
 @click.option("--dataset", help="Path to the dataset JSON file", required=True, type=click.Path(exists=True))
 def main(simulator: str, dataset: str):
-    runner = SimulatorRunner(simulator, dataset)
-    env = CloudSimReleaserEnv(runner, render_mode=None)
+    runner = CloudSimSimulatorRunner(simulator, dataset)
+    env = CloudSimReleaserEnv(runner=runner, render_mode=None)
 
     try:
         obs, _ = env.reset()
