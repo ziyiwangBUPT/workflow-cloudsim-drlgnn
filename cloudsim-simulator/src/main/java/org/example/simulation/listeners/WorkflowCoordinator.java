@@ -116,10 +116,11 @@ public class WorkflowCoordinator extends SimulationTickListener {
     /// Schedule tasks to VMs.
     private void scheduleTasks() {
         var scheduling = scheduler.schedule();
-        if (scheduling.isPresent()) {
+        while (scheduling.isPresent()) {
             var taskStateSensor = TaskStateSensor.getInstance();
             taskStateSensor.scheduleTasks(1);
             executor.notifyScheduling(scheduling.get());
+            scheduling = scheduler.schedule();
         }
     }
 
