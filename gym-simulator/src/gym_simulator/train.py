@@ -3,8 +3,7 @@ import click
 from pprint import pprint
 from ray.rllib.algorithms.ppo import PPOConfig
 
-from gym_simulator.releaser.env import CloudSimReleaserEnv
-from gym_simulator.core.runner import CloudSimSimulatorRunner
+from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
 @click.command()
@@ -16,8 +15,12 @@ def main(simulator: str, dataset: str):
         .framework("torch")
         .env_runners(num_env_runners=1)
         .environment(
-            CloudSimReleaserEnv,
-            env_config={"runner": CloudSimSimulatorRunner(simulator, dataset), "render_mode": None},
+            CloudSimReleaserEnvironment,
+            env_config={
+                "simulator_mode": "embedded",
+                "simulator_kwargs": {"simulator_jar_path": simulator, "dataset_path": dataset},
+                "render_mode": None,
+            },
         )
     )
     config.sample_timeout_s = 300
