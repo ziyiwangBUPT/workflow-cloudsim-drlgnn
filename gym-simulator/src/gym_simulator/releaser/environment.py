@@ -30,6 +30,7 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         simulator_mode = env_config["simulator_mode"]
         simulator_kwargs = env_config.get("simulator_kwargs", {})
         if simulator_mode == "embedded":
+            simulator_kwargs["worker_index"] = getattr(env_config, "worker_index", 0)
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)

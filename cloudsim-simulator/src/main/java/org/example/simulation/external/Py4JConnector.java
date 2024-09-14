@@ -16,7 +16,10 @@ public class Py4JConnector<TObservation, TAction> implements Runnable {
     private final GymAgent<TObservation, TAction> agent;
     private final Semaphore shutdownSemaphore = new Semaphore(0);
 
-    public Py4JConnector(GymSharedQueue<TObservation, TAction> queue) {
+    private final int port;
+
+    public Py4JConnector(int port, GymSharedQueue<TObservation, TAction> queue) {
+        this.port = port;
         this.agent = new GymAgent<>(queue);
     }
 
@@ -37,7 +40,7 @@ public class Py4JConnector<TObservation, TAction> implements Runnable {
 
     @Override
     public void run() {
-        var server = new GatewayServer(this);
+        var server = new GatewayServer(this, port);
         server.start();
 
         try {

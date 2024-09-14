@@ -52,9 +52,13 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
         truncated = bool(result.isTruncated())
         info: dict[str, Any] = {}
 
+        if terminated or truncated:
+            self.simulator.stop()
+
         # Update the renderer
-        if self.renderer is not None:
-            self.renderer.update(obs)
+        if not terminated and not truncated:
+            if self.renderer is not None:
+                self.renderer.update(obs)
 
         return obs, reward, terminated, truncated, info
 

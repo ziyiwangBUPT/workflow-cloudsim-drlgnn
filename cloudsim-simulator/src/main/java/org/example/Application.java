@@ -22,13 +22,16 @@ import java.util.concurrent.Callable;
 
 @Setter
 @Command(name = "CloudSim Simulator", mixinStandardHelpOptions = true, version = "1.0",
-        description = "Runs a simulation of a workflow scheduling algorithm.")
+        description = "Runs a simulation of a workflow scheduling algorithm.", showDefaultValues = true)
 public class Application implements Callable<Integer> {
     @Option(names = {"-f", "--file"}, description = "Dataset file")
     private File datasetFile;
 
-    @Option(names = {"-d", "--duration"}, description = "Duration of the simulation")
-    private int simulationDuration = 1000;
+    @Option(names = {"-d", "--duration"}, description = "Duration of the simulation", defaultValue = "1000")
+    private int simulationDuration;
+
+    @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
+    private int py4JPort;
 
     @Override
     public Integer call() throws Exception {
@@ -56,7 +59,7 @@ public class Application implements Callable<Integer> {
         var executor = new LocalWorkflowExecutor();
 
         // Thread for Py4J connector
-        var releaserConnector = new Py4JConnector<>(sharedReleaseQueue);
+        var releaserConnector = new Py4JConnector<>(py4JPort, sharedReleaseQueue);
         var releaserThread = new Thread(releaserConnector);
         releaserThread.start();
 

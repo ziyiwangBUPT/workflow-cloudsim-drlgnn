@@ -1,9 +1,13 @@
 import time
+import socket
 import subprocess
 
 from typing import Any, Callable, override
 from gym_simulator.core.simulators.base import BaseSimulator
-from py4j.java_gateway import JavaGateway
+from py4j.java_gateway import JavaGateway, DEFAULT_PORT, DEFAULT_ADDRESS, GatewayParameters
+
+
+JVM_PORTS = [25333, 26333]
 
 
 class EmbeddedSimulator(BaseSimulator):
@@ -18,29 +22,34 @@ class EmbeddedSimulator(BaseSimulator):
     simulator_process: subprocess.Popen | None
     java_gateway: JavaGateway
 
-    def __init__(self, simulator_jar_path: str, dataset_path: str):
+    def __init__(self, worker_index: int, simulator_jar_path: str, dataset_path: str):
         self.simulator_jar_path = simulator_jar_path
         self.dataset_path = dataset_path
         self.simulator_process = None
-        self.java_gateway = JavaGateway()
+
+        assert worker_index < len(JVM_PORTS)
+        gateway_params = GatewayParameters(port=JVM_PORTS[worker_index])
+        self.java_gateway = JavaGateway(gateway_parameters=gateway_params)
         self.env_connector = self.java_gateway.entry_point
 
     # --------------------- Simulator Start ---------------------------------------------------------------------------
 
     @override
     def start(self):
-        print("Starting the simulator...")
         self._verify_stopped()
+        self._verify_port_free()
 
         # Start the simulator process
+        port = self.java_gateway.gateway_parameters.port
         self.simulator_process = subprocess.Popen(
-            ["java", "-jar", self.simulator_jar_path, "-f", self.dataset_path],
+            ["java", "-jar", self.simulator_jar_path, "-f", self.dataset_path, "-p", str(port)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             universal_newlines=True,
         )
 
         # Wait for the simulator to start
+        time.sleep(0.1)
         while not self.is_running():
             time.sleep(0.1)
         print(f"Simulator started with PID: {self.simulator_process.pid}")
@@ -60,6 +69,7 @@ class EmbeddedSimulator(BaseSimulator):
         self.simulator_process = None
 
         # Wait for the simulator to stop
+        time.sleep(0.1)
         while self.is_running():
             time.sleep(0.1)
         print("Simulator stopped")
@@ -106,3 +116,11 @@ class EmbeddedSimulator(BaseSimulator):
     def _verify_stopped(self):
         if self.is_running():
             raise Exception("Simulator is still running")
+
+    def _verify_port_free(self):
+        address = self.java_gateway.gateway_parameters.address
+        port = self.java_gateway.gateway_parameters.port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            res = s.connect_ex((address, port)) != 0
+        if not res:
+            raise Exception("Py4J port is already in use")

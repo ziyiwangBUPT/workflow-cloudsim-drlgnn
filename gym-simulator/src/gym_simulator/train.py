@@ -9,7 +9,8 @@ from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 @click.command()
 @click.option("--simulator", help="Path to the simulator JAR file", required=True, type=click.Path(exists=True))
 @click.option("--dataset", help="Path to the dataset JSON file", required=True, type=click.Path(exists=True))
-def main(simulator: str, dataset: str):
+@click.option("--render-mode", help="Render mode", type=click.Choice(["human"]))
+def main(simulator: str, dataset: str, render_mode: str | None):
     config = (
         PPOConfig()
         .framework("torch")
@@ -19,17 +20,20 @@ def main(simulator: str, dataset: str):
             env_config={
                 "simulator_mode": "embedded",
                 "simulator_kwargs": {"simulator_jar_path": simulator, "dataset_path": dataset},
-                "render_mode": None,
+                "render_mode": render_mode,
             },
         )
     )
     config.sample_timeout_s = 300
+    config.evaluation_interval = 5  # type: ignore
     algo = config.build()
 
     for i in range(5):
-        results = algo.train()
-        results.pop("config")
-        pprint(results)
+        result = algo.train()
+        result.pop("config")
+        pprint(result)
+        evaluation = algo.evaluate()
+        pprint(evaluation)
 
 
 if __name__ == "__main__":
