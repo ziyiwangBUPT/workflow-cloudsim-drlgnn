@@ -11,6 +11,8 @@ import java.util.concurrent.Semaphore;
 /// This is used to communicate between the Java and Python sides.
 /// This should be run as a separate thread.
 public class Py4JConnector<TObservation, TAction> implements Runnable {
+    private static final int SHUTDOWN_COUNTDOWN = 1000;
+
     private final GymAgent<TObservation, TAction> agent;
     private final Semaphore shutdownSemaphore = new Semaphore(0);
 
@@ -42,7 +44,7 @@ public class Py4JConnector<TObservation, TAction> implements Runnable {
             // Wait for the shutdown signal
             // After the shutdown signal, wait for a while to allow the server to stop
             shutdownSemaphore.acquire();
-            Thread.sleep(1000);
+            Thread.sleep(SHUTDOWN_COUNTDOWN);
             server.shutdown();
         } catch (InterruptedException ignored) {
         }

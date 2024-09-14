@@ -52,6 +52,7 @@ class CloudSimSimulatorRunner(SimulatorRunner):
             self.simulator_process.terminate()
             self.simulator_process.wait()
             self.simulator_process = None
+            time.sleep(1)
 
             print("Simulator stopped")
 

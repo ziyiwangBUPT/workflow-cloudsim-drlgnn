@@ -1,3 +1,5 @@
+import time
+
 import gymnasium as gym
 from gymnasium import spaces
 from typing import Any
@@ -7,7 +9,7 @@ from py4j.java_gateway import JavaGateway
 
 from gym_simulator.releaser.types import ActionType, ObsType
 from gym_simulator.releaser.renderer import ReleaserRenderer, ReleaserPlotRenderer
-from gym_simulator.core.runner import NoOpSimulatorRunner, SimulatorRunner
+from gym_simulator.core.runner import NoOpSimulatorRunner, SimulatorRunner, CloudSimSimulatorRunner
 
 
 class CloudSimReleaserEnv(gym.Env):
@@ -27,6 +29,7 @@ class CloudSimReleaserEnv(gym.Env):
 
     def __init__(self, env_config: dict[str, Any]):
         super().__init__()
+        print("INIT")
         self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
         self.observation_space = spaces.Tuple(
             [
@@ -54,6 +57,7 @@ class CloudSimReleaserEnv(gym.Env):
     # --------------------- Reset ---------------------------------------------
 
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
+        print("Resetting environment")
         super().reset(seed=seed)
 
         # Restart the simulator
@@ -75,14 +79,17 @@ class CloudSimReleaserEnv(gym.Env):
     # --------------------- Step ----------------------------------------------
 
     def step(self, action: ActionType) -> tuple[ObsType, float, bool, bool, dict[str, Any]]:
+        print(f"Stepping environment with action: {action}")
         # Step the environment
         action_obj = self._create_action(action)
         result = self._connector.step(action_obj)
         observation = self._parse_obs(result.getObservation())
         reward = float(result.getReward())
+        # reward = -abs(observation[0] - observation[1] - 23)
         terminated = bool(result.isTerminated())
         truncated = bool(result.isTruncated())
         info: dict[str, Any] = {}
+        print(f"Reward: {reward}")
 
         # Render the frame
         self._last_observation = observation
@@ -129,3 +136,6 @@ class CloudSimReleaserEnv(gym.Env):
         if self._runner.is_running():
             self._runner.stop()
         self._gateway.close()
+
+    def __del__(self):
+        self.close()
