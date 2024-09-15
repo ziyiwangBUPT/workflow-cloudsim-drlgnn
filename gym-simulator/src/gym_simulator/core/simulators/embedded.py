@@ -120,4 +120,4 @@ class EmbeddedSimulator(BaseSimulator):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             res = s.connect_ex((address, port))
         if res == 0:
-            raise Exception("Py4J port is already in use")
+            raise Exception(f"Port {port} is already in use")

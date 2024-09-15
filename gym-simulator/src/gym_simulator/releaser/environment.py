@@ -1,3 +1,5 @@
+import socket
+
 from gymnasium import spaces
 from typing import Any, override
 import numpy as np
@@ -7,6 +9,18 @@ from gym_simulator.releaser.renderer import ReleaserRenderer
 from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
+
+
+# Taken from Selenium's utils.py
+# https://github.com/SeleniumHQ/selenium/blob/35dd34afbdd96502066d0f7b6a2460a11e5fb73a/py/selenium/webdriver/common/utils.py#L31
+def free_port() -> int:
+    """Determines a free port using sockets."""
+    free_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    free_socket.bind(("127.0.0.1", 0))
+    free_socket.listen(5)
+    port: int = free_socket.getsockname()[1]
+    free_socket.close()
+    return port
 
 
 class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
@@ -27,8 +41,7 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         simulator_mode = env_config["simulator_mode"]
         simulator_kwargs = env_config.get("simulator_kwargs", {})
         if simulator_mode == "embedded":
-            worker_index = getattr(env_config, "worker_index", 0)
-            simulator_kwargs["jvm_port"] = 26400 + worker_index
+            simulator_kwargs["jvm_port"] = free_port()
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)
