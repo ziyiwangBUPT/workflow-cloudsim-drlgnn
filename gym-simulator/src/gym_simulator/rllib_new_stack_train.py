@@ -13,8 +13,6 @@ from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 def main(simulator: str, dataset: str, render_mode: str | None):
     config = (
         PPOConfig()
-        .framework("torch")
-        .env_runners(num_env_runners=1)
         .environment(
             CloudSimReleaserEnvironment,
             env_config={
@@ -23,17 +21,19 @@ def main(simulator: str, dataset: str, render_mode: str | None):
                 "render_mode": render_mode,
             },
         )
+        .api_stack(enable_rl_module_and_learner=True, enable_env_runner_and_connector_v2=True)
+        .resources(num_cpus_for_main_process=1)
+        .learners(num_learners=0, num_gpus_per_learner=0)
+        .env_runners(num_env_runners=1)
+        .training(model={"uses_new_env_runners": True})
     )
-    config.sample_timeout_s = 300
-    config.evaluation_interval = 5  # type: ignore
     algo = config.build()
 
     for i in range(5):
-        result = algo.train()
-        result.pop("config")
-        pprint(result)
-        evaluation = algo.evaluate()
-        pprint(evaluation)
+        results = algo.train()
+        results.pop("config")
+        pprint(results)
+        algo.evaluate()
 
 
 if __name__ == "__main__":

@@ -7,9 +7,6 @@ from gym_simulator.core.simulators.base import BaseSimulator
 from py4j.java_gateway import JavaGateway, DEFAULT_PORT, DEFAULT_ADDRESS, GatewayParameters
 
 
-JVM_PORTS = [25333, 26333]
-
-
 class EmbeddedSimulator(BaseSimulator):
     """
     A simulator that runs CloudSim using a Java process embedded in the Python process.
@@ -22,13 +19,12 @@ class EmbeddedSimulator(BaseSimulator):
     simulator_process: subprocess.Popen | None
     java_gateway: JavaGateway
 
-    def __init__(self, worker_index: int, simulator_jar_path: str, dataset_path: str):
+    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_path: str):
         self.simulator_jar_path = simulator_jar_path
         self.dataset_path = dataset_path
         self.simulator_process = None
 
-        assert worker_index < len(JVM_PORTS)
-        gateway_params = GatewayParameters(port=JVM_PORTS[worker_index])
+        gateway_params = GatewayParameters(port=jvm_port)
         self.java_gateway = JavaGateway(gateway_parameters=gateway_params)
         self.env_connector = self.java_gateway.entry_point
 
@@ -41,6 +37,7 @@ class EmbeddedSimulator(BaseSimulator):
 
         # Start the simulator process
         port = self.java_gateway.gateway_parameters.port
+        print(f"Starting the simulator on port {port}...")
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator_jar_path, "-f", self.dataset_path, "-p", str(port)],
             stdout=subprocess.DEVNULL,

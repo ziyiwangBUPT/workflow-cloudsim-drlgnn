@@ -8,11 +8,14 @@ from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
+JVM_PORTS = [26400, 26401]
+
 
 class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
 
     def __init__(self, env_config: dict[str, Any]):
+        print(env_config)
         # 0 - Do nothing, 1 - Release
         self.action_space = spaces.Discrete(2)
         # Buffered tasks, released tasks, scheduled tasks, running tasks, completed tasks, completion time variance, VM count
@@ -26,7 +29,9 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         simulator_mode = env_config["simulator_mode"]
         simulator_kwargs = env_config.get("simulator_kwargs", {})
         if simulator_mode == "embedded":
-            simulator_kwargs["worker_index"] = getattr(env_config, "worker_index", 0)
+            worker_index = getattr(env_config, "worker_index", 0)
+            assert 0 <= worker_index < len(JVM_PORTS)
+            simulator_kwargs["jvm_port"] = JVM_PORTS[worker_index]
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)
@@ -43,7 +48,9 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     @override
     def parse_obs(self, obs: Any | None) -> ObsType:
         if obs is None:
-            return self.observation_space.sample()
+            if self.last_obs is not None:
+                return self.last_obs
+            return np.zeros(self.observation_space.shape, dtype=np.float32)
         return np.array(
             [
                 obs.bufferedTasks(),
