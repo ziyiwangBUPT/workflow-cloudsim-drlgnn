@@ -14,8 +14,7 @@ def main(simulator: str, dataset: str, render_mode: str | None):
     config = (
         PPOConfig()
         .framework("torch")
-        .env_runners(num_env_runners=1)
-        .evaluation(evaluation_num_env_runners=1)
+        .env_runners(num_env_runners=4)
         .environment(
             CloudSimReleaserEnvironment,
             env_config={

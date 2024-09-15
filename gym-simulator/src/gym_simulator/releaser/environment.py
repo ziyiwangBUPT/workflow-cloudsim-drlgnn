@@ -8,8 +8,6 @@ from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
-JVM_PORTS = [26400, 26401]
-
 
 class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
@@ -30,8 +28,7 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         simulator_kwargs = env_config.get("simulator_kwargs", {})
         if simulator_mode == "embedded":
             worker_index = getattr(env_config, "worker_index", 0)
-            assert 0 <= worker_index < len(JVM_PORTS)
-            simulator_kwargs["jvm_port"] = JVM_PORTS[worker_index]
+            simulator_kwargs["jvm_port"] = 26400 + worker_index
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)
