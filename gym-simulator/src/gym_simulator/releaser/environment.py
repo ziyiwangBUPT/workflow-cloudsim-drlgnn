@@ -13,17 +13,13 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": ["human"], "render_fps": 60}
 
     def __init__(self, env_config: dict[str, Any]):
-        self.action_space = spaces.Discrete(2)  # 0 - Do nothing, 1 - Release
-        self.observation_space = spaces.Tuple(
-            [
-                spaces.Discrete(1000),  # Buffered tasks
-                spaces.Discrete(1000),  # Released tasks
-                spaces.Discrete(1000),  # Scheduled tasks
-                spaces.Discrete(1000),  # Running tasks
-                spaces.Discrete(1000),  # Completed tasks
-                spaces.Box(low=0, high=1000, shape=(1,), dtype=np.float64),  # Completion time variance
-                spaces.Discrete(1000),  # VM count
-            ]
+        # 0 - Do nothing, 1 - Release
+        self.action_space = spaces.Discrete(2)
+        # Buffered tasks, released tasks, scheduled tasks, running tasks, completed tasks, completion time variance, VM count
+        self.observation_space = spaces.Box(
+            low=np.array([0, 0, 0, 0, 0, 0.0, 0]),
+            high=np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf]),
+            dtype=np.float32,
         )
 
         # Initialize the simulator
@@ -49,14 +45,17 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     def parse_obs(self, obs: Any | None) -> ObsType:
         if obs is None:
             return self.observation_space.sample()
-        return (
-            np.int64(obs.bufferedTasks()),
-            np.int64(obs.releasedTasks()),
-            np.int64(obs.scheduledTasks()),
-            np.int64(obs.runningTasks()),
-            np.int64(obs.completedTasks()),
-            np.array([obs.completionTimeVariance()], dtype=np.float64),
-            np.int64(obs.vmCount()),
+        return np.array(
+            [
+                obs.bufferedTasks(),
+                obs.releasedTasks(),
+                obs.scheduledTasks(),
+                obs.runningTasks(),
+                obs.completedTasks(),
+                obs.completionTimeVariance(),
+                obs.vmCount(),
+            ],
+            dtype=np.float32,
         )
 
     # --------------------- Create Action -------------------------------------------------------------------------------
