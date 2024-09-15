@@ -1,16 +1,13 @@
-import click
+import tyro
 
 from pprint import pprint
 from ray.rllib.algorithms.ppo import PPOConfig
 
+from gym_simulator.args import Args
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
-@click.command()
-@click.option("--simulator", help="Path to the simulator JAR file", required=True, type=click.Path(exists=True))
-@click.option("--dataset", help="Path to the dataset JSON file", required=True, type=click.Path(exists=True))
-@click.option("--render-mode", help="Render mode", type=click.Choice(["human"]))
-def main(simulator: str, dataset: str, render_mode: str | None):
+def main(args: Args):
     config = (
         PPOConfig()
         .framework("torch")
@@ -20,8 +17,8 @@ def main(simulator: str, dataset: str, render_mode: str | None):
             CloudSimReleaserEnvironment,
             env_config={
                 "simulator_mode": "embedded",
-                "simulator_kwargs": {"simulator_jar_path": simulator, "dataset_path": dataset},
-                "render_mode": render_mode,
+                "simulator_kwargs": {"simulator_jar_path": args.simulator, "dataset_path": args.dataset},
+                "render_mode": args.render_mode,
             },
         )
     )
@@ -38,4 +35,5 @@ def main(simulator: str, dataset: str, render_mode: str | None):
 
 
 if __name__ == "__main__":
-    main()
+    args = tyro.cli(Args)
+    main(args)

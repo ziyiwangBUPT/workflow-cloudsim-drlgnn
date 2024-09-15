@@ -149,6 +149,15 @@ wheels = [
 ]
 
 [[package]]
+name = "docstring-parser"
+version = "0.16"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/12/9c22a58c0b1e29271051222d8906257616da84135af9ed167c9e28f85cb3/docstring_parser-0.16.tar.gz", hash = "sha256:538beabd0af1e2db0146b6bd3caa526c35a34d61af9fd2887f3a8a27a739aa6e", size = 26565 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d5/7c/e9fcff7623954d86bdc17782036cbf715ecab1bec4847c008557affe1ca8/docstring_parser-0.16-py3-none-any.whl", hash = "sha256:bf0a1387354d3691d102edef7ec124f219ef639982d096e26e3b60aeffa90637", size = 36533 },
+]
+
+[[package]]
 name = "farama-notifications"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -221,13 +230,13 @@ name = "gym-simulator"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "click" },
     { name = "gymnasium" },
     { name = "matplotlib" },
     { name = "py4j" },
     { name = "pygame" },
     { name = "ray", extra = ["rllib"] },
     { name = "torch" },
+    { name = "tyro" },
 ]
 
 [package.dev-dependencies]
@@ -237,13 +246,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.1.7" },
     { name = "gymnasium", specifier = ">=0.28.1" },
     { name = "matplotlib", specifier = ">=3.9.2" },
     { name = "py4j", specifier = ">=0.10.9.7" },
     { name = "pygame", specifier = ">=2.6.0" },
     { name = "ray", extras = ["rllib"], specifier = ">=2.35.0" },
     { name = "torch", specifier = ">=2.4.1" },
+    { name = "tyro", specifier = ">=0.8.10" },
 ]
 
 [package.metadata.requires-dev]
@@ -1077,6 +1086,15 @@ wheels = [
 ]
 
 [[package]]
+name = "shtab"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/e4/13bf30c7c30ab86a7bc4104b1c943ff2f56c1a07c6d82a71ad034bcef1dc/shtab-1.7.1.tar.gz", hash = "sha256:4e4bcb02eeb82ec45920a5d0add92eac9c9b63b2804c9196c1f1fdc2d039243c", size = 45410 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/d1/a1d3189e7873408b9dc396aef0d7926c198b0df2aa3ddb5b539d3e89a70f/shtab-1.7.1-py3-none-any.whl", hash = "sha256:32d3d2ff9022d4c77a62492b6ec875527883891e33c6b479ba4d41a51e259983", size = 14095 },
+]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1188,6 +1206,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec321ba8bce9420de607a1d37f8342eee1863174c69557/typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8", size = 85321 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d", size = 37438 },
+]
+
+[[package]]
+name = "tyro"
+version = "0.8.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "docstring-parser" },
+    { name = "rich" },
+    { name = "shtab" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/ee/fc83c30fc67e3a2f54e2869d5b9130c4d9358c695a39a2be4b48023bd667/tyro-0.8.10.tar.gz", hash = "sha256:78f3622721d2c66f62bebcd2f11863421de9779ad9fc090a89e780b484abf332", size = 135266 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/22/b2b0bba44794df4345a93c559c6ebb5da94cfdeba8888522116b17bdf0c2/tyro-0.8.10-py3-none-any.whl", hash = "sha256:83de6684fa5554b39c111d5b8801723bd20832589603e40feb2a3ff09ed96d8b", size = 105711 },
 ]
 
 [[package]]
