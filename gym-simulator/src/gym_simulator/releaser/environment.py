@@ -43,6 +43,15 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         assert self.render_mode is None or self.render_mode in self.metadata["render_modes"]
         self.renderer = ReleaserRenderer(self.metadata["render_fps"])
 
+    def step(self, action: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
+        obs, reward, terminated, truncated, info = super().step(action)
+
+        # --- Test ---
+        reward = 1 - abs((obs[0] - obs[1]) - 100) / 100
+        # --- Test ---
+
+        return obs, reward, terminated, truncated, info
+
     # --------------------- Parse Observation ---------------------------------------------------------------------------
 
     @override
@@ -50,7 +59,7 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         if obs is None:
             if self.last_obs is not None:
                 return self.last_obs
-            return np.zeros(self.observation_space.shape, dtype=np.float32)
+            return np.zeros(7, dtype=np.float32)
         return np.array(
             [
                 obs.bufferedTasks(),
