@@ -1,5 +1,3 @@
-import io
-
 import matplotlib.pyplot as plt
 
 from typing import override
@@ -7,7 +5,7 @@ from gym_simulator.releaser.types import ObsType
 from gym_simulator.core.renderers.pygame import PygameRenderer
 
 
-class ReleaserHumanRenderer(PygameRenderer):
+class ReleaserRenderer(PygameRenderer):
     """
     A human renderer for the Releaser environment.
     Uses Pygame to render the environment.
@@ -17,7 +15,7 @@ class ReleaserHumanRenderer(PygameRenderer):
         super().__init__(render_fps, 800, 600)
 
     @override
-    def draw(self, obs: ObsType) -> io.BytesIO:
+    def draw_chart(self, obs: ObsType):
         buffered, released, scheduled, executed, completed, _, __ = obs
         inBuffering = buffered - released
         inReleasing = released - scheduled
@@ -32,9 +30,5 @@ class ReleaserHumanRenderer(PygameRenderer):
             color=["blue", "green", "red", "yellow", "purple"],
         )
         ax.set_xlim(0, 1000)
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png")
-        plt.close(fig)
-        buf.seek(0)
 
-        return buf
+        return fig

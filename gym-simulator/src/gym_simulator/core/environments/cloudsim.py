@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+import numpy as np
+import numpy.typing as npt
 import gymnasium as gym
 from typing import Any, Generic, TypeVar, override
 
@@ -21,7 +23,8 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
     """
 
     simulator: BaseSimulator
-    renderer: BaseRenderer | None = None
+    renderer: BaseRenderer
+    last_obs: ObsType | None = None
 
     # --------------------- Reset --------------------------------------------------------------------------------------
 
@@ -35,8 +38,9 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
         info: dict[str, Any] = {}
 
         # Update the renderer
-        if self.renderer is not None:
-            self.renderer.update(obs)
+        self.last_obs = obs
+        if self.render_mode == "human":
+            self.render()
 
         return obs, info
 
@@ -57,16 +61,31 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
 
         # Update the renderer
         if not terminated and not truncated:
-            if self.renderer is not None:
-                self.renderer.update(obs)
+            self.last_obs = obs
+            if self.render_mode == "human":
+                self.render()
 
         return obs, reward, terminated, truncated, info
+
+    # --------------------- Render--------------------------------------------------------------------------------------
+
+    @override
+    def render(self):
+        if self.last_obs is None:
+            return None
+
+        if self.render_mode == "human":
+            self.renderer.update(self.last_obs)
+        elif self.render_mode == "rgb_array":
+            return self.renderer.draw(self.last_obs)
+        return None
 
     # --------------------- Close --------------------------------------------------------------------------------------
 
     @override
     def close(self):
-        self.simulator.stop()
+        if self.simulator.is_running():
+            self.simulator.stop()
         if self.renderer is not None:
             self.renderer.close()
 

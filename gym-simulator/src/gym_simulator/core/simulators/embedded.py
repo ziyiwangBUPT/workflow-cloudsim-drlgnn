@@ -121,6 +121,6 @@ class EmbeddedSimulator(BaseSimulator):
         address = self.java_gateway.gateway_parameters.address
         port = self.java_gateway.gateway_parameters.port
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            res = s.connect_ex((address, port)) != 0
-        if not res:
+            res = s.connect_ex((address, port))
+        if res == 0:
             raise Exception("Py4J port is already in use")

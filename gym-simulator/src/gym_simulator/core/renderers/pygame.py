@@ -1,5 +1,9 @@
 import io
 
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import numpy.typing as npt
+import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any, override
 import pygame
@@ -12,7 +16,7 @@ class PygameRenderer(BaseRenderer, ABC):
     Abstract base class for creating a renderer using Pygame for visualizing the environment's state.
 
     This class defines the standard methods for updating the renderer with new observations and closing it.
-    The rendering is done by drawing the observation as an image and displaying it on the screen.
+    The rendering is done by drawing the observation as an matplotlib chart and displaying it on the screen.
     """
 
     window: pygame.Surface | None
@@ -37,8 +41,8 @@ class PygameRenderer(BaseRenderer, ABC):
             self.clock = pygame.time.Clock()
 
         # Draw the observation
-        buf = self.draw(obs)
-        self.window.blit(pygame.image.load(buf), (0, 0))
+        arr = self.draw(obs)
+        self.window.blit(pygame.surfarray.make_surface(arr.swapaxes(0, 1)), (0, 0))
 
         # Update the display
         pygame.event.pump()
@@ -53,9 +57,30 @@ class PygameRenderer(BaseRenderer, ABC):
             pygame.display.quit()
             pygame.quit()
 
-    # --------------------- Draw -------------------------------------------------------------------------------------
+    # --------------------- Draw Chart -------------------------------------------------------------------------------
+
+    @override
+    def draw(self, obs: Any) -> npt.NDArray[np.uint8]:
+        fig = self.draw_chart(obs)
+
+        # Save the figure as an image buffer
+        buf = io.BytesIO()
+        fig.savefig(buf, format="raw")
+        plt.close(fig)
+        buf.seek(0)
+
+        # Convert the image buffer to a numpy array
+        arr = np.reshape(
+            np.frombuffer(buf.getvalue(), dtype=np.uint8),
+            newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1),
+        )
+        # Drop alpha channel
+        arr = arr[:, :, :3]
+        buf.close()
+
+        return arr
 
     @abstractmethod
-    def draw(self, obs: Any) -> io.BytesIO:
+    def draw_chart(self, obs: Any) -> Figure:
         """Draw the observation as an image and return the image buffer"""
         raise NotImplementedError

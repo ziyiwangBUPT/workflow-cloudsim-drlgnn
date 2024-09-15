@@ -3,14 +3,14 @@ from typing import Any, override
 import numpy as np
 
 from gym_simulator.releaser.types import ActType, ObsType
-from gym_simulator.releaser.renderer import ReleaserHumanRenderer
+from gym_simulator.releaser.renderer import ReleaserRenderer
 from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
 
 class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
-    metadata = {"render_modes": ["human"], "render_fps": 60}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
 
     def __init__(self, env_config: dict[str, Any]):
         # 0 - Do nothing, 1 - Release
@@ -34,10 +34,9 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
             raise ValueError(f"Unknown simulator mode: {simulator_mode}")
 
         # Initialize the renderer
-        render_mode = env_config.get("render_mode", None)
-        assert render_mode is None or render_mode in self.metadata["render_modes"]
-        if render_mode == "human":
-            self.renderer = ReleaserHumanRenderer(self.metadata["render_fps"])
+        self.render_mode = env_config.get("render_mode", None)
+        assert self.render_mode is None or self.render_mode in self.metadata["render_modes"]
+        self.renderer = ReleaserRenderer(self.metadata["render_fps"])
 
     # --------------------- Parse Observation ---------------------------------------------------------------------------
 

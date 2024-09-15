@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-
+import numpy.typing as npt
+import numpy as np
 from typing import Any
 
 
@@ -19,4 +20,9 @@ class BaseRenderer(ABC):
     @abstractmethod
     def close(self):
         """Close the renderer."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw(self, obs: Any) -> npt.NDArray[np.uint8]:
+        """Draw the observation as an image and return the image buffer."""
         raise NotImplementedError
