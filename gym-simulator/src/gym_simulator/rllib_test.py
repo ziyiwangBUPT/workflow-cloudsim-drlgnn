@@ -25,7 +25,7 @@ def main(args: TestArgs):
         }
     )
 
-    episode_return = 0
+    episode_return: float = 0
     terminated = truncated = False
     obs, _ = env.reset()
     while not terminated and not truncated:

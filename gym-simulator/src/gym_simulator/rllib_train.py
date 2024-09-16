@@ -29,11 +29,11 @@ def main(args: TrainArgs):
 
     tuner = tune.Tuner(
         PPO,
-        param_space=config,
+        param_space=config.to_dict(),
         tune_config=tune.TuneConfig(num_samples=1),
         run_config=RunConfig(
             name="ppo-releaser",
-            storage_path=Path("./logs").absolute(),
+            storage_path=str(Path("./logs").absolute()),
             checkpoint_config=CheckpointConfig(
                 num_to_keep=2,
                 checkpoint_score_attribute="mean_accuracy",
