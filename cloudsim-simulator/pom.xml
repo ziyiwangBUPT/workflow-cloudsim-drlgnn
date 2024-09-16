@@ -16,7 +16,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.cloudbus</groupId>
+            <groupId>org.cloudbus.cloudsim</groupId>
             <artifactId>cloudsim</artifactId>
             <version>7.0.0-alpha</version>
         </dependency>
