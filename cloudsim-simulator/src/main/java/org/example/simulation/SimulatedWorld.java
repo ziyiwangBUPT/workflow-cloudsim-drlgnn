@@ -51,7 +51,7 @@ public class SimulatedWorld {
         this.broker = brokerFactory.createBroker();
         var hosts = hostFactory.createHosts(dataset.getHosts());
         var vms = vmFactory.createVms(broker.getId(), dataset.getVms());
-        var _ = datacenterFactory.createDatacenter(hosts);
+        var ignoredDc = datacenterFactory.createDatacenter(hosts);
 
         // Submits the VM list to the broker
         broker.submitGuestList(vms);
@@ -66,7 +66,7 @@ public class SimulatedWorld {
                 .coordinator(coordinator).releaser(releaser).build();
         submitter = WorkflowSubmitter.builder()
                 .buffer(buffer).workflows(dataset.getWorkflows()).build();
-        var _ = UtilizationUpdater.builder()
+        var ignoredUtilUpdater = UtilizationUpdater.builder()
                 .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
     }
 
