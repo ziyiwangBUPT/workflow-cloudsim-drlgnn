@@ -51,7 +51,7 @@ public class Application implements Callable<Integer> {
 
         // Create shared queues
         var sharedReleaseQueue = new GymSharedQueue<ReleaserObservation, ReleaserAction>();
-        var _ = new GymSharedQueue<ReleaserObservation, ReleaserAction>();
+        var ignoredQueue = new GymSharedQueue<ReleaserObservation, ReleaserAction>();
 
         // Create releaser, scheduler, and executor
         var releaser = new GymWorkflowReleaser(sharedReleaseQueue);
