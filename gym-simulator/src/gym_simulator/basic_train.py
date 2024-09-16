@@ -1,10 +1,10 @@
 import tyro
 
-from gym_simulator.args import Args
+from gym_simulator.args import TrainArgs
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
-def main(args: Args):
+def main(args: TrainArgs):
     env = CloudSimReleaserEnvironment(
         env_config={
             "simulator_mode": "embedded",
@@ -24,5 +24,5 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    args = tyro.cli(Args)
+    args = tyro.cli(TrainArgs)
     main(args)

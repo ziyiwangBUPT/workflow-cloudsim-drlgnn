@@ -3,11 +3,11 @@ import tyro
 from pprint import pprint
 from ray.rllib.algorithms.ppo import PPOConfig
 
-from gym_simulator.args import Args
+from gym_simulator.args import TrainArgs
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
-def main(args: Args):
+def main(args: TrainArgs):
     config = (
         PPOConfig()
         .environment(
@@ -34,5 +34,5 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    args = tyro.cli(Args)
+    args = tyro.cli(TrainArgs)
     main(args)

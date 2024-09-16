@@ -1,16 +1,17 @@
 import tyro
+import torch
 from pathlib import Path
 
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray import tune
-from ray.air import RunConfig
+from ray.air import RunConfig, CheckpointConfig
 from ray.rllib.algorithms.ppo import PPO
 
-from gym_simulator.args import Args
+from gym_simulator.args import TrainArgs
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
-def main(args: Args):
+def main(args: TrainArgs):
     config = (
         PPOConfig()
         .framework("torch")
@@ -30,11 +31,20 @@ def main(args: Args):
         PPO,
         param_space=config,
         tune_config=tune.TuneConfig(num_samples=1),
-        run_config=RunConfig(storage_path=Path("./logs").absolute(), name="ppo-releaser"),
+        run_config=RunConfig(
+            name="ppo-releaser",
+            storage_path=Path("./logs").absolute(),
+            checkpoint_config=CheckpointConfig(
+                num_to_keep=2,
+                checkpoint_score_attribute="mean_accuracy",
+                checkpoint_score_order="max",
+                checkpoint_frequency=10,
+            ),
+        ),
     )
     tuner.fit()
 
 
 if __name__ == "__main__":
-    args = tyro.cli(Args)
+    args = tyro.cli(TrainArgs)
     main(args)
