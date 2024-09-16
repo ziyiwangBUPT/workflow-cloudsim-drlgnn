@@ -1,7 +1,10 @@
 import tyro
+from pathlib import Path
 
-from pprint import pprint
 from ray.rllib.algorithms.ppo import PPOConfig
+from ray import tune
+from ray.air import RunConfig
+from ray.rllib.algorithms.ppo import PPO
 
 from gym_simulator.args import Args
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
@@ -11,8 +14,8 @@ def main(args: Args):
     config = (
         PPOConfig()
         .framework("torch")
-        .env_runners(num_env_runners=4)
-        .evaluation(evaluation_num_env_runners=4)
+        .env_runners(num_env_runners=2)
+        .evaluation(evaluation_num_env_runners=2, evaluation_interval=30)
         .environment(
             CloudSimReleaserEnvironment,
             env_config={
@@ -22,16 +25,14 @@ def main(args: Args):
             },
         )
     )
-    config.sample_timeout_s = 300
-    config.evaluation_interval = 5  # type: ignore
-    algo = config.build()
 
-    for i in range(5):
-        result = algo.train()
-        result.pop("config")
-        pprint(result)
-        evaluation = algo.evaluate()
-        pprint(evaluation)
+    tuner = tune.Tuner(
+        PPO,
+        param_space=config,
+        tune_config=tune.TuneConfig(num_samples=1),
+        run_config=RunConfig(storage_path=Path("./logs").absolute(), name="ppo-releaser"),
+    )
+    tuner.fit()
 
 
 if __name__ == "__main__":

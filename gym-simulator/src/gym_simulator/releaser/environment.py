@@ -32,7 +32,7 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         self.action_space = spaces.Discrete(2)
         # Buffered tasks, released tasks, scheduled tasks, running tasks, completed tasks, completion time variance, VM count
         self.observation_space = spaces.Box(
-            low=np.array([0, 0, 0, 0, 0, 0.0, 0]),
+            low=np.array([0, 0, 0, 0, 0, 0, 0]),
             high=np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf]),
             dtype=np.float32,
         )
