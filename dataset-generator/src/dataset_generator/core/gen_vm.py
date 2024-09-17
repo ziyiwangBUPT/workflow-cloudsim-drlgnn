@@ -1,5 +1,8 @@
+import os
 import json
 import random
+
+from pathlib import Path
 
 from dataset_generator.core.models import Host, Vm
 
@@ -11,7 +14,10 @@ def generate_hosts(n: int) -> list[Host]:
     """
 
     hosts: list[Host] = []
-    with open("data/host_specs.json") as f:
+    root_dir = Path(os.path.dirname(__file__)).parent.parent.parent
+    host_data_file = root_dir / "data" / "host_specs.json"
+
+    with open(host_data_file) as f:
         available_hosts: list = json.load(f)
 
     for i in range(n):
