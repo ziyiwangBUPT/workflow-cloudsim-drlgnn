@@ -80,13 +80,13 @@ class Args:
     """the number of iterations (computed in runtime)"""
 
 
-def make_env(env_id, idx, capture_video, video_dir):
+def make_env(idx, args: Args, video_dir: str):
     def thunk():
-        if capture_video and idx == 0:
-            env = gym.make(env_id, render_mode="rgb_array")
+        if args.capture_video and idx == 0:
+            env = gym.make(args.env_id, render_mode="rgb_array")
             env = gym.wrappers.RecordVideo(env, video_dir, episode_trigger=lambda x: x % 10 == 0)
         else:
-            env = gym.make(env_id)
+            env = gym.make(args.env_id)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         return env
 
@@ -163,12 +163,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv(
-        [
-            make_env(args.env_id, i, args.capture_video, f"{args.output_dir}/{run_name}/videos")
-            for i in range(args.num_envs)
-        ],
-    )
+    env_video_dir = f"{args.output_dir}/{run_name}/videos"
+    envs = gym.vector.SyncVectorEnv([make_env(i, args, video_dir=env_video_dir) for i in range(args.num_envs)])
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
     obs_space_shape = envs.single_observation_space.shape
     action_space_shape = envs.single_action_space.shape
