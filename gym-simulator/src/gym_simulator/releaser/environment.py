@@ -27,7 +27,6 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
 
     def __init__(self, env_config: dict[str, Any]):
-        print(env_config)
         # 0 - Do nothing, 1 - Release
         self.action_space = spaces.Discrete(2)
         # Buffered tasks, released tasks, scheduled tasks, running tasks, completed tasks, completion time variance, VM count

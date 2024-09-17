@@ -34,12 +34,7 @@ def main(args: TrainArgs):
         run_config=RunConfig(
             name="ppo-releaser",
             storage_path=str(Path("./logs").absolute()),
-            checkpoint_config=CheckpointConfig(
-                num_to_keep=2,
-                checkpoint_score_attribute="mean_accuracy",
-                checkpoint_score_order="max",
-                checkpoint_frequency=10,
-            ),
+            checkpoint_config=CheckpointConfig(checkpoint_frequency=10),
         ),
     )
     tuner.fit()
