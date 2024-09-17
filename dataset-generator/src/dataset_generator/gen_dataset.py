@@ -1,4 +1,4 @@
-import click
+import tyro
 import random
 import json
 import dataclasses
@@ -8,51 +8,65 @@ import numpy as np
 from dataset_generator.core.gen_dataset import generate_dataset
 
 
-@click.command()
-@click.option("--seed", default=42, help="Random seed", type=int)
-@click.option("--host_count", default=2, help="Number of hosts")
-@click.option("--vm_count", default=4, help="Number of VMs")
-@click.option("--max_cores", default=10, help="Maximum number of cores per VM")
-@click.option("--min_cpu_speed_mips", default=500, help="Minimum CPU speed in MIPS")
-@click.option("--max_cpu_speed_mips", default=5000, help="Maximum CPU speed in MIPS")
-@click.option("--workflow_count", default=3, help="Number of workflows", type=int)
-@click.option("--min_task_count", default=1, help="Minimum number of tasks per workflow", type=int)
-@click.option("--max_task_count", default=5, help="Maximum number of tasks per workflow", type=int)
-@click.option("--task_length_dist", default="normal", help="Task length distribution", type=str)
-@click.option("--min_task_length", default=500, help="Minimum task length", type=int)
-@click.option("--max_task_length", default=100_000, help="Maximum task length", type=int)
-@click.option("--arrival_rate", default=3, help="Arrival rate of workflows (per second)", type=float)
-def main(
-    seed: int,
-    host_count: int,
-    vm_count: int,
-    max_cores: int,
-    min_cpu_speed_mips: int,
-    max_cpu_speed_mips: int,
-    workflow_count: int,
-    min_task_count: int,
-    max_task_count: int,
-    task_length_dist: str,
-    min_task_length: int,
-    max_task_length: int,
-    arrival_rate: float,
-):
-    random.seed(seed)
-    np.random.seed(seed)
+@dataclasses.dataclass
+class Args:
+    seed: int = 42
+    """Random seed"""
+
+    host_count: int = 2
+    """Number of hosts"""
+
+    vm_count: int = 4
+    """Number of VMs"""
+
+    max_cores: int = 10
+    """Maximum number of cores per VM"""
+
+    min_cpu_speed: int = 500
+    """Minimum CPU speed in MIPS"""
+
+    max_cpu_speed: int = 5000
+    """Maximum CPU speed in MIPS"""
+
+    workflow_count: int = 3
+    """Number of workflows"""
+
+    min_task_count: int = 1
+    """Minimum number of tasks per workflow"""
+
+    max_task_count: int = 5
+    """Maximum number of tasks per workflow"""
+
+    task_length_dist: str = "normal"
+    """Task length distribution"""
+
+    min_task_length: int = 500
+    """Minimum task length"""
+
+    max_task_length: int = 100_000
+    """Maximum task length"""
+
+    arrival_rate: float = 3
+    """Arrival rate of workflows (per second)"""
+
+
+def main(args: Args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
     dataset = generate_dataset(
-        host_count=host_count,
-        vm_count=vm_count,
-        max_cores=max_cores,
-        min_cpu_speed_mips=min_cpu_speed_mips,
-        max_cpu_speed_mips=max_cpu_speed_mips,
-        workflow_count=workflow_count,
-        min_task_count=min_task_count,
-        max_task_count=max_task_count,
-        task_length_dist=task_length_dist,
-        min_task_length=min_task_length,
-        max_task_length=max_task_length,
-        arrival_rate=arrival_rate,
+        host_count=args.host_count,
+        vm_count=args.vm_count,
+        max_cores=args.max_cores,
+        min_cpu_speed_mips=args.min_cpu_speed,
+        max_cpu_speed_mips=args.max_cpu_speed,
+        workflow_count=args.workflow_count,
+        min_task_count=args.min_task_count,
+        max_task_count=args.max_task_count,
+        task_length_dist=args.task_length_dist,
+        min_task_length=args.min_task_length,
+        max_task_length=args.max_task_length,
+        arrival_rate=args.arrival_rate,
     )
 
     json_data = json.dumps(dataclasses.asdict(dataset))
@@ -60,4 +74,5 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    args = tyro.cli(Args)
+    main(args)
