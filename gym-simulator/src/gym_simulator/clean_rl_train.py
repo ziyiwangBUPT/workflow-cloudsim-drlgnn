@@ -80,7 +80,7 @@ class Args:
     """the number of iterations (computed in runtime)"""
 
 
-def make_env(idx, args: Args, video_dir: str):
+def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         if args.capture_video and idx == 0:
             env = gym.make(args.env_id, render_mode="rgb_array")
@@ -93,34 +93,34 @@ def make_env(idx, args: Args, video_dir: str):
     return thunk
 
 
-def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
+def layer_init(layer: nn.Linear, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
 
 class Agent(nn.Module):
-    def __init__(self, envs):
+    def __init__(self, obs_space_shape: tuple[int, ...], n_actions: int):
         super().__init__()
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            layer_init(nn.Linear(np.array(obs_space_shape).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 1), std=1.0),
         )
         self.actor = nn.Sequential(
-            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            layer_init(nn.Linear(np.array(obs_space_shape).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, envs.single_action_space.n), std=0.01),
+            layer_init(nn.Linear(64, n_actions), std=0.01),
         )
 
-    def get_value(self, x):
+    def get_value(self, x: torch.Tensor):
         return self.critic(x)
 
-    def get_action_and_value(self, x, action=None):
+    def get_action_and_value(self, x: torch.Tensor, action: torch.Tensor | None = None):
         logits = self.actor(x)
         probs = Categorical(logits=logits)
         if action is None:
@@ -128,8 +128,7 @@ class Agent(nn.Module):
         return action, probs.log_prob(action), probs.entropy(), self.critic(x)
 
 
-if __name__ == "__main__":
-    args = tyro.cli(Args)
+def main(args: Args):
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
@@ -165,18 +164,18 @@ if __name__ == "__main__":
     # env setup
     env_video_dir = f"{args.output_dir}/{run_name}/videos"
     envs = gym.vector.SyncVectorEnv([make_env(i, args, video_dir=env_video_dir) for i in range(args.num_envs)])
-    assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
-    obs_space_shape = envs.single_observation_space.shape
-    action_space_shape = envs.single_action_space.shape
-    assert obs_space_shape is not None, "The observation space shape was None"
-    assert action_space_shape is not None, "The action space shape was None"
+    obs_space = envs.single_observation_space
+    act_space = envs.single_action_space
+    assert isinstance(act_space, gym.spaces.Discrete), "only discrete action space is supported"
+    assert obs_space.shape is not None
+    assert act_space.shape is not None
 
-    agent = Agent(envs).to(device)
+    agent = Agent(obs_space.shape, int(act_space.n)).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup
-    obs = torch.zeros((args.num_steps, args.num_envs) + obs_space_shape).to(device)
-    actions = torch.zeros((args.num_steps, args.num_envs) + action_space_shape).to(device)
+    obs = torch.zeros((args.num_steps, args.num_envs) + obs_space.shape).to(device)
+    actions = torch.zeros((args.num_steps, args.num_envs) + act_space.shape).to(device)
     logprobs = torch.zeros((args.num_steps, args.num_envs)).to(device)
     rewards = torch.zeros((args.num_steps, args.num_envs)).to(device)
     dones = torch.zeros((args.num_steps, args.num_envs)).to(device)
@@ -238,9 +237,9 @@ if __name__ == "__main__":
             returns = advantages + values
 
         # flatten the batch
-        b_obs = obs.reshape((-1,) + obs_space_shape)
+        b_obs = obs.reshape((-1,) + obs_space.shape)
         b_logprobs = logprobs.reshape(-1)
-        b_actions = actions.reshape((-1,) + action_space_shape)
+        b_actions = actions.reshape((-1,) + act_space.shape)
         b_advantages = advantages.reshape(-1)
         b_returns = returns.reshape(-1)
         b_values = values.reshape(-1)
@@ -319,3 +318,8 @@ if __name__ == "__main__":
 
     envs.close()
     writer.close()
+
+
+if __name__ == "__main__":
+    args = tyro.cli(Args)
+    main(args)
