@@ -14,8 +14,17 @@ from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
 
+from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
+
+
 @dataclass
 class Args:
+    simulator: str
+    """the path to the simulator jar file"""
+
+    dataset: str
+    """the path to the dataset file"""
+
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
     seed: int = 1
@@ -82,13 +91,18 @@ class Args:
 
 def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
+        env_config = {
+            "simulator_mode": "embedded",
+            "simulator_kwargs": {"simulator_jar_path": args.simulator, "dataset_path": args.dataset},
+        }
         if args.capture_video and idx == 0:
-            env = gym.make(args.env_id, render_mode="rgb_array")
-            env = gym.wrappers.RecordVideo(env, video_dir, episode_trigger=lambda x: x % 10 == 0)
-        else:
-            env = gym.make(args.env_id)
-        env = gym.wrappers.RecordEpisodeStatistics(env)
-        return env
+            env_config["render_mode"] = "rgb_array"
+            base_env = CloudSimReleaserEnvironment(env_config=env_config)
+            env = gym.wrappers.RecordVideo(base_env, video_dir, episode_trigger=lambda x: x % 10 == 0)
+            return gym.wrappers.RecordEpisodeStatistics(env)
+
+        base_env = CloudSimReleaserEnvironment(env_config=env_config)
+        return gym.wrappers.RecordEpisodeStatistics(base_env)
 
     return thunk
 
