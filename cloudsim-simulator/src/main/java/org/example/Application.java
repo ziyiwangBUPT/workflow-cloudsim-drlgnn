@@ -21,14 +21,15 @@ import java.io.File;
 import java.util.concurrent.Callable;
 
 @Setter
-@Command(name = "CloudSim Simulator", mixinStandardHelpOptions = true, version = "1.0",
-        description = "Runs a simulation of a workflow scheduling algorithm.", showDefaultValues = true)
+@Command(name = "cloudsim-simulator", mixinStandardHelpOptions = true, version = "1.0",
+        description = "Runs a simulation of a workflow scheduling algorithm.",
+        usageHelpAutoWidth = true)
 public class Application implements Callable<Integer> {
     @Option(names = {"-f", "--file"}, description = "Dataset file")
     private File datasetFile;
 
     @Option(names = {"-d", "--duration"}, description = "Duration of the simulation", defaultValue = "1000")
-    private int simulationDuration;
+    private int duration;
 
     @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
     private int py4JPort;
@@ -45,7 +46,7 @@ public class Application implements Callable<Integer> {
 
         // Configure simulation
         var config = SimulatedWorldConfig.builder()
-                .simulationDuration(simulationDuration)
+                .simulationDuration(duration)
                 .monitoringUpdateInterval(5)
                 .build();
 
@@ -68,7 +69,7 @@ public class Application implements Callable<Integer> {
                 .releaser(releaser).scheduler(scheduler).executor(executor)
                 .config(config).build();
         var solution = world.runSimulation();
-         System.out.println(solution.toJson());
+        System.out.println(solution.toJson());
 
         // Stop Py4J connector
         sharedReleaseQueue.setObservation(AgentResult.truncated());

@@ -24,8 +24,8 @@ class Args:
     """maximum CPU speed in MIPS"""
     workflow_count: int = 3
     """number of workflows"""
-    workflow_method: str = "gnp"
-    """workflow method method (pegasus, gnp)"""
+    dag_method: str = "gnp"
+    """DAG generation method (pegasus, gnp)"""
     gnp_min_n: int = 1
     """minimum number of tasks per workflow (for G(n,p) method)"""
     gnp_max_n: int = 5
@@ -51,7 +51,7 @@ def main(args: Args):
         min_cpu_speed_mips=args.min_cpu_speed,
         max_cpu_speed_mips=args.max_cpu_speed,
         workflow_count=args.workflow_count,
-        workflow_method=args.workflow_method,
+        dag_method=args.dag_method,
         gnp_min_n=args.gnp_min_n,
         gnp_max_n=args.gnp_max_n,
         task_length_dist=args.task_length_dist,

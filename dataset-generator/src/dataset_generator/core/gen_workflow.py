@@ -6,7 +6,7 @@ from dataset_generator.core.gen_task import generate_task_length, generate_dag, 
 
 def generate_workflows(
     workflow_count: int,
-    workflow_method: str,
+    dag_method: str,
     gnp_min_n: int,
     gnp_max_n: int,
     task_length_dist: str,
@@ -29,7 +29,7 @@ def generate_workflows(
         return random.randint(1, max_req_cores)
 
     def dag_gen() -> dict[int, set[int]]:
-        return generate_dag(workflow_method, gnp_min_n=gnp_min_n, gnp_max_n=gnp_max_n)
+        return generate_dag(dag_method, gnp_min_n=gnp_min_n, gnp_max_n=gnp_max_n)
 
     arrival_time = 0
     workflows: list[Workflow] = []

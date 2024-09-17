@@ -10,7 +10,7 @@ def generate_dataset(
     min_cpu_speed_mips: int,
     max_cpu_speed_mips: int,
     workflow_count: int,
-    workflow_method: str,
+    dag_method: str,
     gnp_min_n: int,
     gnp_max_n: int,
     task_length_dist: str,
@@ -28,7 +28,7 @@ def generate_dataset(
 
     workflows = generate_workflows(
         workflow_count=workflow_count,
-        workflow_method=workflow_method,
+        dag_method=dag_method,
         gnp_min_n=gnp_min_n,
         gnp_max_n=gnp_max_n,
         task_length_dist=task_length_dist,
