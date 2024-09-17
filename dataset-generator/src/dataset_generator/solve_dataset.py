@@ -10,7 +10,7 @@ from dataset_generator.visualizers.printers import print_solution
 @dataclasses.dataclass
 class Args:
     method: str = "sat"
-    """Method to solve the dataset"""
+    """method to solve the dataset (sat, round_robin)"""
 
 
 def main(args: Args):

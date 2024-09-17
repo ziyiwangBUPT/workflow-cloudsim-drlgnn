@@ -14,7 +14,7 @@ from dataset_generator.visualizers.printers import print_solution
 @dataclasses.dataclass
 class Args:
     prefix: str = "tmp/viz_solution"
-    """File prefix to use (with directory)"""
+    """file prefix to use (with directory)"""
 
 
 def main(args: Args):

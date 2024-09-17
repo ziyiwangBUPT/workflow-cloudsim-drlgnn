@@ -11,43 +11,33 @@ from dataset_generator.core.gen_dataset import generate_dataset
 @dataclasses.dataclass
 class Args:
     seed: int = 42
-    """Random seed"""
-
+    """random seed"""
     host_count: int = 2
-    """Number of hosts"""
-
+    """number of hosts"""
     vm_count: int = 4
-    """Number of VMs"""
-
+    """number of VMs"""
     max_cores: int = 10
-    """Maximum number of cores per VM"""
-
+    """maximum number of cores per VM"""
     min_cpu_speed: int = 500
-    """Minimum CPU speed in MIPS"""
-
+    """minimum CPU speed in MIPS"""
     max_cpu_speed: int = 5000
-    """Maximum CPU speed in MIPS"""
-
+    """maximum CPU speed in MIPS"""
     workflow_count: int = 3
-    """Number of workflows"""
-
-    min_task_count: int = 1
-    """Minimum number of tasks per workflow"""
-
-    max_task_count: int = 5
-    """Maximum number of tasks per workflow"""
-
+    """number of workflows"""
+    workflow_method: str = "gnp"
+    """workflow method method (pegasus, gnp)"""
+    gnp_min_n: int = 1
+    """minimum number of tasks per workflow (for G(n,p) method)"""
+    gnp_max_n: int = 5
+    """maximum number of tasks per workflow (for G(n,p) method)"""
     task_length_dist: str = "normal"
-    """Task length distribution"""
-
+    """task length distribution (normal, uniform, left_skewed, right_skewed)"""
     min_task_length: int = 500
-    """Minimum task length"""
-
+    """minimum task length"""
     max_task_length: int = 100_000
-    """Maximum task length"""
-
+    """maximum task length"""
     arrival_rate: float = 3
-    """Arrival rate of workflows (per second)"""
+    """arrival rate of workflows (per second)"""
 
 
 def main(args: Args):
@@ -61,8 +51,9 @@ def main(args: Args):
         min_cpu_speed_mips=args.min_cpu_speed,
         max_cpu_speed_mips=args.max_cpu_speed,
         workflow_count=args.workflow_count,
-        min_task_count=args.min_task_count,
-        max_task_count=args.max_task_count,
+        workflow_method=args.workflow_method,
+        gnp_min_n=args.gnp_min_n,
+        gnp_max_n=args.gnp_max_n,
         task_length_dist=args.task_length_dist,
         min_task_length=args.min_task_length,
         max_task_length=args.max_task_length,

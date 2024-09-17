@@ -1,4 +1,4 @@
-import sys
+import random
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -128,3 +128,37 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
     ax.set_yticks(range(len(vms)))
     ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU" for vm in vms])
     ax.set_xlabel("Time")
+
+
+# -------------------------------------------------------------------------------------------------
+# Graphing functions for Pegasus DAG
+
+
+def plot_pegasus_dag(graph: dict[int, set[int]], node_numbers: dict[str, int]) -> pgv.AGraph:
+    node_names = {v: k for k, v in node_numbers.items()}
+
+    G: nx.DiGraph = nx.DiGraph()
+    for node in graph.keys():
+        G.add_node(node)
+        for child in graph[node]:
+            G.add_edge(node, child)
+
+    groups: dict[str, set[int]] = {}
+    for node in graph.keys():
+        node_name = node_names[node]
+        group = node_name.split("_ID")[0]
+        if group not in groups:
+            groups[group] = set()
+        groups[group].add(node)
+
+    A: pgv.AGraph = nx.nx_agraph.to_agraph(G)
+    for group in groups:
+        A.add_subgraph(groups[group], name=f"cluster_{group}", label=group, style="dashed")
+        color = f"/set312/{random.randint(1, 12)}"
+        for node in groups[group]:
+            n = A.get_node(node)
+            n.attr["fillcolor"] = color
+            n.attr["style"] = "filled"
+            n.attr["label"] = ""
+
+    return A

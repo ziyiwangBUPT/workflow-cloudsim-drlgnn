@@ -1,6 +1,7 @@
 import random
 import math
 
+from pathlib import Path
 from scipy import stats
 
 
@@ -41,7 +42,7 @@ def generate_task_length(dist: str, low: float, high: float) -> float:
     return value
 
 
-def generate_dag(n: int, p: float | None = None) -> dict[int, set[int]]:
+def generate_dag_gnp(n: int, p: float | None = None) -> dict[int, set[int]]:
     """
     Generate a random Directed Acyclic Graph (DAG) using the G(n, p) model.
     The resulting graph is represented as an adjacency list. <br/>
@@ -68,3 +69,70 @@ def generate_dag(n: int, p: float | None = None) -> dict[int, set[int]]:
         nodes[0].add(i)
 
     return nodes
+
+
+def generate_dag_pegasus(dag_file: str) -> tuple[dict[int, set[int]], dict[str, int]]:
+    """
+    Generate a Directed Acyclic Graph (DAG) using the Pegasus workflow generator.
+    The resulting graph is represented as an adjacency list. <br/>
+    This will return 2 values: the nodes and the node numbers.
+    Node numbers are the assigned numbers of the nodes in the DAG file.
+    """
+
+    with open(dag_file) as f:
+        lines = f.readlines()
+
+    nodes: dict[int, set[int]] = {}
+    node_numbers: dict[str, int] = {}
+    for line in lines:
+        if line.startswith("JOB"):
+            node_name = line.split()[1]
+            node_number = len(node_numbers)
+            node_numbers[node_name] = node_number
+            nodes[node_number] = set()
+
+    for line in lines:
+        if line.startswith("PARENT"):
+            parent_name = line.split()[1]
+            child_name = line.split()[3]
+            parent = node_numbers[parent_name]
+            child = node_numbers[child_name]
+            nodes[parent].add(child)
+
+    return nodes, node_numbers
+
+
+def generate_dag_pegasus_random() -> tuple[dict[int, set[int]], dict[str, int]]:
+    """
+    Generate a random Directed Acyclic Graph (DAG) using the Pegasus workflow generator.
+    The resulting graph is represented as an adjacency list. <br/>
+    This will return 2 values: the nodes and the node numbers.
+    Node numbers are the assigned numbers of the nodes in the DAG file.
+    """
+
+    root_path = Path(__file__).parent.parent.parent.parent
+    workflow_files_root = root_path / "data" / "pegasus_workflows"
+    workflow_files = [
+        workflow_files_root / "sipht.dag",
+    ]
+
+    dag_file = random.choice(workflow_files)
+    return generate_dag_pegasus(str(dag_file))
+
+
+def generate_dag(method: str, **kwargs) -> dict[int, set[int]]:
+    """
+    Generate a Directed Acyclic Graph (DAG) using the specified method.
+    """
+
+    if method == "gnp":
+        gnp_min_n = kwargs["gnp_min_n"]
+        gnp_max_n = kwargs["gnp_max_n"]
+        gnp_p = kwargs.get("gnp_p", None)
+        task_count = random.randint(gnp_min_n, gnp_max_n)
+        return generate_dag_gnp(task_count, gnp_p)
+    elif method == "pegasus":
+        graph, _ = generate_dag_pegasus_random()
+        return graph
+    else:
+        raise ValueError(f"Invalid method: {method}")
