@@ -1,10 +1,15 @@
+import json
 import time
 import socket
 import subprocess
+import dataclasses
 
 from typing import Any, Callable, override
-from gym_simulator.core.simulators.base import BaseSimulator
 from py4j.java_gateway import JavaGateway, DEFAULT_PORT, DEFAULT_ADDRESS, GatewayParameters
+
+from gym_simulator.core.simulators.base import BaseSimulator
+from dataset_generator.core.gen_dataset import generate_dataset
+from dataset_generator.gen_dataset import Args as DatasetArgs
 
 
 class EmbeddedSimulator(BaseSimulator):
@@ -19,9 +24,9 @@ class EmbeddedSimulator(BaseSimulator):
     simulator_process: subprocess.Popen | None
     java_gateway: JavaGateway
 
-    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_path: str):
+    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_args: dict[str, Any]):
         self.simulator_jar_path = simulator_jar_path
-        self.dataset_path = dataset_path
+        self.dataset_args = dataset_args
         self.simulator_process = None
 
         gateway_params = GatewayParameters(port=jvm_port)
@@ -39,11 +44,14 @@ class EmbeddedSimulator(BaseSimulator):
         port = self.java_gateway.gateway_parameters.port
         print(f"Starting the simulator on port {port}...")
         self.simulator_process = subprocess.Popen(
-            ["java", "-jar", self.simulator_jar_path, "-f", self.dataset_path, "-p", str(port)],
+            ["java", "-jar", self.simulator_jar_path, "-p", str(port)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             universal_newlines=True,
         )
+        dataset_json = self._generate_dataset_json()
+        self.simulator_process.stdin.write(dataset_json + "\n")
 
         # Wait for the simulator to start
         time.sleep(0.1)
@@ -121,3 +129,22 @@ class EmbeddedSimulator(BaseSimulator):
             res = s.connect_ex((address, port))
         if res == 0:
             raise Exception(f"Port {port} is already in use")
+
+    def _generate_dataset_json(self) -> str:
+        default_args = DatasetArgs()
+        dataset = generate_dataset(
+            host_count=self.dataset_args.get("host_count", default_args.host_count),
+            vm_count=self.dataset_args.get("vm_count", default_args.vm_count),
+            max_cores=self.dataset_args.get("max_cores", default_args.max_cores),
+            min_cpu_speed_mips=self.dataset_args.get("min_cpu_speed", default_args.min_cpu_speed),
+            max_cpu_speed_mips=self.dataset_args.get("max_cpu_speed", default_args.max_cpu_speed),
+            workflow_count=self.dataset_args.get("workflow_count", default_args.workflow_count),
+            dag_method=self.dataset_args.get("dag_method", default_args.dag_method),
+            gnp_min_n=self.dataset_args.get("gnp_min_n", default_args.gnp_min_n),
+            gnp_max_n=self.dataset_args.get("gnp_max_n", default_args.gnp_max_n),
+            task_length_dist=self.dataset_args.get("task_length_dist", default_args.task_length_dist),
+            min_task_length=self.dataset_args.get("min_task_length", default_args.min_task_length),
+            max_task_length=self.dataset_args.get("max_task_length", default_args.max_task_length),
+            arrival_rate=self.dataset_args.get("arrival_rate", default_args.arrival_rate),
+        )
+        return json.dumps(dataclasses.asdict(dataset))

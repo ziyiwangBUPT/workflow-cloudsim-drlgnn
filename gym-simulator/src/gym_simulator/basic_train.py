@@ -1,14 +1,26 @@
 import tyro
+import dataclasses
 
-from gym_simulator.args import TrainArgs
 from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 
 
-def main(args: TrainArgs):
+@dataclasses.dataclass
+class Args:
+    simulator: str
+    """Path to the simulator JAR file"""
+
+    render_mode: str | None = None
+    """Render mode"""
+
+
+def main(args: Args):
     env = CloudSimReleaserEnvironment(
         env_config={
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator, "dataset_path": args.dataset},
+            "simulator_kwargs": {
+                "simulator_jar_path": args.simulator,
+                "dataset_args": {"workflow_count": 900, "arrival_rate": 0.2},
+            },
             "render_mode": args.render_mode,
         },
     )
@@ -30,5 +42,5 @@ def main(args: TrainArgs):
 
 
 if __name__ == "__main__":
-    args = tyro.cli(TrainArgs)
+    args = tyro.cli(Args)
     main(args)

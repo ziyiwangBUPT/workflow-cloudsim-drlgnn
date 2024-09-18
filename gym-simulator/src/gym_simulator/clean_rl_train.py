@@ -21,8 +21,6 @@ from gym_simulator.releaser.environment import CloudSimReleaserEnvironment
 class Args:
     simulator: str
     """the path to the simulator jar file"""
-    dataset: str
-    """the path to the dataset file"""
 
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
@@ -90,7 +88,10 @@ def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         env_config = {
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator, "dataset_path": args.dataset},
+            "simulator_kwargs": {
+                "simulator_jar_path": args.simulator,
+                "dataset_args": {"workflow_count": 900, "arrival_rate": 0.2},
+            },
         }
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
