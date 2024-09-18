@@ -14,7 +14,7 @@ def main(args: TrainArgs):
     )
 
     observation, info = env.reset()
-    total_reward = 0
+    total_reward: float = 0
     t = 0
     for _ in range(1000):
         action = int((observation[0] - observation[1]) >= 100)

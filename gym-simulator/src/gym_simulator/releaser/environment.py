@@ -54,8 +54,11 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
 
     def step(self, action: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
         # --- Test ---
+        assert self.last_obs is not None
         x = self.last_obs[0] - self.last_obs[1]
-        reward = 1 - abs(x - 100) / 100
+        reward1 = int(90 <= x <= 110) if action == 1 else 0
+        reward2 = 1 - abs(x - 100) / 100
+        reward = (reward1 + reward2) / 2
         # --- Test ---
 
         obs, _, terminated, truncated, info = super().step(action)
