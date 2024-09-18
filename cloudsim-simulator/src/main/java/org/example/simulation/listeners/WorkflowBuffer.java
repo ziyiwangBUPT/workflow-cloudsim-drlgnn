@@ -28,9 +28,6 @@ public class WorkflowBuffer extends SimulationTickListener {
 
     @Override
     protected void onTick(double time) {
-        // No need to continue if there are no workflows
-        if (workflowCache.isEmpty()) return;
-
         // Check if we should release the workflows
         if (releaser.shouldRelease()) {
             var taskStateSensor = TaskStateSensor.getInstance();

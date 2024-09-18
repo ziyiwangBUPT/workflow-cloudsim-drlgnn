@@ -53,11 +53,12 @@ class CloudSimReleaserEnvironment(BaseCloudSimEnvironment):
         self.renderer = ReleaserRenderer(self.metadata["render_fps"])
 
     def step(self, action: Any) -> tuple[Any, float, bool, bool, dict[str, Any]]:
-        obs, reward, terminated, truncated, info = super().step(action)
+        # --- Test ---
+        x = self.last_obs[0] - self.last_obs[1]
+        reward = 1 - abs(x - 100) / 100
+        # --- Test ---
 
-        # --- Test ---
-        reward = 1 - abs((obs[0] - obs[1]) - 100) / 100
-        # --- Test ---
+        obs, _, terminated, truncated, info = super().step(action)
 
         return obs, reward, terminated, truncated, info
 

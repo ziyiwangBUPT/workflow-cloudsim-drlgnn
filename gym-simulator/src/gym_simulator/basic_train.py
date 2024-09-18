@@ -14,12 +14,18 @@ def main(args: TrainArgs):
     )
 
     observation, info = env.reset()
+    total_reward = 0
+    t = 0
     for _ in range(1000):
-        action = env.action_space.sample()
+        action = int((observation[0] - observation[1]) >= 100)
         observation, reward, terminated, truncated, info = env.step(action)
+        total_reward += reward
+        t += 1
         if terminated or truncated:
-            observation, info = env.reset()
+            break
 
+    print(f"Total reward: {total_reward}")
+    print(f"Total steps: {t}")
     env.close()
 
 
