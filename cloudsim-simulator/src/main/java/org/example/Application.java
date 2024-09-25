@@ -3,11 +3,10 @@ package org.example;
 import lombok.Setter;
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
-import org.example.api.scheduler.gym.mappers.SimpleGymMapper;
+import org.example.api.scheduler.gym.algorithms.StaticGymSchedulingAlgorithm;
 import org.example.api.scheduler.gym.types.AgentResult;
-import org.example.api.scheduler.gym.types.Action;
-import org.example.api.scheduler.gym.types.JsonObservation;
-import org.example.api.scheduler.gym.GymWorkflowScheduler;
+import org.example.api.scheduler.gym.types.StaticAction;
+import org.example.api.scheduler.gym.types.StaticObservation;
 import org.example.api.executor.LocalWorkflowExecutor;
 import org.example.api.scheduler.internal.StaticWorkflowScheduler;
 import org.example.api.scheduler.internal.algorithms.RoundRobinSchedulingAlgorithm;
@@ -36,7 +35,7 @@ public class Application implements Callable<Integer> {
     @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
     private int py4JPort;
 
-    @Option(names = {"-a", "--algorithm"}, description = "Scheduling algorithm", defaultValue = "gym:simple")
+    @Option(names = {"-a", "--algorithm"}, description = "Scheduling algorithm", defaultValue = "static:gym")
     private String algorithm;
 
     @Override
@@ -56,12 +55,12 @@ public class Application implements Callable<Integer> {
                 .build();
 
         // Create shared queue
-        var gymSharedQueue = new GymSharedQueue<JsonObservation, Action>();
+        var gymSharedQueue = new GymSharedQueue<StaticObservation, StaticAction>();
 
         // Create scheduler, and executor
         var executor = new LocalWorkflowExecutor();
         var scheduler = switch (algorithm) {
-            case "gym:simple" -> new GymWorkflowScheduler<>(new SimpleGymMapper(), gymSharedQueue);
+            case "static:gym" -> new StaticWorkflowScheduler(new StaticGymSchedulingAlgorithm(gymSharedQueue));
             case "static:round-robin" -> new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
             default -> throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
         };
