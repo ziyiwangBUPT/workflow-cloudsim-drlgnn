@@ -3,11 +3,12 @@ package org.example;
 import lombok.Setter;
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
+import org.example.api.scheduler.gym.mappers.SimpleGymMapper;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.Action;
-import org.example.api.scheduler.gym.types.Observation;
-import org.example.api.scheduler.impl.GymWorkflowScheduler;
-import org.example.api.scheduler.impl.LocalWorkflowExecutor;
+import org.example.api.scheduler.gym.types.JsonObservation;
+import org.example.api.scheduler.gym.GymWorkflowScheduler;
+import org.example.api.executor.LocalWorkflowExecutor;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -50,11 +51,12 @@ public class Application implements Callable<Integer> {
                 .build();
 
         // Create shared queue
-        var gymSharedQueue = new GymSharedQueue<Observation, Action>();
+        var gymSharedQueue = new GymSharedQueue<JsonObservation, Action>();
 
         // Create scheduler, and executor
         // var scheduler = new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
-        var scheduler = new GymWorkflowScheduler(gymSharedQueue);
+        var schedulerAlgorithm = new SimpleGymMapper();
+        var scheduler = new GymWorkflowScheduler<>(schedulerAlgorithm, gymSharedQueue);
         var executor = new LocalWorkflowExecutor();
 
         // Thread for Py4J connector

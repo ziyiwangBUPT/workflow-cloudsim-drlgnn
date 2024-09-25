@@ -3,7 +3,7 @@ package org.example.simulation;
 import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
-import org.example.api.scheduler.WorkflowExecutor;
+import org.example.api.executor.WorkflowExecutor;
 import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;

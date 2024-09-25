@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Vm;
-import org.example.api.scheduler.WorkflowExecutor;
+import org.example.api.executor.WorkflowExecutor;
 import org.example.api.scheduler.WorkflowScheduler;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;

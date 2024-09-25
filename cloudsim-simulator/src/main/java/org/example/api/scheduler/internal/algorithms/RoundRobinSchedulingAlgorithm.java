@@ -1,4 +1,4 @@
-package org.example.api.scheduler.algorithms;
+package org.example.api.scheduler.internal.algorithms;
 
 import lombok.NonNull;
 import org.example.api.dtos.VmAssignmentDto;

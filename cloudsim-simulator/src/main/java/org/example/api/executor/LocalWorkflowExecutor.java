@@ -1,7 +1,6 @@
-package org.example.api.scheduler.impl;
+package org.example.api.executor;
 
 import lombok.NonNull;
-import org.example.api.scheduler.WorkflowExecutor;
 import org.example.api.dtos.*;
 import org.example.utils.DependencyCountMap;
 

@@ -1,11 +1,11 @@
-package org.example.api.scheduler.impl;
+package org.example.api.scheduler.internal;
 
 import lombok.NonNull;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
 import org.example.api.scheduler.WorkflowScheduler;
-import org.example.api.scheduler.algorithms.StaticSchedulingAlgorithm;
+import org.example.api.scheduler.internal.algorithms.StaticSchedulingAlgorithm;
 
 import java.util.ArrayList;
 import java.util.List;
