@@ -9,7 +9,6 @@ public class TaskStateSensor {
     private static final TaskStateSensor instance = new TaskStateSensor();
 
     private int bufferedTasks = 0; // Just submitted by user (Buffer)
-    private int releasedTasks = 0; // Released to be scheduled (Buffer)
     private int scheduledTasks = 0; // Scheduled to a VM to run (Scheduler)
     private int executedTasks = 0; // Actually running in VM (Executor)
     private int completedTasks = 0; // Finished running (Executor)
@@ -20,11 +19,6 @@ public class TaskStateSensor {
     /// Increment the number of tasks in the buffer.
     public void bufferTasks(int count) {
         bufferedTasks += count;
-    }
-
-    /// Increment the number of tasks released to be scheduled.
-    public void releaseTasks(int count) {
-        releasedTasks += count;
     }
 
     /// Increment the number of tasks scheduled to run.

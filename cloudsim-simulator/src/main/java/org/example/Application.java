@@ -35,7 +35,7 @@ public class Application implements Callable<Integer> {
     @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
     private int py4JPort;
 
-    @Option(names = {"-a", "--algorithm"}, description = "Scheduling algorithm", defaultValue = "static:gym")
+    @Option(names = {"-a", "--algorithm"}, description = "Scheduling algorithm", defaultValue = "static:round-robin")
     private String algorithm;
 
     @Override

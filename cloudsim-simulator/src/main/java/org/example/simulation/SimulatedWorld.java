@@ -85,7 +85,6 @@ public class SimulatedWorld {
         System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
 
         System.err.printf("Buffered Tasks               : %d%n", taskStateSensor.getBufferedTasks());
-        System.err.printf("Released Tasks               : %d%n", taskStateSensor.getReleasedTasks());
         System.err.printf("Scheduled Tasks              : %d%n", taskStateSensor.getScheduledTasks());
         System.err.printf("Executed Tasks               : %d%n", taskStateSensor.getExecutedTasks());
         System.err.printf("Finished Tasks               : %d%n", taskStateSensor.getCompletedTasks());

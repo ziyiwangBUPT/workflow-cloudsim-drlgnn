@@ -61,6 +61,8 @@ public class WorkflowCoordinator extends SimulationTickListener {
         var workflowDto = WorkflowDto.from(workflow);
         scheduler.notifyNewWorkflow(workflowDto);
         executor.notifyNewWorkflow(workflowDto);
+        var taskStateSensor = TaskStateSensor.getInstance();
+        taskStateSensor.bufferTasks(workflow.getTasks().size());
         for (var task : workflow.getTasks()) {
             unscheduledTasks.put(new WorkflowTaskId(workflow.getId(), task.getId()), task);
         }
