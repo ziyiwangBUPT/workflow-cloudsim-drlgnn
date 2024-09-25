@@ -6,8 +6,8 @@ import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.Action;
 import org.example.api.scheduler.gym.types.Observation;
+import org.example.api.scheduler.impl.GymWorkflowScheduler;
 import org.example.api.scheduler.impl.LocalWorkflowExecutor;
-import org.example.api.scheduler.impl.RoundRobinWorkflowScheduler;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -53,7 +53,8 @@ public class Application implements Callable<Integer> {
         var gymSharedQueue = new GymSharedQueue<Observation, Action>();
 
         // Create scheduler, and executor
-        var scheduler = new RoundRobinWorkflowScheduler();
+        // var scheduler = new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
+        var scheduler = new GymWorkflowScheduler(gymSharedQueue);
         var executor = new LocalWorkflowExecutor();
 
         // Thread for Py4J connector

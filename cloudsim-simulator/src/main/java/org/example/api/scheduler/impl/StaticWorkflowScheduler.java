@@ -1,21 +1,28 @@
-package org.example.api.scheduler;
+package org.example.api.scheduler.impl;
 
 import lombok.NonNull;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
+import org.example.api.scheduler.WorkflowScheduler;
+import org.example.api.scheduler.algorithms.StaticSchedulingAlgorithm;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/// The abstract class for the static workflow scheduler.
 /// Static workflow scheduler is a scheduler that schedules workflows statically.
 /// Each workflow is assigned to a VM at the beginning, and it does not change.
-public abstract class StaticWorkflowScheduler implements WorkflowScheduler {
+public class StaticWorkflowScheduler implements WorkflowScheduler {
+    private final StaticSchedulingAlgorithm algorithm;
+
     private final List<VmDto> vms = new ArrayList<>();
     private final List<WorkflowDto> workflows = new ArrayList<>();
     private List<VmAssignmentDto> schedulingResult = null;
+
+    public StaticWorkflowScheduler(@NonNull StaticSchedulingAlgorithm algorithm) {
+        this.algorithm = algorithm;
+    }
 
     @Override
     public void notifyNewVm(@NonNull VmDto newVm) {
@@ -39,7 +46,7 @@ public abstract class StaticWorkflowScheduler implements WorkflowScheduler {
             if (workflows.isEmpty() || vms.isEmpty()) {
                 return Optional.empty();
             }
-            schedulingResult = schedule(workflows, vms);
+            schedulingResult = algorithm.schedule(workflows, vms);
         }
 
         if (schedulingResult.isEmpty()) {
@@ -47,9 +54,4 @@ public abstract class StaticWorkflowScheduler implements WorkflowScheduler {
         }
         return Optional.of(schedulingResult.removeFirst());
     }
-
-    /// Schedules the workflows to the VMs.
-    /// This is the method that the subclasses should implement.
-    /// This is called only once.
-    protected abstract List<VmAssignmentDto> schedule(List<WorkflowDto> workflows, List<VmDto> vms);
 }

@@ -1,21 +1,17 @@
-package org.example.api.scheduler.impl;
+package org.example.api.scheduler.algorithms;
 
+import lombok.NonNull;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
-import org.example.api.scheduler.StaticWorkflowScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /// The round-robin workflow scheduler.
-public class RoundRobinWorkflowScheduler extends StaticWorkflowScheduler {
+public class RoundRobinSchedulingAlgorithm implements StaticSchedulingAlgorithm {
     @Override
-    protected List<VmAssignmentDto> schedule(List<WorkflowDto> workflows, List<VmDto> vms) {
-        System.out.println("Scheduling workflows using Round Robin...");
-        System.out.println("Number of workflows: " + workflows.size());
-        System.out.println("Number of VMs: " + vms.size());
-
+    public List<VmAssignmentDto> schedule(@NonNull List<WorkflowDto> workflows, @NonNull List<VmDto> vms) {
         var vmIndex = 0;
         var schedulingResult = new ArrayList<VmAssignmentDto>();
 
