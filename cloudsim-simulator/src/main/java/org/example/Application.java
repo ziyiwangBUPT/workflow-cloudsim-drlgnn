@@ -9,6 +9,8 @@ import org.example.api.scheduler.gym.types.Action;
 import org.example.api.scheduler.gym.types.JsonObservation;
 import org.example.api.scheduler.gym.GymWorkflowScheduler;
 import org.example.api.executor.LocalWorkflowExecutor;
+import org.example.api.scheduler.internal.StaticWorkflowScheduler;
+import org.example.api.scheduler.internal.algorithms.RoundRobinSchedulingAlgorithm;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -34,6 +36,9 @@ public class Application implements Callable<Integer> {
     @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
     private int py4JPort;
 
+    @Option(names = {"-a", "--algorithm"}, description = "Scheduling algorithm", defaultValue = "gym:simple")
+    private String algorithm;
+
     @Override
     public Integer call() throws Exception {
         System.err.println("Running simulation...");
@@ -54,10 +59,12 @@ public class Application implements Callable<Integer> {
         var gymSharedQueue = new GymSharedQueue<JsonObservation, Action>();
 
         // Create scheduler, and executor
-        // var scheduler = new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
-        var schedulerAlgorithm = new SimpleGymMapper();
-        var scheduler = new GymWorkflowScheduler<>(schedulerAlgorithm, gymSharedQueue);
         var executor = new LocalWorkflowExecutor();
+        var scheduler = switch (algorithm) {
+            case "gym:simple" -> new GymWorkflowScheduler<>(new SimpleGymMapper(), gymSharedQueue);
+            case "static:round-robin" -> new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
+            default -> throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
+        };
 
         // Thread for Py4J connector
         var gymConnector = new Py4JConnector<>(py4JPort, gymSharedQueue);
