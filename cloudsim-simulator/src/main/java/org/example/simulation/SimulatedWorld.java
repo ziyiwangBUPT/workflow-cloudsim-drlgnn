@@ -4,13 +4,11 @@ import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.example.api.scheduler.WorkflowExecutor;
-import org.example.api.scheduler.WorkflowReleaser;
 import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
 import org.example.sensors.TaskStateSensor;
-import org.example.simulation.listeners.WorkflowBuffer;
 import org.example.simulation.listeners.WorkflowCoordinator;
 import org.example.simulation.listeners.UtilizationUpdater;
 import org.example.core.entities.DynamicDatacenterBroker;
@@ -31,7 +29,6 @@ public class SimulatedWorld {
 
     @Builder
     public SimulatedWorld(@NonNull Dataset dataset,
-                          @NonNull WorkflowReleaser releaser,
                           @NonNull WorkflowScheduler scheduler,
                           @NonNull WorkflowExecutor executor,
                           @NonNull SimulatedWorldConfig config) {
@@ -61,11 +58,9 @@ public class SimulatedWorld {
         // Create tick listeners
         var coordinator = WorkflowCoordinator.builder()
                 .broker(broker).cloudletFactory(cloudletFactory)
-                .releaser(releaser).scheduler(scheduler).executor(executor).build();
-        var buffer = WorkflowBuffer.builder()
-                .coordinator(coordinator).releaser(releaser).build();
+                .scheduler(scheduler).executor(executor).build();
         submitter = WorkflowSubmitter.builder()
-                .buffer(buffer).workflows(dataset.getWorkflows()).build();
+                .coordinator(coordinator).workflows(dataset.getWorkflows()).build();
         var ignoredUtilUpdater = UtilizationUpdater.builder()
                 .monitoringUpdateInterval(config.getMonitoringUpdateInterval()).build();
     }

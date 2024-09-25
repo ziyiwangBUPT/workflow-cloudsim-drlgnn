@@ -12,15 +12,15 @@ import java.util.*;
 public class WorkflowSubmitter extends SimulationTickListener {
     private static final String NAME = "WORKFLOW_SUBMITTER";
 
-    private final WorkflowBuffer buffer;
+    private final WorkflowCoordinator coordinator;
     private final Queue<DatasetWorkflow> workflowBacklog = new LinkedList<>();
     @Getter
     private final List<DatasetWorkflow> submittedWorkflows = new ArrayList<>();
 
     @Builder
-    public WorkflowSubmitter(@NonNull List<DatasetWorkflow> workflows, @NonNull WorkflowBuffer buffer) {
+    public WorkflowSubmitter(@NonNull List<DatasetWorkflow> workflows, @NonNull WorkflowCoordinator coordinator) {
         super(NAME);
-        this.buffer = buffer;
+        this.coordinator = coordinator;
 
         // Sort the pending workflows by arrival time (ascending) and add to the queue
         workflows.stream().sorted(Comparator.comparingInt(DatasetWorkflow::getArrivalTime))
@@ -41,7 +41,7 @@ public class WorkflowSubmitter extends SimulationTickListener {
 
             // Workflow arrived, submit it
             var workflow = workflowBacklog.poll();
-            buffer.submitWorkflowFromUser(workflow);
+            coordinator.submitWorkflowFromUser(workflow);
             submittedWorkflows.add(workflow);
         }
     }

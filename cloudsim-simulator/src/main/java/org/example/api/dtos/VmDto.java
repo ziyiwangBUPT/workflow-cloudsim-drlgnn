@@ -41,4 +41,8 @@ public class VmDto {
                 .vmm(vm.getVmm())
                 .build();
     }
+
+    public boolean canRunTask(TaskDto task) {
+        return task.getReqCores() <= cores;
+    }
 }

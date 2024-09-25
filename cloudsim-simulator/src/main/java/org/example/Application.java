@@ -4,9 +4,8 @@ import lombok.Setter;
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
-import org.example.api.scheduler.gym.types.ReleaserAction;
-import org.example.api.scheduler.gym.types.ReleaserObservation;
-import org.example.api.scheduler.impl.GymWorkflowReleaser;
+import org.example.api.scheduler.gym.types.Action;
+import org.example.api.scheduler.gym.types.Observation;
 import org.example.api.scheduler.impl.LocalWorkflowExecutor;
 import org.example.api.scheduler.impl.RoundRobinWorkflowScheduler;
 import org.example.dataset.Dataset;
@@ -50,30 +49,28 @@ public class Application implements Callable<Integer> {
                 .monitoringUpdateInterval(5)
                 .build();
 
-        // Create shared queues
-        var sharedReleaseQueue = new GymSharedQueue<ReleaserObservation, ReleaserAction>();
-        var ignoredQueue = new GymSharedQueue<ReleaserObservation, ReleaserAction>();
+        // Create shared queue
+        var gymSharedQueue = new GymSharedQueue<Observation, Action>();
 
-        // Create releaser, scheduler, and executor
-        var releaser = new GymWorkflowReleaser(sharedReleaseQueue);
+        // Create scheduler, and executor
         var scheduler = new RoundRobinWorkflowScheduler();
         var executor = new LocalWorkflowExecutor();
 
         // Thread for Py4J connector
-        var releaserConnector = new Py4JConnector<>(py4JPort, sharedReleaseQueue);
-        var releaserThread = new Thread(releaserConnector);
-        releaserThread.start();
+        var gymConnector = new Py4JConnector<>(py4JPort, gymSharedQueue);
+        var gymThread = new Thread(gymConnector);
+        gymThread.start();
 
         // Run simulation
         var world = SimulatedWorld.builder().dataset(dataset)
-                .releaser(releaser).scheduler(scheduler).executor(executor)
+                .scheduler(scheduler).executor(executor)
                 .config(config).build();
         var solution = world.runSimulation();
         System.out.println(solution.toJson());
 
         // Stop Py4J connector
-        sharedReleaseQueue.setObservation(AgentResult.truncated());
-        releaserThread.join();
+        gymSharedQueue.setObservation(AgentResult.truncated());
+        gymThread.join(5000);
         return 0;
     }
 

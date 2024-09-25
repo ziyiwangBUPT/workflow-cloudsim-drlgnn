@@ -5,7 +5,6 @@ import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Vm;
 import org.example.api.scheduler.WorkflowExecutor;
-import org.example.api.scheduler.WorkflowReleaser;
 import org.example.api.scheduler.WorkflowScheduler;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
@@ -29,7 +28,6 @@ public class WorkflowCoordinator extends SimulationTickListener {
     private final DynamicDatacenterBroker broker;
     private final CloudletFactory cloudletFactory;
 
-    private final WorkflowReleaser releaser;
     private final WorkflowScheduler scheduler;
     private final WorkflowExecutor executor;
 
@@ -38,14 +36,12 @@ public class WorkflowCoordinator extends SimulationTickListener {
     private final Map<WorkflowTaskId, Cloudlet> executingTasks = new HashMap<>();
 
     @Builder
-    public WorkflowCoordinator(@NonNull WorkflowReleaser releaser,
-                               @NonNull WorkflowScheduler scheduler,
+    public WorkflowCoordinator(@NonNull WorkflowScheduler scheduler,
                                @NonNull WorkflowExecutor executor,
                                @NonNull DynamicDatacenterBroker broker,
                                @NonNull CloudletFactory cloudletFactory) {
         super(NAME);
 
-        this.releaser = releaser;
         this.scheduler = scheduler;
         this.executor = executor;
         this.broker = broker;
@@ -60,21 +56,17 @@ public class WorkflowCoordinator extends SimulationTickListener {
         submitAndExecuteCloudlets();
     }
 
-    /// Submit workflows to the system.
-    /// This is called by the workflow buffer when it decides to release workflows.
-    public void submitWorkflowsToSystem(@NonNull List<DatasetWorkflow> workflows) {
-        for (var workflow : workflows) {
-            var workflowDto = WorkflowDto.from(workflow);
-            scheduler.notifyNewWorkflow(workflowDto);
-            executor.notifyNewWorkflow(workflowDto);
-            for (var task : workflow.getTasks()) {
-                unscheduledTasks.put(new WorkflowTaskId(workflow.getId(), task.getId()), task);
-            }
+    /// Submit a workflow from a user.
+    public void submitWorkflowFromUser(@NonNull DatasetWorkflow workflow) {
+        var workflowDto = WorkflowDto.from(workflow);
+        scheduler.notifyNewWorkflow(workflowDto);
+        executor.notifyNewWorkflow(workflowDto);
+        for (var task : workflow.getTasks()) {
+            unscheduledTasks.put(new WorkflowTaskId(workflow.getId(), task.getId()), task);
         }
     }
 
     /// Check for the broker's VM list and discover any new VMs.
-    /// New VMs are submitted to the releaser.
     private void discoverNewVmsFromCloudSim() {
         // No need to continue if there are no new VMs
         if (broker.getGuestsCreatedList().isEmpty()) return;
@@ -85,7 +77,6 @@ public class WorkflowCoordinator extends SimulationTickListener {
             var vmId = new VmId(vm.getId());
             if (discoveredVms.contains(vmId)) continue;
             var vmDto = VmDto.from((Vm) vm);
-            releaser.notifyNewVm(vmDto);
             scheduler.notifyNewVm(vmDto);
             executor.notifyNewVm(vmDto);
             discoveredVms.add(vmId);

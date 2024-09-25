@@ -1,81 +1,38 @@
 package org.example.api.scheduler.impl;
 
-import lombok.NonNull;
-import org.example.api.scheduler.WorkflowScheduler;
-import org.example.api.dtos.TaskDto;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
-import org.example.utils.DependencyCountMap;
+import org.example.api.scheduler.StaticWorkflowScheduler;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.List;
 
-/// Round-robin workflow scheduler implementation.
-public class RoundRobinWorkflowScheduler implements WorkflowScheduler {
-    private final List<VmDto> vms = new ArrayList<>();
-
-    private final Map<WorkflowTaskId, TaskDto> taskMap = new HashMap<>();
-    private final DependencyCountMap<WorkflowTaskId> pendingDependencies = new DependencyCountMap<>();
-    private final Queue<WorkflowTaskId> readyQueue = new LinkedList<>();
-
-    private final AtomicInteger index = new AtomicInteger(0);
-
+/// The round-robin workflow scheduler.
+public class RoundRobinWorkflowScheduler extends StaticWorkflowScheduler {
     @Override
-    public void notifyNewVm(@NonNull VmDto newVm) {
-        vms.add(newVm);
-    }
+    protected List<VmAssignmentDto> schedule(List<WorkflowDto> workflows, List<VmDto> vms) {
+        System.out.println("Scheduling workflows using Round Robin...");
+        System.out.println("Number of workflows: " + workflows.size());
+        System.out.println("Number of VMs: " + vms.size());
 
-    @Override
-    public void notifyNewWorkflow(@NonNull WorkflowDto newWorkflow) {
-        // Update the task map
-        for (var task : newWorkflow.getTasks()) {
-            var taskId = new WorkflowTaskId(newWorkflow.getId(), task.getId());
-            taskMap.put(taskId, task);
-        }
+        var vmIndex = 0;
+        var schedulingResult = new ArrayList<VmAssignmentDto>();
 
-        // Update the pending dependencies map with new tasks
-        for (var task : newWorkflow.getTasks()) {
-            for (var childId : task.getChildIds()) {
-                var childTaskId = new WorkflowTaskId(newWorkflow.getId(), childId);
-                pendingDependencies.addNewDependency(childTaskId);
+        for (var workflow : workflows) {
+            for (var task : workflow.getTasks()) {
+                var vm = vms.get(vmIndex);
+                vmIndex = (vmIndex + 1) % vms.size();
+                while (!vm.canRunTask(task)) {
+                    vm = vms.get(vmIndex);
+                    vmIndex = (vmIndex + 1) % vms.size();
+                }
+
+                var assignment = new VmAssignmentDto(vm.getId(), workflow.getId(), task.getId());
+                schedulingResult.add(assignment);
             }
         }
 
-        // The start node of the workflow is ready to be scheduled
-        readyQueue.add(new WorkflowTaskId(newWorkflow.getId(), 0));
-    }
-
-    @Override
-    public Optional<VmAssignmentDto> schedule() {
-        if (readyQueue.isEmpty()) return Optional.empty();
-
-        var workflowTaskId = readyQueue.poll();
-        var task = taskMap.get(workflowTaskId);
-
-        // Find the next best VM that is suitable for the task
-        var bestVm = vms.get(index.getAndIncrement() % vms.size());
-        while (bestVm.getCores() < task.getReqCores()) {
-            bestVm = vms.get(index.getAndIncrement() % vms.size());
-        }
-
-        var vmAssignment = new VmAssignmentDto(bestVm.getId(), task.getWorkflowId(), task.getId());
-
-        // Add the task to the ready set if all dependencies are done
-        // Only process child tasks since they are the ones becoming ready
-        for (var childId : task.getChildIds()) {
-            var childTaskId = new WorkflowTaskId(task.getWorkflowId(), childId);
-            pendingDependencies.removeOneDependency(childTaskId);
-            if (pendingDependencies.hasNoDependency(childTaskId)) {
-                // This was the last dependency
-                readyQueue.add(childTaskId);
-            }
-        }
-
-        return Optional.of(vmAssignment);
-    }
-
-    /// A private record to represent a workflow task ID.
-    private record WorkflowTaskId(int workflowId, int taskId) {
+        return schedulingResult;
     }
 }
