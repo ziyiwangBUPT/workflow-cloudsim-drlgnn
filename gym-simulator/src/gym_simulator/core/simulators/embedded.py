@@ -51,6 +51,7 @@ class EmbeddedSimulator(BaseSimulator):
             universal_newlines=True,
         )
         dataset_json = self._generate_dataset_json()
+        assert self.simulator_process.stdin is not None
         self.simulator_process.stdin.write(dataset_json + "\n")
 
         # Wait for the simulator to start
@@ -145,6 +146,7 @@ class EmbeddedSimulator(BaseSimulator):
             task_length_dist=self.dataset_args.get("task_length_dist", default_args.task_length_dist),
             min_task_length=self.dataset_args.get("min_task_length", default_args.min_task_length),
             max_task_length=self.dataset_args.get("max_task_length", default_args.max_task_length),
+            task_arrival=self.dataset_args.get("task_arrival", default_args.task_arrival),
             arrival_rate=self.dataset_args.get("arrival_rate", default_args.arrival_rate),
         )
         return json.dumps(dataclasses.asdict(dataset))

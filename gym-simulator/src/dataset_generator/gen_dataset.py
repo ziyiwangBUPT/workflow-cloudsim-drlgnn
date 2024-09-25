@@ -36,8 +36,10 @@ class Args:
     """minimum task length"""
     max_task_length: int = 100_000
     """maximum task length"""
+    task_arrival: str = "dynamic"
+    """task arrival mode (static, dynamic)"""
     arrival_rate: float = 3
-    """arrival rate of workflows (per second)"""
+    """arrival rate of workflows/second (for dynamic arrival)"""
 
 
 def main(args: Args):
@@ -57,6 +59,7 @@ def main(args: Args):
         task_length_dist=args.task_length_dist,
         min_task_length=args.min_task_length,
         max_task_length=args.max_task_length,
+        task_arrival=args.task_arrival,
         arrival_rate=args.arrival_rate,
     )
 

@@ -16,6 +16,7 @@ def generate_dataset(
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
+    task_arrival: str,
     arrival_rate: float,
 ) -> Dataset:
     """
@@ -36,6 +37,7 @@ def generate_dataset(
         max_task_length=max_task_length,
         # Make sure that the problem is feasible
         max_req_cores=max(vm.cores for vm in vms),
+        task_arrival=task_arrival,
         arrival_rate=arrival_rate,
     )
 

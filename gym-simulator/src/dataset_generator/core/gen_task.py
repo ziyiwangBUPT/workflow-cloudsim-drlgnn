@@ -14,6 +14,20 @@ def generate_poisson_delay(lam: float) -> float:
     return stats.expon.rvs(scale=1 / lam)
 
 
+def generate_delay(method: str, **kwargs) -> float:
+    """
+    Generate a random delay between workflows based on the specified method.
+    Available methods: dynamic, static
+    """
+
+    if method == "dynamic":
+        return generate_poisson_delay(kwargs["arrival_rate"])
+    elif method == "static":
+        return 0
+    else:
+        raise ValueError(f"Invalid method: {method}")
+
+
 def generate_task_length(dist: str, low: float, high: float) -> float:
     """
     Generate a random task length based on the specified method. <br/>

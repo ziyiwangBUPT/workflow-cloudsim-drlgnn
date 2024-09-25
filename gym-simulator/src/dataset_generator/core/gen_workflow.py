@@ -1,7 +1,7 @@
 import random
 
 from dataset_generator.core.models import Task, Workflow
-from dataset_generator.core.gen_task import generate_task_length, generate_dag, generate_poisson_delay
+from dataset_generator.core.gen_task import generate_task_length, generate_dag, generate_delay
 
 
 def generate_workflows(
@@ -13,6 +13,7 @@ def generate_workflows(
     min_task_length: int,
     max_task_length: int,
     max_req_cores: int,
+    task_arrival: str,
     arrival_rate: float,
 ) -> list[Workflow]:
     """
@@ -20,7 +21,7 @@ def generate_workflows(
     """
 
     def delay_gen() -> int:
-        return int(generate_poisson_delay(arrival_rate))
+        return int(generate_delay(task_arrival, arrival_rate=arrival_rate))
 
     def task_length_gen() -> int:
         return int(generate_task_length(task_length_dist, min_task_length, max_task_length))
