@@ -28,6 +28,7 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "mypy>=1.11.2",
     "types-networkx>=3.2.1.20240918",
+    "pyqt6>=6.7.1",
 ]
 
 [tool.mypy]

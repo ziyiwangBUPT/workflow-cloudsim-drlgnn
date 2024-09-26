@@ -1,7 +1,12 @@
 import tyro
+import json
 import dataclasses
 
-from gym_simulator.algorithms.round_robin import round_robin
+import matplotlib.pyplot as plt
+
+from dataset_generator.core.models import Solution
+from dataset_generator.visualizers.plotters import plot_gantt_chart
+from gym_simulator.algorithms.heuristics import round_robin, best_fit
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
 
@@ -19,6 +24,8 @@ class Args:
     """number of workflows"""
     task_limit: int = 30
     """maximum number of tasks"""
+    algorithm: str = "round_robin"
+    """algorithm to use"""
 
 
 def main(args: Args):
@@ -34,20 +41,31 @@ def main(args: Args):
         },
     )
 
-    # Since this is static, the step will be only called once
-    # So there will not be loops
-    # But we are iterating N times to make sure results are consistent
-    rewards: list[float] = []
-    for i in range(10):
-        print(f"Step {i}")
-        (tasks, vms), _ = env.reset()
-        action = round_robin(tasks, vms)
-        _, reward, terminated, truncated, _ = env.step(action)
-        assert terminated or truncated, "Static environment should terminate after one step"
-        rewards.append(reward)
+    # Choose the algorithm
+    if args.algorithm == "round_robin":
+        algorithm = round_robin
+    elif args.algorithm == "best_fit":
+        algorithm = best_fit
+    else:
+        raise ValueError(f"Unknown algorithm: {args.algorithm}")
 
-    print(f"Average reward: {sum(rewards) / len(rewards)}")
-    print(f"Variance: {sum((r - sum(rewards) / len(rewards)) ** 2 for r in rewards) / len(rewards)}")
+    # Since this is static, the step will be only called once
+    (tasks, vms), _ = env.reset()
+    action = algorithm(tasks, vms)
+    _, reward, terminated, truncated, info = env.step(action)
+    assert terminated or truncated, "Static environment should terminate after one step"
+
+    # Render the output if available
+    print("Reward:", reward)
+    if "output" in info:
+        dataset_str = info["output"]
+        _, ax = plt.subplots()
+        dataset_dict = json.loads(dataset_str)
+        solution = Solution.from_json(dataset_dict)
+        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=False)
+        plt.title(f"Algorithm: {args.algorithm}")
+        plt.show()
+
     env.close()
 
 
