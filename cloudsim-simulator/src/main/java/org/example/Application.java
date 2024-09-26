@@ -3,13 +3,11 @@ package org.example;
 import lombok.Setter;
 import org.cloudbus.cloudsim.Log;
 import org.example.api.scheduler.gym.GymSharedQueue;
-import org.example.api.scheduler.gym.algorithms.StaticGymSchedulingAlgorithm;
+import org.example.api.scheduler.gym.WorkflowSchedulerFactory;
 import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.StaticAction;
 import org.example.api.scheduler.gym.types.StaticObservation;
 import org.example.api.executor.LocalWorkflowExecutor;
-import org.example.api.scheduler.internal.StaticWorkflowScheduler;
-import org.example.api.scheduler.internal.algorithms.RoundRobinSchedulingAlgorithm;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -58,12 +56,9 @@ public class Application implements Callable<Integer> {
         var gymSharedQueue = new GymSharedQueue<StaticObservation, StaticAction>();
 
         // Create scheduler, and executor
+        var scheduler = new WorkflowSchedulerFactory().staticSharedQueue(gymSharedQueue)
+                .create(algorithm);
         var executor = new LocalWorkflowExecutor();
-        var scheduler = switch (algorithm) {
-            case "static:gym" -> new StaticWorkflowScheduler(new StaticGymSchedulingAlgorithm(gymSharedQueue));
-            case "static:round-robin" -> new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
-            default -> throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
-        };
 
         // Thread for Py4J connector
         var gymConnector = new Py4JConnector<>(py4JPort, gymSharedQueue);
