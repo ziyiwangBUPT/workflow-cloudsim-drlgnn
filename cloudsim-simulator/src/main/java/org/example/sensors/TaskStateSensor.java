@@ -35,4 +35,9 @@ public class TaskStateSensor {
     public void completeTasks(int count) {
         completedTasks += count;
     }
+
+    /// Get the number of tasks that are currently running/not completed.
+    public int getIncompleteTasks() {
+        return bufferedTasks - completedTasks;
+    }
 }
