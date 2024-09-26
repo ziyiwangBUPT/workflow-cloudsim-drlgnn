@@ -57,7 +57,8 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
         info: dict[str, Any] = {}
 
         if terminated or truncated:
-            self.simulator.stop()
+            output = self.simulator.stop()
+            info["output"] = output
 
         # Update the renderer
         if not terminated and not truncated:

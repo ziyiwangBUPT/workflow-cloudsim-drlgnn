@@ -27,10 +27,12 @@ class RemoteSimulator(BaseSimulator):
         while not self.is_running():
             time.sleep(0.1)
 
-    def stop(self):
+    @override
+    def stop(self) -> str | None:
         while self.is_running():
             time.sleep(0.1)
         self.java_gateway.close()
+        return None
 
     # --------------------- Simulator Status -------------------------------------------------------------------------
 

@@ -45,7 +45,7 @@ class EmbeddedSimulator(BaseSimulator):
         print(f"Starting the simulator on port {port}...")
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
-            stdout=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
             universal_newlines=True,
@@ -63,7 +63,7 @@ class EmbeddedSimulator(BaseSimulator):
     # --------------------- Simulator Stop ----------------------------------------------------------------------------
 
     @override
-    def stop(self):
+    def stop(self) -> str | None:
         print("Stopping the simulator...")
         self._verify_running()
 
@@ -72,13 +72,16 @@ class EmbeddedSimulator(BaseSimulator):
         self.java_gateway.close()
         self.simulator_process.terminate()
         self.simulator_process.wait()
-        self.simulator_process = None
 
         # Wait for the simulator to stop
         time.sleep(0.1)
         while self.is_running():
             time.sleep(0.1)
         print("Simulator stopped")
+
+        output = self.simulator_process.stdout.read()
+        self.simulator_process = None
+        return output
 
     # --------------------- Simulator Status -------------------------------------------------------------------------
 
