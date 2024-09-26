@@ -23,7 +23,7 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
     """
 
     simulator: BaseSimulator
-    renderer: BaseRenderer
+    renderer: BaseRenderer | None
     last_obs: ObsType | None = None
 
     # --------------------- Reset --------------------------------------------------------------------------------------
@@ -75,8 +75,10 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
             return None
 
         if self.render_mode == "human":
+            assert self.renderer is not None, "Human rendering requires a renderer"
             self.renderer.update(self.last_obs)
         elif self.render_mode == "rgb_array":
+            assert self.renderer is not None, "RGB array rendering requires a renderer"
             return self.renderer.draw(self.last_obs)
         return None
 

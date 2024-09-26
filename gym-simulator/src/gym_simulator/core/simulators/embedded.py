@@ -44,7 +44,7 @@ class EmbeddedSimulator(BaseSimulator):
         port = self.java_gateway.gateway_parameters.port
         print(f"Starting the simulator on port {port}...")
         self.simulator_process = subprocess.Popen(
-            ["java", "-jar", self.simulator_jar_path, "-p", str(port)],
+            ["java", "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
