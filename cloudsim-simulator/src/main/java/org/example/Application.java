@@ -8,6 +8,7 @@ import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.StaticAction;
 import org.example.api.scheduler.gym.types.StaticObservation;
 import org.example.api.executor.LocalWorkflowExecutor;
+import org.example.core.registries.CloudletRegistry;
 import org.example.dataset.Dataset;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
@@ -72,8 +73,12 @@ public class Application implements Callable<Integer> {
         var solution = world.runSimulation();
         System.out.println(solution.toJson());
 
+        // Notify final reward
+        var cloudletRegistry = CloudletRegistry.getInstance();
+        var reward = -cloudletRegistry.getTotalMakespan();
+        gymSharedQueue.setObservation(AgentResult.truncated(reward));
+
         // Stop Py4J connector
-        gymSharedQueue.setObservation(AgentResult.truncated());
         gymThread.join(5000);
         return 0;
     }

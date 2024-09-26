@@ -4,7 +4,6 @@ import lombok.NonNull;
 import org.example.api.dtos.TaskDto;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
-import org.example.api.dtos.WorkflowDto;
 import org.example.api.scheduler.gym.GymEnvironment;
 import org.example.api.scheduler.gym.GymSharedQueue;
 import org.example.api.scheduler.gym.types.AgentResult;
@@ -23,10 +22,7 @@ public class StaticGymSchedulingAlgorithm implements StaticSchedulingAlgorithm {
     }
 
     @Override
-    public List<VmAssignmentDto> schedule(@NonNull List<WorkflowDto> workflows, @NonNull List<VmDto> vms) {
-        var tasks = new ArrayList<TaskDto>();
-        workflows.forEach(workflow -> tasks.addAll(workflow.getTasks()));
-
+    public List<VmAssignmentDto> schedule(@NonNull List<TaskDto> tasks, @NonNull List<VmDto> vms) {
         var observation = new StaticObservation(tasks, vms);
         var action = environment.step(AgentResult.reward(observation, 0));
         return action.getAssignments();

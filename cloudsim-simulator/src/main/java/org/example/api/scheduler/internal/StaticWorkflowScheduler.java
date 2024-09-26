@@ -1,6 +1,7 @@
 package org.example.api.scheduler.internal;
 
 import lombok.NonNull;
+import org.example.api.dtos.TaskDto;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
 import org.example.api.dtos.WorkflowDto;
@@ -46,7 +47,9 @@ public class StaticWorkflowScheduler implements WorkflowScheduler {
             if (workflows.isEmpty() || vms.isEmpty()) {
                 return Optional.empty();
             }
-            schedulingResult = algorithm.schedule(workflows, vms);
+            var tasks = new ArrayList<TaskDto>();
+            workflows.forEach(workflow -> tasks.addAll(workflow.getTasks()));
+            schedulingResult = algorithm.schedule(tasks, vms);
         }
 
         if (schedulingResult.isEmpty()) {

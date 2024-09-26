@@ -18,7 +18,7 @@ public class WorkflowSchedulerFactory {
     /// Create a new WorkflowScheduler instance.
     public WorkflowScheduler create(String algorithm) {
         return switch (algorithm) {
-            case "switch:gym" -> new StaticWorkflowScheduler(new StaticGymSchedulingAlgorithm(staticSharedQueue));
+            case "static:gym" -> new StaticWorkflowScheduler(new StaticGymSchedulingAlgorithm(staticSharedQueue));
             case "static:round-robin" -> new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
             default -> throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
         };

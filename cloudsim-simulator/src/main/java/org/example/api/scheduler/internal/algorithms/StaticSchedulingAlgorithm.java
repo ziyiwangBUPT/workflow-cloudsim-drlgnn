@@ -1,9 +1,9 @@
 package org.example.api.scheduler.internal.algorithms;
 
 import lombok.NonNull;
+import org.example.api.dtos.TaskDto;
 import org.example.api.dtos.VmAssignmentDto;
 import org.example.api.dtos.VmDto;
-import org.example.api.dtos.WorkflowDto;
 
 import java.util.List;
 
@@ -12,5 +12,5 @@ import java.util.List;
 /// Arrival time of workflows and VMs are not considered.
 public interface StaticSchedulingAlgorithm {
     /// Schedules the workflows to the VMs.
-    List<VmAssignmentDto> schedule(@NonNull List<WorkflowDto> workflows, @NonNull List<VmDto> vms);
+    List<VmAssignmentDto> schedule(@NonNull List<TaskDto> tasks, @NonNull List<VmDto> vms);
 }
