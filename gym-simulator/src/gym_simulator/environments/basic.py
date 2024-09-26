@@ -83,7 +83,9 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             simulator_kwargs["dataset_args"]["dag_method"] = "gnp"
             simulator_kwargs["dataset_args"]["gnp_max_n"] = task_limit
 
-            # Set JVM port
+            # Set Simulator args
+            assert "jvm_port" not in simulator_kwargs, "jvm_port is set by the environment"
+            assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
             simulator_kwargs["jvm_port"] = free_port()
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":

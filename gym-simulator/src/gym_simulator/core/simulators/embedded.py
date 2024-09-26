@@ -1,8 +1,10 @@
+import sys
 import json
 import time
 import socket
 import subprocess
 import dataclasses
+import hashlib
 
 from typing import Any, Callable, override
 from py4j.java_gateway import JavaGateway, DEFAULT_PORT, DEFAULT_ADDRESS, GatewayParameters
@@ -24,7 +26,7 @@ class EmbeddedSimulator(BaseSimulator):
     simulator_process: subprocess.Popen | None
     java_gateway: JavaGateway
 
-    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_args: dict[str, Any]):
+    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_args: dict[str, Any], verbose: bool = False):
         self.simulator_jar_path = simulator_jar_path
         self.dataset_args = dataset_args
         self.simulator_process = None
@@ -32,6 +34,8 @@ class EmbeddedSimulator(BaseSimulator):
         gateway_params = GatewayParameters(port=jvm_port)
         self.java_gateway = JavaGateway(gateway_parameters=gateway_params)
         self.env_connector = self.java_gateway.entry_point
+
+        self.verbose = verbose
 
     # --------------------- Simulator Start ---------------------------------------------------------------------------
 
@@ -42,7 +46,6 @@ class EmbeddedSimulator(BaseSimulator):
 
         # Start the simulator process
         port = self.java_gateway.gateway_parameters.port
-        print(f"Starting the simulator on port {port}...")
         self.simulator_process = subprocess.Popen(
             ["java", "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
             stdout=subprocess.PIPE,
@@ -58,13 +61,12 @@ class EmbeddedSimulator(BaseSimulator):
         time.sleep(0.1)
         while not self.is_running():
             time.sleep(0.1)
-        print(f"Simulator started with PID: {self.simulator_process.pid}")
+        self._print_if_verbose(f"Simulator started with PID: {self.simulator_process.pid} on port {port}")
 
     # --------------------- Simulator Stop ----------------------------------------------------------------------------
 
     @override
     def stop(self) -> str | None:
-        print("Stopping the simulator...")
         self._verify_running()
 
         # Terminate the simulator process
@@ -77,9 +79,10 @@ class EmbeddedSimulator(BaseSimulator):
         time.sleep(0.1)
         while self.is_running():
             time.sleep(0.1)
-        print("Simulator stopped")
+        self._print_if_verbose(f"Simulator stopped with PID: {self.simulator_process.pid}")
 
         output = self.simulator_process.stdout.read()
+        self._print_if_verbose(self.simulator_process.stderr.read(), file=sys.stderr)
         self.simulator_process = None
         return output
 
@@ -152,4 +155,12 @@ class EmbeddedSimulator(BaseSimulator):
             task_arrival=self.dataset_args.get("task_arrival", default_args.task_arrival),
             arrival_rate=self.dataset_args.get("arrival_rate", default_args.arrival_rate),
         )
-        return json.dumps(dataclasses.asdict(dataset))
+        json_str = json.dumps(dataclasses.asdict(dataset))
+        hash_obj = hashlib.md5(json_str.encode())
+        hash_str = hash_obj.hexdigest()
+        self._print_if_verbose(f"Generated dataset with hash: {hash_str}")
+        return json_str
+
+    def _print_if_verbose(self, *args, **kwargs):
+        if self.verbose:
+            print(*args, **kwargs)

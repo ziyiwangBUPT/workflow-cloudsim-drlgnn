@@ -1,12 +1,14 @@
 import tyro
 import json
 import dataclasses
+import random
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
-from gym_simulator.algorithms.heuristics import round_robin, best_fit
+from gym_simulator.algorithms.heuristics import round_robin, best_fit, min_min, max_min
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
 
@@ -22,13 +24,16 @@ class Args:
     """number of VMs"""
     workflow_count: int = 20
     """number of workflows"""
-    task_limit: int = 30
+    task_limit: int = 20
     """maximum number of tasks"""
     algorithm: str = "round_robin"
     """algorithm to use"""
 
 
 def main(args: Args):
+    random.seed(0)
+    np.random.seed(0)
+
     env = StaticCloudSimEnvironment(
         env_config={
             "host_count": args.host_count,
@@ -36,7 +41,7 @@ def main(args: Args):
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator},
+            "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": True},
             "render_mode": args.render_mode,
         },
     )
@@ -46,6 +51,10 @@ def main(args: Args):
         algorithm = round_robin
     elif args.algorithm == "best_fit":
         algorithm = best_fit
+    elif args.algorithm == "min_min":
+        algorithm = min_min
+    elif args.algorithm == "max_min":
+        algorithm = max_min
     else:
         raise ValueError(f"Unknown algorithm: {args.algorithm}")
 
