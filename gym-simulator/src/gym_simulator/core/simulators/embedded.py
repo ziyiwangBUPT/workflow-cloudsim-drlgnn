@@ -172,8 +172,6 @@ class EmbeddedSimulator(BaseSimulator):
         json_str = json.dumps(dataclasses.asdict(dataset))
         hash_obj = hashlib.md5(json_str.encode())
         hash_str = hash_obj.hexdigest()
-        with open("sa.txt", "w") as f:
-            f.write(json_str)
         self._print_if_verbose(f"Generated dataset with hash: {hash_str}")
         return json_str
 
