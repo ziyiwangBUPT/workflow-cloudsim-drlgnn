@@ -29,8 +29,6 @@ class RemoteSimulator(BaseSimulator):
 
     @override
     def stop(self) -> str | None:
-        while self.is_running():
-            time.sleep(0.1)
         self.java_gateway.close()
         return None
 
@@ -49,8 +47,6 @@ class RemoteSimulator(BaseSimulator):
 
     @override
     def reset(self) -> Any:
-        if self.is_running():
-            self.stop()
         self.start()
 
         return self.env_connector.reset()

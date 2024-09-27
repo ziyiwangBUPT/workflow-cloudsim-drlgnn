@@ -120,7 +120,7 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
                 ax.text(
                     x=assigned_task.start_time + (assigned_task.end_time - assigned_task.start_time) / 2,
                     y=int(assigned_task.vm_id),
-                    s=f"W{workflow.id}\nT{task.id}",
+                    s=f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_cores} vCPU\n{assigned_task.end_time - assigned_task.start_time:.0f}s",
                     ha="center",
                     va="center",
                 )

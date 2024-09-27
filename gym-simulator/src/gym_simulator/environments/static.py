@@ -8,10 +8,11 @@ from gym_simulator.environments.basic import BasicCloudSimEnvironment
 class StaticCloudSimEnvironment(BasicCloudSimEnvironment):
     def __init__(self, env_config: dict[str, Any]):
         # Override args
-        simulator_kwargs = env_config.get("simulator_kwargs", {})
-        simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
-        assert "task_arrival" not in simulator_kwargs["dataset_args"], "task_arrival is set by the environment"
-        simulator_kwargs["dataset_args"]["task_arrival"] = "static"
+        if env_config["simulator_mode"] == "embedded":
+            simulator_kwargs = env_config.get("simulator_kwargs", {})
+            simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
+            assert "task_arrival" not in simulator_kwargs["dataset_args"], "task_arrival is set by the environment"
+            simulator_kwargs["dataset_args"]["task_arrival"] = "static"
 
         super().__init__(env_config)
         del self.observation_space

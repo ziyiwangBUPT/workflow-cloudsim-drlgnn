@@ -26,7 +26,14 @@ class EmbeddedSimulator(BaseSimulator):
     simulator_process: subprocess.Popen | None
     java_gateway: JavaGateway
 
-    def __init__(self, jvm_port: int, simulator_jar_path: str, dataset_args: dict[str, Any], verbose: bool = False):
+    def __init__(
+        self,
+        jvm_port: int,
+        simulator_jar_path: str,
+        dataset_args: dict[str, Any],
+        verbose: bool = False,
+        remote_debug: bool = False,
+    ):
         self.simulator_jar_path = simulator_jar_path
         self.dataset_args = dataset_args
         self.simulator_process = None
@@ -36,6 +43,7 @@ class EmbeddedSimulator(BaseSimulator):
         self.env_connector = self.java_gateway.entry_point
 
         self.verbose = verbose
+        self.remote_debug = remote_debug
 
     # --------------------- Simulator Start ---------------------------------------------------------------------------
 
@@ -46,8 +54,10 @@ class EmbeddedSimulator(BaseSimulator):
 
         # Start the simulator process
         port = self.java_gateway.gateway_parameters.port
+        java_args = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"] if self.remote_debug else []
+
         self.simulator_process = subprocess.Popen(
-            ["java", "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
+            ["java", *java_args, "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
@@ -56,6 +66,10 @@ class EmbeddedSimulator(BaseSimulator):
         dataset_json = self._generate_dataset_json()
         assert self.simulator_process.stdin is not None
         self.simulator_process.stdin.write(dataset_json + "\n")
+        self.simulator_process.stdin.flush()
+        if self.remote_debug:
+            # The first line is the JVM listening message
+            print(self.simulator_process.stdout.readline())
 
         # Wait for the simulator to start
         time.sleep(0.1)
@@ -158,6 +172,8 @@ class EmbeddedSimulator(BaseSimulator):
         json_str = json.dumps(dataclasses.asdict(dataset))
         hash_obj = hashlib.md5(json_str.encode())
         hash_str = hash_obj.hexdigest()
+        with open("sa.txt", "w") as f:
+            f.write(json_str)
         self._print_if_verbose(f"Generated dataset with hash: {hash_str}")
         return json_str
 

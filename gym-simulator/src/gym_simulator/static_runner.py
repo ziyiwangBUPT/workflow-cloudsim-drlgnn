@@ -41,7 +41,7 @@ def main(args: Args):
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": True},
+            "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": True, "remote_debug": False},
             "render_mode": args.render_mode,
         },
     )
@@ -66,12 +66,12 @@ def main(args: Args):
 
     # Render the output if available
     print("Reward:", reward)
-    if "output" in info:
+    if info.get("output") is not None:
         dataset_str = info["output"]
         _, ax = plt.subplots()
         dataset_dict = json.loads(dataset_str)
         solution = Solution.from_json(dataset_dict)
-        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=False)
+        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
         plt.title(f"Algorithm: {args.algorithm}")
         plt.show()
 
