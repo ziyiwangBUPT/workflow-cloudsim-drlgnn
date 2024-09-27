@@ -48,25 +48,24 @@ def best_fit(tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
     assignments: list[VmAssignmentDto] = []
 
     for task in tasks:
-        print(f"Task {task.id} with {task.req_memory_mb} cores")
         best_vm_index = None
-        best_vm_additional_cores = float("inf")
+        best_vm_allocation = float("inf")
         for vm_index, vm in enumerate(vms):
             if not is_vm_suitable(vm, task):
                 continue
-            additional_cores = vm.memory_mb - task.req_memory_mb
-            assert additional_cores >= 0, "Task requires more cores than the VM has"
+            vm_allocation = task.req_memory_mb / vm.memory_mb
+            assert 0 <= vm_allocation <= 1, f"Invalid VM allocation: {vm_allocation}"
 
             # If the current VM has a better fit, update the best VM
-            if best_vm_index is None or additional_cores < best_vm_additional_cores:
+            if best_vm_index is None or vm_allocation > best_vm_allocation:
                 best_vm_index = vm_index
-                best_vm_additional_cores = additional_cores
+                best_vm_allocation = vm_allocation
 
-            # If the current VM has the same remaining cores, check the estimated completion time
-            elif additional_cores == best_vm_additional_cores:
+            # If the current VM has the same memory, check the estimated completion time
+            elif vm_allocation == best_vm_allocation:
                 if est_vm_completion_times[vm_index] < est_vm_completion_times[best_vm_index]:
                     best_vm_index = vm_index
-                    best_vm_additional_cores = additional_cores
+                    best_vm_allocation = vm_allocation
 
         if best_vm_index is None:
             raise Exception("No VM found for task")
@@ -82,10 +81,6 @@ def best_fit(tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
         est_vm_completion_times[best_vm_index] = est_end_time
         for child_id in task.child_ids:
             est_task_start_times[(task.workflow_id, child_id)] = est_end_time
-
-        print(f"Assigned to VM {vms[best_vm_index].id} with {best_vm_additional_cores} cores remaining")
-        print(f"Estimated completion time: {est_end_time}")
-        print()
 
     return assignments
 
