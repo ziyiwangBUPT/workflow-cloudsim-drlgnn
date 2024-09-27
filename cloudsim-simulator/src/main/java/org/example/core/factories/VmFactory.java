@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Vm;
 import org.example.core.entities.CloudletSchedulerTimeSharedFixed;
+import org.example.core.registries.VmRegistry;
 import org.example.dataset.DatasetVm;
 
 import java.util.ArrayList;
@@ -33,6 +34,9 @@ public class VmFactory {
             var vm = createVm(brokerId, datasetVm);
             vmList.add(vm);
         }
+
+        var vmRegistry = VmRegistry.getInstance();
+        vmRegistry.registerNewVms(vmList);
         return vmList;
     }
 }

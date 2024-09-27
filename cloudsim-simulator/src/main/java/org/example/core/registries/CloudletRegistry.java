@@ -76,6 +76,8 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
 
     @Override
     protected SummaryTable<Cloudlet> buildSummaryTable() {
+        var vmRegistry = VmRegistry.getInstance();
+
         var summaryTable = new SummaryTable<Cloudlet>();
 
         summaryTable.addColumn("Cloudlet", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, Cloudlet::getCloudletId);
@@ -86,6 +88,7 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
         summaryTable.addColumn("Start Time", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, Cloudlet::getExecStartTime);
         summaryTable.addColumn("End Time  ", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, Cloudlet::getExecFinishTime);
         summaryTable.addColumn("Makespan  ", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, cloudlet -> cloudlet.isFinished() ? cloudlet.getExecFinishTime() - cloudlet.getExecStartTime() : 0);
+        summaryTable.addColumn("Estimated Makespan", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, cloudlet -> vmRegistry.estimateMakespan(cloudlet.getGuestId(), cloudlet.getCloudletLength()));
 
         return summaryTable;
     }
