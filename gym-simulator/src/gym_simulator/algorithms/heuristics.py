@@ -45,10 +45,13 @@ class RoundRobinScheduler(AbstractHeuristicScheduler):
             self.processed_tasks.add(workflow_task_id)
             task = self.task_map[workflow_task_id]
 
+            # Find the suitable VM in round-robin manner
             while not is_vm_suitable(self.vms[vm_index], task):
                 vm_index = (vm_index + 1) % len(self.vms)
 
+            # Save assignment
             assignments.append(VmAssignmentDto(self.vms[vm_index].id, task.workflow_id, task.id))
+            # Increment index since we want to start with next index in next iteration
             vm_index = (vm_index + 1) % len(self.vms)
 
             self.add_child_tasks(task)
@@ -66,6 +69,7 @@ class BestFitScheduler(AbstractHeuristicScheduler):
             self.processed_tasks.add(workflow_task_id)
             task = self.task_map[workflow_task_id]
 
+            # Best VM is the one with highest allocation (best fitting)
             best_vm_index = None
             best_vm_allocation = float("inf")
             for vm_index, vm in enumerate(self.vms):
@@ -88,6 +92,115 @@ class BestFitScheduler(AbstractHeuristicScheduler):
             if best_vm_index is None:
                 raise Exception("No VM found for task")
 
+            # Save assignment
+            assignments.append(VmAssignmentDto(self.vms[best_vm_index].id, task.workflow_id, task.id))
+
+            # Update the estimated completion times and task start times
+            est_process_time = task.length / self.vms[best_vm_index].cpu_speed_mips
+            est_end_time = (
+                max(est_vm_completion_times[best_vm_index], est_task_start_times[workflow_task_id]) + est_process_time
+            )
+            est_vm_completion_times[best_vm_index] = est_end_time
+            for child_id in task.child_ids:
+                est_task_start_times[(task.workflow_id, child_id)] = est_end_time
+            self.add_child_tasks(task)
+
+        return assignments
+
+
+class MinMinScheduler(AbstractHeuristicScheduler):
+    def schedule(self) -> list[VmAssignmentDto]:
+        assignments: list[VmAssignmentDto] = []
+        est_vm_completion_times = [0] * len(self.vms)
+        est_task_start_times = {(task.workflow_id, task.id): 0 for task in self.tasks}
+
+        while self.ready_tasks:
+            smallest_task_index = -1
+            smallest_task_length = float("inf")
+            for i, workflow_task_id in enumerate(self.ready_tasks):
+                task = self.task_map[workflow_task_id]
+                if task.length < smallest_task_length:
+                    smallest_task_length = task.length
+                    smallest_task_index = i
+            assert smallest_task_index != -1
+
+            workflow_task_id = self.ready_tasks[smallest_task_index]
+            del self.ready_tasks[smallest_task_index]
+            self.processed_tasks.add(workflow_task_id)
+            task = self.task_map[workflow_task_id]
+
+            best_vm_index = None
+            best_vm_completion_time = float("inf")
+            for vm_index, vm in enumerate(self.vms):
+                if not is_vm_suitable(vm, task):
+                    continue
+
+                completion_time = (
+                    max(est_vm_completion_times[vm_index], est_task_start_times[workflow_task_id])
+                    + task.length / vm.cpu_speed_mips
+                )
+                if best_vm_completion_time > completion_time:
+                    best_vm_index = vm_index
+                    best_vm_completion_time = completion_time
+
+            if best_vm_index is None:
+                raise Exception("No VM found for task")
+
+            # Save assignment
+            assignments.append(VmAssignmentDto(self.vms[best_vm_index].id, task.workflow_id, task.id))
+
+            # Update the estimated completion times and task start times
+            est_process_time = task.length / self.vms[best_vm_index].cpu_speed_mips
+            est_end_time = (
+                max(est_vm_completion_times[best_vm_index], est_task_start_times[workflow_task_id]) + est_process_time
+            )
+            est_vm_completion_times[best_vm_index] = est_end_time
+            for child_id in task.child_ids:
+                est_task_start_times[(task.workflow_id, child_id)] = est_end_time
+            self.add_child_tasks(task)
+
+        return assignments
+
+
+class MaxMinScheduler(AbstractHeuristicScheduler):
+    def schedule(self) -> list[VmAssignmentDto]:
+        assignments: list[VmAssignmentDto] = []
+        est_vm_completion_times = [0] * len(self.vms)
+        est_task_start_times = {(task.workflow_id, task.id): 0 for task in self.tasks}
+
+        while self.ready_tasks:
+            largest_task_index = -1
+            largest_task_length = -float("inf")
+            for i, workflow_task_id in enumerate(self.ready_tasks):
+                task = self.task_map[workflow_task_id]
+                if task.length > largest_task_length:
+                    largest_task_length = task.length
+                    largest_task_index = i
+            assert largest_task_index != -1
+
+            workflow_task_id = self.ready_tasks[largest_task_index]
+            del self.ready_tasks[largest_task_index]
+            self.processed_tasks.add(workflow_task_id)
+            task = self.task_map[workflow_task_id]
+
+            best_vm_index = None
+            best_vm_completion_time = float("inf")
+            for vm_index, vm in enumerate(self.vms):
+                if not is_vm_suitable(vm, task):
+                    continue
+
+                completion_time = (
+                    max(est_vm_completion_times[vm_index], est_task_start_times[workflow_task_id])
+                    + task.length / vm.cpu_speed_mips
+                )
+                if best_vm_completion_time > completion_time:
+                    best_vm_index = vm_index
+                    best_vm_completion_time = completion_time
+
+            if best_vm_index is None:
+                raise Exception("No VM found for task")
+
+            # Save assignment
             assignments.append(VmAssignmentDto(self.vms[best_vm_index].id, task.workflow_id, task.id))
 
             # Update the estimated completion times and task start times
