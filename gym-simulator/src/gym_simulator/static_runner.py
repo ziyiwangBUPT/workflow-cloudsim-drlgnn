@@ -28,6 +28,8 @@ class Args:
     """maximum number of tasks"""
     algorithm: str = "round_robin"
     """algorithm to use"""
+    remote_debug: bool = False
+    """enable remote debugging"""
 
 
 def main(args: Args):
@@ -41,7 +43,11 @@ def main(args: Args):
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": True, "remote_debug": False},
+            "simulator_kwargs": {
+                "simulator_jar_path": args.simulator,
+                "verbose": True,
+                "remote_debug": args.remote_debug,
+            },
             "render_mode": args.render_mode,
         },
     )
