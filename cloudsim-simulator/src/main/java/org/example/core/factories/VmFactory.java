@@ -2,8 +2,8 @@ package org.example.core.factories;
 
 import lombok.Builder;
 import lombok.NonNull;
-import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
 import org.cloudbus.cloudsim.Vm;
+import org.example.core.entities.CloudletSchedulerTimeSharedFixed;
 import org.example.dataset.DatasetVm;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class VmFactory {
         var vmSizeMb = datasetVm.getDiskMb(); // MB
         var vmVmm = datasetVm.getVmm();
 
-        var cloudletScheduler = new CloudletSchedulerTimeShared();
+        var cloudletScheduler = new CloudletSchedulerTimeSharedFixed();
         return new Vm(id, brokerId, vmSpeed, vmCores,
                 vmRamMb, vmBwMbps, vmSizeMb, vmVmm, cloudletScheduler);
     }

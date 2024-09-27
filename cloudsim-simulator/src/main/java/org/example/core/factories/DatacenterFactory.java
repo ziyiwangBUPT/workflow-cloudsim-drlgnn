@@ -3,6 +3,8 @@ package org.example.core.factories;
 import lombok.Builder;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.*;
+import org.example.core.entities.DatasetVmAllocationPolicy;
+import org.example.dataset.DatasetVm;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,11 +39,12 @@ public class DatacenterFactory {
     private final int schedulingInterval = 1;
 
     /// Creates a data center with the specified hosts.
-    public Datacenter createDatacenter(@NonNull List<? extends Host> hosts, VmAllocationPolicy vmAllocationPolicy) {
+    public Datacenter createDatacenter(@NonNull List<? extends Host> hosts, List<DatasetVm> datasetVms) {
         var name = String.format("DC-%d", CURRENT_DC_ID.getAndIncrement());
         var characteristics = new DatacenterCharacteristics(dcArchitecture, dcOperatingSystem, dcVmm, hosts, dcTimezone,
                 costPerCpu, costPerMem, costPerStorage, costPerBw);
         try {
+            var vmAllocationPolicy = new DatasetVmAllocationPolicy(hosts, datasetVms);
             return new Datacenter(name, characteristics, vmAllocationPolicy, List.of(), schedulingInterval);
         } catch (Exception e) {
             Log.println("Failed to create data center");

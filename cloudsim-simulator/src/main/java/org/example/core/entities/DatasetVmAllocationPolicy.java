@@ -1,4 +1,4 @@
-package org.example.dataset.allocation;
+package org.example.core.entities;
 
 import org.cloudbus.cloudsim.VmAllocationPolicy;
 import org.cloudbus.cloudsim.core.GuestEntity;

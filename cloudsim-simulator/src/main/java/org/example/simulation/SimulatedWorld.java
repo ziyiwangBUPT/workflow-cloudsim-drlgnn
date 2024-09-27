@@ -8,7 +8,6 @@ import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
-import org.example.dataset.allocation.DatasetVmAllocationPolicy;
 import org.example.sensors.TaskStateSensor;
 import org.example.simulation.listeners.WorkflowCoordinator;
 import org.example.simulation.listeners.UtilizationUpdater;
@@ -49,8 +48,7 @@ public class SimulatedWorld {
         this.broker = brokerFactory.createBroker();
         var hosts = hostFactory.createHosts(dataset.getHosts());
         var vms = vmFactory.createVms(broker.getId(), dataset.getVms());
-        var vmAllocationPolicy = new DatasetVmAllocationPolicy(hosts, dataset.getVms());
-        var ignoredDc = datacenterFactory.createDatacenter(hosts, vmAllocationPolicy);
+        var ignoredDc = datacenterFactory.createDatacenter(hosts, dataset.getVms());
 
         // Submits the VM list to the broker
         broker.submitGuestList(vms);
