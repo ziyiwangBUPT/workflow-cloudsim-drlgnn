@@ -69,6 +69,7 @@ class EmbeddedSimulator(BaseSimulator):
         self.simulator_process.stdin.flush()
         if self.remote_debug:
             # The first line is the JVM listening message
+            assert self.simulator_process.stdout is not None
             print(self.simulator_process.stdout.readline())
 
         # Wait for the simulator to start
@@ -95,6 +96,8 @@ class EmbeddedSimulator(BaseSimulator):
             time.sleep(0.1)
         self._print_if_verbose(f"Simulator stopped with PID: {self.simulator_process.pid}")
 
+        assert self.simulator_process.stdout is not None
+        assert self.simulator_process.stderr is not None
         output = self.simulator_process.stdout.read()
         self._print_if_verbose(self.simulator_process.stderr.read(), file=sys.stderr)
         self.simulator_process = None
