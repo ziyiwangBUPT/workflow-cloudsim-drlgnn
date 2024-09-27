@@ -112,7 +112,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                     "id": int(task.getId()),
                     "workflow_id": int(task.getWorkflowId()),
                     "length": int(task.getLength()),
-                    "req_cores": int(task.getReqCores()),
+                    "req_memory_mb": int(task.getReqMemoryMb()),
                     "child_ids": [int(child) for child in task.getChildIds()],
                 }
                 for task in obs.getTasks()
@@ -120,7 +120,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             "vms": [
                 {
                     "id": int(vm.getId()),
-                    "cores": int(vm.getCores()),
+                    "memory_mb": int(vm.getMemoryMb()),
                     "cpu_speed_mips": float(vm.getCpuSpeedMips()),
                     "host_power_idle_watt": float(vm.getHost().getPowerIdleWatt()),
                     "host_power_peak_watt": float(vm.getHost().getPowerPeakWatt()),

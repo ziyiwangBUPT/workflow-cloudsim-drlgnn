@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class VmDto:
     id: int
-    cores: int
+    memory_mb: int
     cpu_speed_mips: float
     host_power_idle_watt: float
     host_power_peak_watt: float
@@ -15,7 +15,7 @@ class TaskDto:
     id: int
     workflow_id: int
     length: int
-    req_cores: int
+    req_memory_mb: int
     child_ids: list[int]
 
 

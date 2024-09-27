@@ -6,7 +6,6 @@ import lombok.Data;
 public class DatasetVm {
     private final int id;
     private final int hostId;
-    private final int cores;
     private final int cpuSpeedMips;
     private final int memoryMb;
     private final int diskMb;

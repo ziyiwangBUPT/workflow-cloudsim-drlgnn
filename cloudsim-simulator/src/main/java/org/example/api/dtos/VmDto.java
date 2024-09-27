@@ -11,7 +11,6 @@ import org.example.core.entities.MonitoredHost;
 public class VmDto {
     private final int id;
     private final HostDto host;
-    private final int cores;
     private final double cpuSpeedMips;
     private final int memoryMb;
     private final long diskMb;
@@ -33,7 +32,6 @@ public class VmDto {
                         .powerIdleWatt(host.getPowerModel().getPower(0))
                         .powerPeakWatt(host.getPowerModel().getPower(1))
                         .build())
-                .cores(vm.getNumberOfPes())
                 .cpuSpeedMips(vm.getMips())
                 .memoryMb(vm.getRam())
                 .diskMb(vm.getSize())
@@ -43,6 +41,6 @@ public class VmDto {
     }
 
     public boolean canRunTask(TaskDto task) {
-        return task.getReqCores() <= cores;
+        return task.getReqMemoryMb() <= memoryMb;
     }
 }

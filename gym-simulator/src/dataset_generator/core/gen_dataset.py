@@ -6,7 +6,7 @@ from dataset_generator.core.gen_vm import generate_hosts, generate_vms, allocate
 def generate_dataset(
     host_count: int,
     vm_count: int,
-    max_cores: int,
+    max_memory_gb: int,
     min_cpu_speed_mips: int,
     max_cpu_speed_mips: int,
     workflow_count: int,
@@ -24,7 +24,7 @@ def generate_dataset(
     """
 
     hosts = generate_hosts(host_count)
-    vms = generate_vms(vm_count, max_cores, min_cpu_speed_mips, max_cpu_speed_mips)
+    vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips)
     allocate_vms(vms, hosts)
 
     workflows = generate_workflows(
@@ -36,7 +36,7 @@ def generate_dataset(
         min_task_length=min_task_length,
         max_task_length=max_task_length,
         # Make sure that the problem is feasible
-        max_req_cores=max(vm.cores for vm in vms),
+        max_req_memory_mb=max(vm.memory_mb for vm in vms),
         task_arrival=task_arrival,
         arrival_rate=arrival_rate,
     )

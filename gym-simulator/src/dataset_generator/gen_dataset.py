@@ -16,8 +16,8 @@ class Args:
     """number of hosts"""
     vm_count: int = 4
     """number of VMs"""
-    max_cores: int = 10
-    """maximum number of cores per VM"""
+    max_memory_gb: int = 10
+    """maximum amount of RAM for a VM (in GB)"""
     min_cpu_speed: int = 500
     """minimum CPU speed in MIPS"""
     max_cpu_speed: int = 5000
@@ -49,7 +49,7 @@ def main(args: Args):
     dataset = generate_dataset(
         host_count=args.host_count,
         vm_count=args.vm_count,
-        max_cores=args.max_cores,
+        max_memory_gb=args.max_memory_gb,
         min_cpu_speed_mips=args.min_cpu_speed,
         max_cpu_speed_mips=args.max_cpu_speed,
         workflow_count=args.workflow_count,

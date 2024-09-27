@@ -32,7 +32,7 @@ def plot_workflow_graphs(G: nx.DiGraph, workflows: list[Workflow]) -> pgv.AGraph
     for workflow in workflows:
         for task in workflow.tasks:
             node_id = get_node_id(workflow.id, task.id)
-            node_label = f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_cores} vCPU"
+            node_label = f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_memory_mb // 1024} GB"
             node_color = color(workflow.id)
             G.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial")
             for child_id in task.child_ids:
@@ -68,7 +68,7 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
         workflow_id, task_id = processing.pop()
         task = task_map[(workflow_id, task_id)]
         node_id = get_node_id(workflow_id, task_id)
-        node_label = f"W{workflow_id} T{task_id}\n{task.length} MI\n{task.req_cores} vCPU"
+        node_label = f"W{workflow_id} T{task_id}\n{task.length} MI\n{task.req_memory_mb//1024} GB"
         node_color = color(workflow_id)
         G.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial", shape="box")
         for child_id in task.child_ids:
@@ -83,7 +83,7 @@ def plot_execution_graph(G: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
     # Add subgraphs for each VM
     for vm in vms:
         if vm_nodes[vm.id]:
-            label = f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU"
+            label = f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{vm.memory_mb // 1024} GB"
             A.add_subgraph(vm_nodes[vm.id], name=f"cluster_{vm.id}", style="dashed", fontname="Arial", label=label)
     for node_id in no_vm_nodes:
         A.add_subgraph(node_id, name="cluster_no_vm", style="dashed", fontname="Arial", label="Unscheduled")
@@ -120,13 +120,13 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
                 ax.text(
                     x=assigned_task.start_time + (assigned_task.end_time - assigned_task.start_time) / 2,
                     y=int(assigned_task.vm_id),
-                    s=f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_cores} vCPU\n{assigned_task.end_time - assigned_task.start_time:.0f}s",
+                    s=f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_memory_mb // 1024} GB\n{assigned_task.end_time - assigned_task.start_time:.0f}s",
                     ha="center",
                     va="center",
                 )
 
     ax.set_yticks(range(len(vms)))
-    ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{int(vm.cores)} vCPU" for vm in vms])
+    ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{vm.memory_mb // 1024} GB" for vm in vms])
     ax.set_xlabel("Time")
 
 

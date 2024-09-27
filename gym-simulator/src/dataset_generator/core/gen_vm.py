@@ -37,17 +37,17 @@ def generate_hosts(n: int) -> list[Host]:
     return hosts
 
 
-def generate_vms(n: int, max_cores: int, min_cpu_speed_mips: int, max_cpu_speed_mips: int) -> list[Vm]:
+def generate_vms(n: int, max_memory_gb: int, min_cpu_speed_mips: int, max_cpu_speed_mips: int) -> list[Vm]:
     """
     Generate a list of VMs with the specified number of VMs.
     """
 
     vms = []
     for i in range(n):
-        cores = random.randint(1, max_cores)
+        ram_mb = random.randint(1, max_memory_gb) * 1024
         cpu_speed = random.randint(min_cpu_speed_mips, max_cpu_speed_mips)
         host_id = -1  # Unallocated
-        vms.append(Vm(i, host_id, cores, cpu_speed, memory_mb=512, disk_mb=1024, bandwidth_mbps=50, vmm="Xen"))
+        vms.append(Vm(i, host_id, cpu_speed, memory_mb=ram_mb, disk_mb=1024, bandwidth_mbps=50, vmm="Xen"))
     return vms
 
 

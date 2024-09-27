@@ -6,7 +6,7 @@ class Task:
     id: int
     workflow_id: int
     length: int
-    req_cores: int
+    req_memory_mb: int
     child_ids: list[int]
 
 
@@ -26,7 +26,6 @@ class Workflow:
 class Vm:
     id: int
     host_id: int
-    cores: int
     cpu_speed_mips: int
     memory_mb: int
     disk_mb: int

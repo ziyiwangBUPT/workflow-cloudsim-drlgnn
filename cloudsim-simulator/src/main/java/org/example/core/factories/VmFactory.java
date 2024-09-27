@@ -15,7 +15,7 @@ public class VmFactory {
     private Vm createVm(int brokerId, @NonNull DatasetVm datasetVm) {
         var id = datasetVm.getId();
         var vmSpeed = datasetVm.getCpuSpeedMips(); // MIPS
-        var vmCores = datasetVm.getCores(); // vCPUs
+        var vmCores = 1; // We assume all VMs have 1 core
         var vmRamMb = datasetVm.getMemoryMb(); // MB
         var vmBwMbps = datasetVm.getBandwidthMbps(); // Mbit/s
         var vmSizeMb = datasetVm.getDiskMb(); // MB

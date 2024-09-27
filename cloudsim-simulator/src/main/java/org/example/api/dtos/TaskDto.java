@@ -11,6 +11,6 @@ public class TaskDto {
     private final int id;
     private final int workflowId;
     private final int length;
-    private final int reqCores;
+    private final int reqMemoryMb;
     private final List<Integer> childIds;
 }

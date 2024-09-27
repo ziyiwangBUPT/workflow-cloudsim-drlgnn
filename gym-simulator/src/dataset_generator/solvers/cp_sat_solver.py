@@ -12,7 +12,7 @@ def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]
     """
 
     def is_assignable(task: Task, vm: Vm):
-        return vm.cores >= task.req_cores
+        return vm.memory_mb >= task.req_memory_mb
 
     def runtime(task_length: int, vm_speed: int):
         return int(task_length / vm_speed)

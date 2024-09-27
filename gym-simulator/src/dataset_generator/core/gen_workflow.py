@@ -12,7 +12,7 @@ def generate_workflows(
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
-    max_req_cores: int,
+    max_req_memory_mb: int,
     task_arrival: str,
     arrival_rate: float,
 ) -> list[Workflow]:
@@ -26,8 +26,8 @@ def generate_workflows(
     def task_length_gen() -> int:
         return int(generate_task_length(task_length_dist, min_task_length, max_task_length))
 
-    def req_cores_gen() -> int:
-        return random.randint(1, max_req_cores)
+    def req_memory_gen() -> int:
+        return random.randint(1, max_req_memory_mb // 1024) * 1024
 
     def dag_gen() -> dict[int, set[int]]:
         return generate_dag(dag_method, gnp_min_n=gnp_min_n, gnp_max_n=gnp_max_n)
@@ -41,7 +41,7 @@ def generate_workflows(
                 id=task_id,
                 workflow_id=workflow_id,
                 length=task_length_gen(),
-                req_cores=req_cores_gen(),
+                req_memory_mb=req_memory_gen(),
                 child_ids=list(child_ids),
             )
             for task_id, child_ids in dag.items()

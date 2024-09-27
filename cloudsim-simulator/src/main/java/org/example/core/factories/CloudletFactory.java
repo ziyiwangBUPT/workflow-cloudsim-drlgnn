@@ -25,7 +25,7 @@ public class CloudletFactory {
         try {
             var cloudletId = CLOUDLET_ID.getAndIncrement();
             var cloudletLength = datasetTask.getLength();
-            var pesNumber = datasetTask.getReqCores();
+            var pesNumber = 1; // We assume all cloudlets have 1 PE
             var utilizationModel = new UtilizationModelFull();
 
             // Create cloudlet

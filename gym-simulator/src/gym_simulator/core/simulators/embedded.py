@@ -156,7 +156,7 @@ class EmbeddedSimulator(BaseSimulator):
         dataset = generate_dataset(
             host_count=self.dataset_args.get("host_count", default_args.host_count),
             vm_count=self.dataset_args.get("vm_count", default_args.vm_count),
-            max_cores=self.dataset_args.get("max_cores", default_args.max_cores),
+            max_memory_gb=self.dataset_args.get("max_memory_gb", default_args.max_memory_gb),
             min_cpu_speed_mips=self.dataset_args.get("min_cpu_speed", default_args.min_cpu_speed),
             max_cpu_speed_mips=self.dataset_args.get("max_cpu_speed", default_args.max_cpu_speed),
             workflow_count=self.dataset_args.get("workflow_count", default_args.workflow_count),

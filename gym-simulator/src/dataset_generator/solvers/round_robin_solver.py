@@ -9,7 +9,7 @@ def solve_round_robin(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssign
     """
 
     def is_assignable(task: Task, vm: Vm):
-        return vm.cores >= task.req_cores
+        return vm.cores >= task.req_memory_mb
 
     def runtime(task_length: int, vm_speed: int):
         return int(task_length / vm_speed)

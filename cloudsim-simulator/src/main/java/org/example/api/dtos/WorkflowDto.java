@@ -22,7 +22,7 @@ public class WorkflowDto {
                                 .id(task.getId())
                                 .workflowId(task.getWorkflowId())
                                 .length(task.getLength())
-                                .reqCores(task.getReqCores())
+                                .reqMemoryMb(task.getReqMemoryMb())
                                 .childIds(task.getChildIds())
                                 .build()
                 ).collect(Collectors.toList()))
