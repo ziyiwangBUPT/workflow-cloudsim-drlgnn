@@ -37,13 +37,12 @@ public class DatacenterFactory {
     private final int schedulingInterval = 1;
 
     /// Creates a data center with the specified hosts.
-    public Datacenter createDatacenter(@NonNull List<? extends Host> hosts) {
+    public Datacenter createDatacenter(@NonNull List<? extends Host> hosts, VmAllocationPolicy vmAllocationPolicy) {
         var name = String.format("DC-%d", CURRENT_DC_ID.getAndIncrement());
         var characteristics = new DatacenterCharacteristics(dcArchitecture, dcOperatingSystem, dcVmm, hosts, dcTimezone,
                 costPerCpu, costPerMem, costPerStorage, costPerBw);
-        var allocationPolicy = new VmAllocationPolicySimple(hosts);
         try {
-            return new Datacenter(name, characteristics, allocationPolicy, List.of(), schedulingInterval);
+            return new Datacenter(name, characteristics, vmAllocationPolicy, List.of(), schedulingInterval);
         } catch (Exception e) {
             Log.println("Failed to create data center");
             throw new RuntimeException(e);

@@ -5,7 +5,6 @@ import lombok.NonNull;
 import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
 import org.cloudbus.cloudsim.Vm;
 import org.example.dataset.DatasetVm;
-import org.example.core.registries.HostRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +28,9 @@ public class VmFactory {
 
     /// Create a list of VMs based on the dataset using registered hosts.
     public List<Vm> createVms(int brokerId, @NonNull List<DatasetVm> datasetVms) {
-        var hostRegistry = HostRegistry.getInstance();
-
         var vmList = new ArrayList<Vm>();
         for (var datasetVm : datasetVms) {
             var vm = createVm(brokerId, datasetVm);
-            var host = hostRegistry.findRegistered(datasetVm.getHostId());
-            vm.setHost(host);
             vmList.add(vm);
         }
         return vmList;
