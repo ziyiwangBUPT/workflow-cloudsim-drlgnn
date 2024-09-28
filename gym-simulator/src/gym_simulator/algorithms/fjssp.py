@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import override
 
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
@@ -135,11 +136,9 @@ class FjsspScheduler(BaseReadyQueueScheduler):
     # Helper methods -----------------------------------------------------------
 
     def _group_to_workflows(self, tasks: list[TaskDto]) -> dict[int, list[TaskDto]]:
-        workflows: dict[int, list[TaskDto]] = {}
+        workflows: defaultdict[int, list[TaskDto]] = defaultdict(list)
         for task in tasks:
             workflow_id = task.workflow_id
-            if workflow_id not in workflows:
-                workflows[workflow_id] = []
             workflows[workflow_id].append(task)
 
-        return workflows
+        return dict(workflows)

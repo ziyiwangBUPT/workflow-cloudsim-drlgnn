@@ -1,6 +1,5 @@
+from collections import defaultdict
 from multiprocessing import Process, Manager, Queue
-
-from numpy import sort
 
 from dataset_generator.core.models import Task, Vm, VmAssignment, Workflow
 from dataset_generator.solvers.cp_sat_solver import solve_cp_sat
@@ -21,10 +20,8 @@ class CpSatScheduler(BaseScheduler):
     """
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
-        grouped_task_objs: dict[int, list[Task]] = {}
+        grouped_task_objs: defaultdict[int, list[Task]] = defaultdict(list)
         for task in tasks:
-            if task.workflow_id not in grouped_task_objs:
-                grouped_task_objs[task.workflow_id] = []
             grouped_task_objs[task.workflow_id].append(
                 Task(
                     id=task.id,

@@ -246,6 +246,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "gymnasium" },
+    { name = "heft" },
     { name = "matplotlib" },
     { name = "moviepy" },
     { name = "networkx" },
@@ -270,6 +271,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "gymnasium", specifier = ">=0.28.1" },
+    { name = "heft", git = "https://github.com/mackncheesiest/heft" },
     { name = "matplotlib", specifier = ">=3.9.2" },
     { name = "moviepy", specifier = ">=1.0.3" },
     { name = "networkx", specifier = ">=3.3" },
@@ -305,6 +307,16 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/58/6a/c304954dc009648a21db245a8f56f63c8da8a025d446dd0fd67319726003/gymnasium-0.28.1.tar.gz", hash = "sha256:4c2c745808792c8f45c6e88ad0a5504774394e0c126f6e3db555e720d3da6f24", size = 796462 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/82/3762ef4555791a729ae554e13c011efe5e8347d7eba9ea5ed245a8d1b234/gymnasium-0.28.1-py3-none-any.whl", hash = "sha256:7bc9a5bce1022f997d1dbc152fc91d1ac977bad9cc7794cdc25437010867cabf", size = 925534 },
+]
+
+[[package]]
+name = "heft"
+version = "1.0.0"
+source = { git = "https://github.com/mackncheesiest/heft#591508e7bfdc5d33ba93a0b92518a49b9e05c334" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "networkx" },
+    { name = "numpy" },
 ]
 
 [[package]]
