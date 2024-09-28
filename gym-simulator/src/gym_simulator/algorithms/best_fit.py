@@ -1,3 +1,5 @@
+from typing import override
+
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
@@ -10,11 +12,13 @@ class BestFitScheduler(BaseReadyQueueScheduler):
     The algorithm selects the VM that has the best fit for the task. (RAM)
     """
 
-    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
+    @override
+    def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the next task (with no preference)."""
         return ready_tasks[0]
 
-    def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    @override
+    def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Schedule the task on the VM that has the best fit."""
         assert self.est_vm_completion_times is not None
         assert self.est_task_min_start_times is not None

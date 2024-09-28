@@ -35,13 +35,13 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
 
         while self._ready_tasks:
             read_task_objs = [self.get_task(task_id) for task_id in self._ready_tasks]
-            next_task = self.choose_next(read_task_objs)
+            next_task = self.select_task(read_task_objs)
             next_task_id = self.tid(next_task)
             self._ready_tasks.remove(next_task_id)
             self._processed_tasks.add(next_task_id)
 
             task = self.get_task(next_task_id)
-            selected_vm = self.schedule_next(task, vms)
+            selected_vm = self.select_vm(task, vms)
             assignments.append(VmAssignmentDto(selected_vm.id, task.workflow_id, task.id))
 
             # Update the completion time of the VM and the min start time of the child tasks
@@ -74,12 +74,12 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         return assignments
 
     @abstractmethod
-    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
+    def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Out of the ready tasks, choose the next task to schedule."""
         raise NotImplementedError
 
     @abstractmethod
-    def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Assign the task to a VM."""
         raise NotImplementedError
 

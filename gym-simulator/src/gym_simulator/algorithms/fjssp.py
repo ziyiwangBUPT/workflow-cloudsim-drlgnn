@@ -1,3 +1,5 @@
+from typing import override
+
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
@@ -10,35 +12,37 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         self.task_select_algo = task_select_algo
         self.vm_select_algo = vm_select_algo
 
-    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
+    @override
+    def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         assert self.task_map is not None
         pending_tasks = [task for task_id, task in self.task_map.items() if self.is_pending(task_id)]
         if self.task_select_algo == "fifo":
-            return self.schedule_task_fifo(ready_tasks)
+            return self.select_task_fifo(ready_tasks)
         elif self.task_select_algo == "mopnr":
-            return self.schedule_task_mopnr(ready_tasks, pending_tasks)
+            return self.select_task_mopnr(ready_tasks, pending_tasks)
         elif self.task_select_algo == "lwkr":
-            return self.schedule_task_lwkr(ready_tasks, pending_tasks)
+            return self.select_task_lwkr(ready_tasks, pending_tasks)
         elif self.task_select_algo == "mwkr":
-            return self.schedule_task_mwkr(ready_tasks, pending_tasks)
+            return self.select_task_mwkr(ready_tasks, pending_tasks)
         else:
             raise ValueError(f"Unknown task selection algorithm: {self.task_select_algo}")
 
-    def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    @override
+    def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         if self.vm_select_algo == "spt":
-            return self.schedule_vm_spt(task, vms)
+            return self.select_vm_spt(task, vms)
         elif self.vm_select_algo == "eet":
-            return self.schedule_vm_eet(task, vms)
+            return self.select_vm_eet(task, vms)
         else:
             raise ValueError(f"Unknown VM selection algorithm: {self.vm_select_algo}")
 
     # Task selection algorithms ------------------------------------------------
 
-    def schedule_task_fifo(self, ready_tasks: list[TaskDto]) -> TaskDto:
+    def select_task_fifo(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Select task based on First In First Out (FIFO)"""
         return ready_tasks[0]
 
-    def schedule_task_mopnr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
+    def select_task_mopnr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
         """Select task based on Most Operation Number Remaining (MOPNR)"""
         remaining_tasks = ready_tasks + pending_tasks
         grouped_remaining_tasks = self._group_to_workflows(remaining_tasks)
@@ -55,7 +59,7 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         assert selected_task is not None
         return selected_task
 
-    def schedule_task_lwkr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
+    def select_task_lwkr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
         """Select task based on Least Work Remaining (LWKR)"""
         remaining_tasks = ready_tasks + pending_tasks
         grouped_remaining_tasks = self._group_to_workflows(remaining_tasks)
@@ -72,7 +76,7 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         assert selected_task is not None
         return selected_task
 
-    def schedule_task_mwkr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
+    def select_task_mwkr(self, ready_tasks: list[TaskDto], pending_tasks: list[TaskDto]) -> TaskDto:
         """Select task based on Most Work Remaining (MWKR)"""
         remaining_tasks = ready_tasks + pending_tasks
         grouped_remaining_tasks = self._group_to_workflows(remaining_tasks)
@@ -91,7 +95,7 @@ class FjsspScheduler(BaseReadyQueueScheduler):
 
     # VM selection algorithms --------------------------------------------------
 
-    def schedule_vm_spt(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    def select_vm_spt(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Select VM based on Shortest Processing Time (SPT)"""
         selected_vm = None
         selected_vm_proc_time = float("inf")
@@ -106,7 +110,7 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         assert selected_vm is not None
         return selected_vm
 
-    def schedule_vm_eet(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    def select_vm_eet(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Select VM based on Earliest End Time (EET)"""
         assert self.est_vm_completion_times is not None
         assert self.est_task_min_start_times is not None

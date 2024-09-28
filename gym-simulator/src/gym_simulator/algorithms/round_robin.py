@@ -1,3 +1,5 @@
+from typing import override
+
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
@@ -11,11 +13,13 @@ class RoundRobinScheduler(BaseReadyQueueScheduler):
 
     vm_index: int = 0
 
-    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
+    @override
+    def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the next task (with no preference)."""
         return ready_tasks[0]
 
-    def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+    @override
+    def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Schedule the task on the next VM in the list."""
         while not self.is_vm_suitable(vms[self.vm_index], task):
             self.vm_index = (self.vm_index + 1) % len(vms)
