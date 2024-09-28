@@ -1,5 +1,5 @@
 from gym_simulator.algorithms.min_min import MinMinScheduler
-from gym_simulator.algorithms.types import TaskIdType
+from gym_simulator.algorithms.types import TaskDto
 
 
 class MaxMinScheduler(MinMinScheduler):
@@ -11,15 +11,14 @@ class MaxMinScheduler(MinMinScheduler):
     This is a variant of the MinMin algorithm choosing the task with the largest length first.
     """
 
-    def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the task with the largest length."""
-        largest_task_id = None
+        largest_task = None
         largest_task_length = -float("inf")
-        for task_id in ready_tasks:
-            task = self.get_task(task_id)
+        for task in ready_tasks:
             if task.length > largest_task_length:
                 largest_task_length = task.length
-                largest_task_id = self.tid(task)
-        assert largest_task_id is not None
+                largest_task = task
+        assert largest_task is not None
 
-        return largest_task_id
+        return largest_task

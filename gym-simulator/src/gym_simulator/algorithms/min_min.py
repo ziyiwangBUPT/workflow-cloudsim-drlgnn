@@ -1,5 +1,5 @@
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
-from gym_simulator.algorithms.types import TaskDto, VmDto, TaskIdType
+from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
 class MinMinScheduler(BaseReadyQueueScheduler):
@@ -10,18 +10,17 @@ class MinMinScheduler(BaseReadyQueueScheduler):
     on the VM that will complete the task the fastest.
     """
 
-    def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the task with the smallest length."""
-        smallest_task_id = None
+        smallest_task = None
         smallest_task_length = float("inf")
-        for task_id in ready_tasks:
-            task = self.get_task(task_id)
+        for task in ready_tasks:
             if task.length < smallest_task_length:
                 smallest_task_length = task.length
-                smallest_task_id = self.tid(task)
-        assert smallest_task_id is not None
+                smallest_task = task
+        assert smallest_task is not None
 
-        return smallest_task_id
+        return smallest_task
 
     def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Schedule the task on the VM that will complete the task the fastest."""

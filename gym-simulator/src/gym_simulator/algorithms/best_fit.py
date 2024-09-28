@@ -1,5 +1,5 @@
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
-from gym_simulator.algorithms.types import TaskDto, VmDto, TaskIdType
+from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
 class BestFitScheduler(BaseReadyQueueScheduler):
@@ -10,7 +10,7 @@ class BestFitScheduler(BaseReadyQueueScheduler):
     The algorithm selects the VM that has the best fit for the task. (RAM)
     """
 
-    def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the next task (with no preference)."""
         return ready_tasks[0]
 

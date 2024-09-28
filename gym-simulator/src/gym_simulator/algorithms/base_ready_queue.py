@@ -30,12 +30,15 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         self.est_vm_completion_times = {self.vid(_vm): 0.0 for _vm in vms}  # Time when the VM will be free
         self.est_task_min_start_times = {self.tid(_task): 0.0 for _task in tasks}  # Min time when the task can start
 
-        ready_tasks = [self.tid(_task) for _task in tasks if _task.id == 0]
-        processed_tasks: set[TaskIdType] = set()
-        while ready_tasks:
-            next_task_id = self.choose_next(ready_tasks)
-            ready_tasks.remove(next_task_id)
-            processed_tasks.add(next_task_id)
+        self._ready_tasks = [self.tid(_task) for _task in tasks if _task.id == 0]
+        self._processed_tasks: set[TaskIdType] = set()
+
+        while self._ready_tasks:
+            read_task_objs = [self.get_task(task_id) for task_id in self._ready_tasks]
+            next_task = self.choose_next(read_task_objs)
+            next_task_id = self.tid(next_task)
+            self._ready_tasks.remove(next_task_id)
+            self._processed_tasks.add(next_task_id)
 
             task = self.get_task(next_task_id)
             selected_vm = self.schedule_next(task, vms)
@@ -58,12 +61,12 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
             for child_id in task.child_ids:
                 child_task_id_2: TaskIdType = (task.workflow_id, child_id)
                 all_parents_processed = all(
-                    self.tid(parent) in processed_tasks
+                    self.tid(parent) in self._processed_tasks
                     for parent in tasks
                     if parent.workflow_id == task.workflow_id and child_id in parent.child_ids
                 )
-                if all_parents_processed and child_task_id_2 not in ready_tasks:
-                    ready_tasks.append(child_task_id_2)
+                if all_parents_processed and child_task_id_2 not in self._ready_tasks:
+                    self._ready_tasks.append(child_task_id_2)
 
         assert len(assignments) == len(tasks), f"Expected {len(tasks)} assignments, got {len(assignments)}"
         self.est_vm_completion_times = None
@@ -71,7 +74,7 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         return assignments
 
     @abstractmethod
-    def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+    def choose_next(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Out of the ready tasks, choose the next task to schedule."""
         raise NotImplementedError
 
@@ -101,3 +104,15 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         assert self.vm_map is not None, "VM map not initialized yet"
         assert vm_id in self.vm_map, f"Unknown VM id: {vm_id}"
         return self.vm_map[vm_id]
+
+    def is_ready(self, task_id: TaskIdType) -> bool:
+        """Check if the task is ready to be scheduled."""
+        return task_id in self._ready_tasks
+
+    def is_processed(self, task_id: TaskIdType) -> bool:
+        """Check if the task has been processed."""
+        return task_id in self._processed_tasks
+
+    def is_pending(self, task_id: TaskIdType) -> bool:
+        """Check if the task is pending."""
+        return not self.is_ready(task_id) and not self.is_processed(task_id)
