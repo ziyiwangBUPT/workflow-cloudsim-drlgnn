@@ -8,7 +8,11 @@ import numpy as np
 
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
-from gym_simulator.algorithms.heuristics import round_robin, best_fit, min_min, max_min
+from gym_simulator.algorithms.base_scheduler import BaseScheduler
+from gym_simulator.algorithms.round_robin import RoundRobinScheduler
+from gym_simulator.algorithms.best_fit import BestFitScheduler
+from gym_simulator.algorithms.min_min import MinMinScheduler
+from gym_simulator.algorithms.max_min import MaxMinScheduler
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
 
@@ -53,20 +57,21 @@ def main(args: Args):
     )
 
     # Choose the algorithm
+    scheduler: BaseScheduler
     if args.algorithm == "round_robin":
-        algorithm = round_robin
+        scheduler = RoundRobinScheduler()
     elif args.algorithm == "best_fit":
-        algorithm = best_fit
+        scheduler = BestFitScheduler()
     elif args.algorithm == "min_min":
-        algorithm = min_min
+        scheduler = MinMinScheduler()
     elif args.algorithm == "max_min":
-        algorithm = max_min
+        scheduler = MaxMinScheduler()
     else:
         raise ValueError(f"Unknown algorithm: {args.algorithm}")
 
     # Since this is static, the step will be only called once
     (tasks, vms), _ = env.reset()
-    action = algorithm(tasks, vms)
+    action = scheduler.schedule(tasks, vms)
     _, reward, terminated, truncated, info = env.step(action)
     assert terminated or truncated, "Static environment should terminate after one step"
 
