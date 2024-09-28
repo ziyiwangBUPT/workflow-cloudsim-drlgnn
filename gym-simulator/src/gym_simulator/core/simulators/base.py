@@ -18,7 +18,7 @@ class BaseSimulator(ABC):
 
     @abstractmethod
     def stop(self) -> str | None:
-        """Stop the simulator and (optionally) return the output."""
+        """Stop the simulator and (optionally) return the STDOUT output."""
         raise NotImplementedError
 
     @abstractmethod

@@ -1,9 +1,11 @@
 import socket
+import json
 
 from gymnasium import spaces
-from typing import Any, override, Generic
+from typing import Any, override
 import numpy as np
 
+from dataset_generator.core.models import Solution
 from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
@@ -98,7 +100,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
         assert self.render_mode is None or self.render_mode in self.metadata["render_modes"]
         self.renderer = None
 
-    # --------------------- Parse Observation ---------------------------------------------------------------------------
+    # --------------------- Parse Observation -------------------------------------------------------------------------
 
     @override
     def parse_obs(self, obs: Any | None) -> dict[str, list[dict[str, Any]]]:
@@ -129,7 +131,21 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             ],
         }
 
-    # --------------------- Create Action -------------------------------------------------------------------------------
+    # --------------------- Parse Info --------------------------------------------------------------------------------
+
+    @override
+    def parse_info(self, info: Any | None) -> dict[str, Any]:
+        raw_info = super().parse_info(info)
+        info: dict[str, Any] = {}
+
+        if "solution" in raw_info:
+            solution_json = raw_info["solution"]
+            solution_dict = json.loads(solution_json)
+            info["solution"] = Solution.from_json(solution_dict)
+
+        return info
+
+    # --------------------- Create Action -----------------------------------------------------------------------------
 
     @override
     def create_action(self, jvm: Any, action: list[dict[str, Any]]) -> Any:

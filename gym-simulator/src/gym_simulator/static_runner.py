@@ -63,14 +63,14 @@ def main(args: Args):
 
     # Render the output if available
     print("Reward:", reward)
-    if info.get("output") is not None:
-        dataset_str = info["output"]
-        _, ax = plt.subplots()
-        dataset_dict = json.loads(dataset_str)
-        solution = Solution.from_json(dataset_dict)
-        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
-        plt.title(f"Algorithm: {args.algorithm}")
-        plt.show()
+
+    # Plot the Gantt chart
+    solution = info.get("solution")
+    assert solution is not None and isinstance(solution, Solution), "Solution is not available"
+    _, ax = plt.subplots()
+    plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
+    plt.title(f"Algorithm: {args.algorithm}")
+    plt.show()
 
     env.close()
 

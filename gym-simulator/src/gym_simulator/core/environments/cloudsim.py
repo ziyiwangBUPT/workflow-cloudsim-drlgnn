@@ -54,11 +54,11 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
         reward = float(result.getReward())
         terminated = bool(result.isTerminated())
         truncated = bool(result.isTruncated())
-        info: dict[str, Any] = {}
+        info: dict[str, Any] = self.parse_info(result.getInfo())
 
         if terminated or truncated:
             output = self.simulator.stop()
-            info["output"] = output
+            info["stdout"] = output
 
         # Update the renderer
         if not terminated and not truncated:
@@ -104,6 +104,10 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
     def parse_obs(self, obs: Any | None) -> ObsType:
         """Parse the raw observation object from the simulator into the observation space of the environment."""
         raise NotImplementedError
+
+    def parse_info(self, info: Any) -> dict[str, Any]:
+        """Parse the raw info object from the simulator into the info space of the environment."""
+        return {str(o.getKey()): str(o.getValue()) for o in info.entrySet()}
 
     @abstractmethod
     def create_action(self, jvm: Any, action: ActType) -> Any:

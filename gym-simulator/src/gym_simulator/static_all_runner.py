@@ -5,6 +5,7 @@ import random
 
 import numpy as np
 
+from dataset_generator.core.models import Solution
 from gym_simulator.algorithms import algorithm_strategy
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
@@ -60,10 +61,14 @@ def main(args: Args):
 
         (tasks, vms), _ = env.reset()
         action = scheduler.schedule(tasks, vms)
-        _, reward, terminated, truncated, _ = env.step(action)
+        _, reward, terminated, truncated, info = env.step(action)
         assert terminated or truncated, "Static environment should terminate after one step"
 
-        print(f"Algorithm: {algorithm}, Reward: {reward}")
+        solution = info.get("solution")
+        assert solution is not None and isinstance(solution, Solution), "Solution is not available"
+        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
+
+        print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}")
 
     env.close()
 
