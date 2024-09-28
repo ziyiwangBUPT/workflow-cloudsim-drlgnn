@@ -1,9 +1,21 @@
-from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
+from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler, TaskIdType
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
 class BestFitScheduler(BaseReadyQueueScheduler):
+    """
+    Implementation of the Best Fit scheduling algorithm.
+
+    Best Fit is a simple scheduling algorithm that schedules the tasks so that the VMs are used efficiently.
+    The algorithm selects the VM that has the best fit for the task. (RAM)
+    """
+
+    def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+        """Choose the next task (with no preference)."""
+        return ready_tasks[0]
+
     def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+        """Schedule the task on the VM that has the best fit."""
         assert self.est_vm_completion_times is not None
         assert self.est_task_min_start_times is not None
 

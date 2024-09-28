@@ -9,6 +9,17 @@ VmIdType = int
 
 
 class BaseReadyQueueScheduler(BaseScheduler, ABC):
+    """
+    Base class for scheduling algorithms that use a ready queue.
+
+    Following is the pseudo code for the algorithm:
+    1. Initialize the ready queue with start tasks in each workflow.
+    2. While the ready queue is not empty:
+        - Choose the next task to schedule. (Implement this in the subclass)
+        - Schedule the task on a VM. (Implement this in the subclass)
+        - Update the ready tasks based on the dependencies.
+    """
+
     task_map: dict[TaskIdType, TaskDto] | None = None
     vm_map: dict[VmIdType, VmDto] | None = None
     est_vm_completion_times: dict[VmIdType, float] | None = None
@@ -17,14 +28,14 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
         assignments: list[VmAssignmentDto] = []
 
+        self.task_map = {self.tid(_task): _task for _task in tasks}
+        self.vm_map = {self.vid(_vm): _vm for _vm in vms}
+
         self.est_vm_completion_times = {self.vid(_vm): 0.0 for _vm in vms}  # Time when the VM will be free
         self.est_task_min_start_times = {self.tid(_task): 0.0 for _task in tasks}  # Min time when the task can start
 
-        self.task_map = {self.tid(_task): _task for _task in tasks}
-        self.vm_map = {self.vid(_vm): _vm for _vm in vms}
         ready_tasks = [self.tid(_task) for _task in tasks if _task.id == 0]
         processed_tasks: set[TaskIdType] = set()
-
         while ready_tasks:
             next_task_id = self.choose_next(ready_tasks)
             ready_tasks.remove(next_task_id)
@@ -63,29 +74,34 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         self.est_task_min_start_times = None
         return assignments
 
+    @abstractmethod
     def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
-        return ready_tasks[0]
+        """Out of the ready tasks, choose the next task to schedule."""
+        raise NotImplementedError
 
     @abstractmethod
     def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+        """Assign the task to a VM."""
         raise NotImplementedError
 
+    # Helper functions
+
     def tid(self, task: TaskDto) -> TaskIdType:
+        """Return the task ID."""
         return (task.workflow_id, task.id)
 
     def vid(self, vm: VmDto) -> VmIdType:
+        """Return the VM ID."""
         return vm.id
 
     def get_task(self, task_id: TaskIdType) -> TaskDto:
-        if self.task_map is None:
-            raise Exception("Task map not initialized yet")
-        if task_id in self.task_map:
-            return self.task_map[task_id]
-        raise Exception(f"Unknown task id: {task_id}")
+        """Return the task with the given ID."""
+        assert self.task_map is not None, "Task map not initialized yet"
+        assert task_id in self.task_map, f"Unknown task id: {task_id}"
+        return self.task_map[task_id]
 
     def get_vm(self, vm_id: VmIdType) -> VmDto:
-        if self.vm_map is None:
-            raise Exception("Task map not initialized yet")
-        if vm_id in self.vm_map:
-            return self.vm_map[vm_id]
-        raise Exception(f"Unknown VM id: {vm_id}")
+        """Return the VM with the given ID."""
+        assert self.vm_map is not None, "VM map not initialized yet"
+        assert vm_id in self.vm_map, f"Unknown VM id: {vm_id}"
+        return self.vm_map[vm_id]

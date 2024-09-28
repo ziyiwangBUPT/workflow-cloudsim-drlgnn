@@ -1,11 +1,17 @@
-from abc import ABC
-
-from gym_simulator.algorithms.base_ready_queue import TaskIdType
-from gym_simulator.algorithms.random_min import RandomMinScheduler
+from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler, TaskIdType
+from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
-class MinMinScheduler(RandomMinScheduler, ABC):
+class MinMinScheduler(BaseReadyQueueScheduler):
+    """
+    Implementation of the MinMin scheduling algorithm.
+
+    MinMin is a simple scheduling algorithm that schedules the task with the smallest length
+    on the VM that will complete the task the fastest.
+    """
+
     def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+        """Choose the task with the smallest length."""
         smallest_task_id = None
         smallest_task_length = float("inf")
         for task_id in ready_tasks:
@@ -16,3 +22,28 @@ class MinMinScheduler(RandomMinScheduler, ABC):
         assert smallest_task_id is not None
 
         return smallest_task_id
+
+    def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
+        """Schedule the task on the VM that will complete the task the fastest."""
+        assert self.est_vm_completion_times is not None
+        assert self.est_task_min_start_times is not None
+
+        # Select the best VM by comparing the completion times
+        best_vm = None
+        best_vm_completion_time = float("inf")
+        for vm in vms:
+            if not self.is_vm_suitable(vm, task):
+                continue
+
+            completion_time = (
+                max(self.est_vm_completion_times[self.vid(vm)], self.est_task_min_start_times[self.tid(task)])
+                + task.length / vm.cpu_speed_mips
+            )
+            if best_vm_completion_time > completion_time:
+                best_vm = vm
+                best_vm_completion_time = completion_time
+
+        if best_vm is None:
+            raise Exception("No VM found for task")
+
+        return best_vm

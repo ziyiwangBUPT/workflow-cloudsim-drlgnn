@@ -1,11 +1,18 @@
-from abc import ABC
-
 from gym_simulator.algorithms.base_ready_queue import TaskIdType
-from gym_simulator.algorithms.random_min import RandomMinScheduler
+from gym_simulator.algorithms.min_min import MinMinScheduler
 
 
-class MaxMinScheduler(RandomMinScheduler, ABC):
+class MaxMinScheduler(MinMinScheduler):
+    """
+    Implementation of the MaxMin scheduling algorithm.
+
+    MaxMin is a simple scheduling algorithm that schedules the task with the largest length
+    on the VM that will complete the task the fastest.
+    This is a variant of the MinMin algorithm choosing the task with the largest length first.
+    """
+
     def choose_next(self, ready_tasks: list[TaskIdType]) -> TaskIdType:
+        """Choose the task with the largest length."""
         largest_task_id = None
         largest_task_length = -float("inf")
         for task_id in ready_tasks:
