@@ -8,11 +8,7 @@ import numpy as np
 
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
-from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.round_robin import RoundRobinScheduler
-from gym_simulator.algorithms.best_fit import BestFitScheduler
-from gym_simulator.algorithms.min_min import MinMinScheduler
-from gym_simulator.algorithms.max_min import MaxMinScheduler
+from gym_simulator.algorithms import algorithm_strategy
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
 
@@ -22,13 +18,13 @@ class Args:
     """path to the simulator JAR file"""
     render_mode: str | None = None
     """render mode"""
-    host_count: int = 4
+    host_count: int = 10
     """number of hosts"""
     vm_count: int = 10
     """number of VMs"""
-    workflow_count: int = 20
+    workflow_count: int = 5
     """number of workflows"""
-    task_limit: int = 20
+    task_limit: int = 5
     """maximum number of tasks"""
     algorithm: str = "round_robin"
     """algorithm to use"""
@@ -57,17 +53,7 @@ def main(args: Args):
     )
 
     # Choose the algorithm
-    scheduler: BaseScheduler
-    if args.algorithm == "round_robin":
-        scheduler = RoundRobinScheduler()
-    elif args.algorithm == "best_fit":
-        scheduler = BestFitScheduler()
-    elif args.algorithm == "min_min":
-        scheduler = MinMinScheduler()
-    elif args.algorithm == "max_min":
-        scheduler = MaxMinScheduler()
-    else:
-        raise ValueError(f"Unknown algorithm: {args.algorithm}")
+    scheduler = algorithm_strategy.get_scheduler(args.algorithm)
 
     # Since this is static, the step will be only called once
     (tasks, vms), _ = env.reset()
