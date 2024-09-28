@@ -75,7 +75,10 @@ public class Application implements Callable<Integer> {
 
         var rewardSensor = RewardSensor.getInstance();
         var reward = rewardSensor.finalReward(duration);
-        gymSharedQueue.setObservation(AgentResult.truncated(reward));
+
+        AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
+        finalAgentResult.addInfo("solution", solution.toJson());
+        gymSharedQueue.setObservation(finalAgentResult);
 
         // Stop Py4J connector
         gymThread.join(5000);
