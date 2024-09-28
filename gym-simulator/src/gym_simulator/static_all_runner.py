@@ -50,6 +50,7 @@ def main(args: Args):
         "fjssp_lwkr_eet",
         "fjssp_mwkr_spt",
         "fjssp_mwkr_eet",
+        "cp_sat",
     ]
 
     for algorithm in algorithms:

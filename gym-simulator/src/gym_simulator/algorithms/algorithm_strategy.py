@@ -1,5 +1,6 @@
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.best_fit import BestFitScheduler
+from gym_simulator.algorithms.cp_sat import CpSatScheduler
 from gym_simulator.algorithms.fjssp import FjsspScheduler
 from gym_simulator.algorithms.max_min import MaxMinScheduler
 from gym_simulator.algorithms.min_min import MinMinScheduler
@@ -15,6 +16,8 @@ def get_scheduler(algorithm: str) -> BaseScheduler:
         return MinMinScheduler()
     elif algorithm == "max_min":
         return MaxMinScheduler()
+    elif algorithm == "cp_sat":
+        return CpSatScheduler()
     elif algorithm.startswith("fjssp_"):
         split_args = algorithm.split("_")
         assert len(split_args) == 3, "Invalid FJSSP algorithm format (expected: fjssp_<task_algo>_<vm_algo>)"

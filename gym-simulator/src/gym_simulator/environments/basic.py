@@ -136,14 +136,14 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
     @override
     def parse_info(self, info: Any | None) -> dict[str, Any]:
         raw_info = super().parse_info(info)
-        info: dict[str, Any] = {}
+        parsed_info: dict[str, Any] = {}
 
-        if "solution" in raw_info:
+        if raw_info.get("solution") is not None:
             solution_json = raw_info["solution"]
             solution_dict = json.loads(solution_json)
-            info["solution"] = Solution.from_json(solution_dict)
+            parsed_info["solution"] = Solution.from_json(solution_dict)
 
-        return info
+        return parsed_info
 
     # --------------------- Create Action -----------------------------------------------------------------------------
 
