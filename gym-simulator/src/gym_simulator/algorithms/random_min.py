@@ -1,10 +1,10 @@
 from abc import ABC
 
-from gym_simulator.algorithms.base_heuristic import BaseHeuristicScheduler
+from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
-class RandomMinScheduler(BaseHeuristicScheduler, ABC):
+class RandomMinScheduler(BaseReadyQueueScheduler, ABC):
     def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         assert self.est_vm_completion_times is not None
         assert self.est_task_min_start_times is not None

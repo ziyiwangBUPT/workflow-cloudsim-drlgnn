@@ -1,8 +1,8 @@
-from gym_simulator.algorithms.base_heuristic import BaseHeuristicScheduler
+from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.algorithms.types import TaskDto, VmDto
 
 
-class RoundRobinScheduler(BaseHeuristicScheduler):
+class RoundRobinScheduler(BaseReadyQueueScheduler):
     vm_index: int = 0
 
     def schedule_next(self, task: TaskDto, vms: list[VmDto]) -> VmDto:

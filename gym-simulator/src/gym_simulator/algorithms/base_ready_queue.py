@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from gym_simulator.algorithms.base_scheduler import BaseScheduler
+from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
 
 
@@ -8,7 +8,7 @@ TaskIdType = tuple[int, int]
 VmIdType = int
 
 
-class BaseHeuristicScheduler(BaseScheduler, ABC):
+class BaseReadyQueueScheduler(BaseScheduler, ABC):
     task_map: dict[TaskIdType, TaskDto] | None = None
     vm_map: dict[VmIdType, VmDto] | None = None
     est_vm_completion_times: dict[VmIdType, float] | None = None

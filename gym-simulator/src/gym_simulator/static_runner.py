@@ -8,7 +8,7 @@ import numpy as np
 
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
-from gym_simulator.algorithms.base_scheduler import BaseScheduler
+from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
 from gym_simulator.algorithms.best_fit import BestFitScheduler
 from gym_simulator.algorithms.min_min import MinMinScheduler

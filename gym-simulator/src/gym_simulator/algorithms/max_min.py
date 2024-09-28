@@ -1,6 +1,6 @@
 from abc import ABC
 
-from gym_simulator.algorithms.base_heuristic import TaskIdType
+from gym_simulator.algorithms.base_ready_queue import TaskIdType
 from gym_simulator.algorithms.random_min import RandomMinScheduler
 
 
