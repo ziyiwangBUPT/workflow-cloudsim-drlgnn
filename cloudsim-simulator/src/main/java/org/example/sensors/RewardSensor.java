@@ -18,7 +18,7 @@ public class RewardSensor {
         var taskStateSensor = TaskStateSensor.getInstance();
 
         // More the makespan, more the penalty (0 <= makespanPenalty <= 1)
-        var makespanPenalty = cloudletRegistry.getTotalMakespan() / totalDuration;
+        var makespanPenalty = cloudletRegistry.getMakespan() / totalDuration;
         // More tasks are incomplete, more the penalty (0 <= unscheduledPenalty <= 1)
         var incompletePenalty = taskStateSensor.getIncompleteTasks() / (double) taskStateSensor.getBufferedTasks();
         // Total penalty (0 <= penalty <= 1)

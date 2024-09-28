@@ -1,6 +1,5 @@
 package org.example.core.registries;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import lombok.Getter;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.Cloudlet;
@@ -11,7 +10,6 @@ import org.example.utils.SummaryTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /// A singleton class that holds a list of Cloudlets.
 public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
@@ -20,7 +18,6 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
 
     // Cloudlet ID -> (Workflow ID + Task ID)
     private final Map<Integer, WorkflowTaskId> cloudletMap = new HashMap<>();
-    private final AtomicDouble timestepStartAt = new AtomicDouble(0);
 
     private CloudletRegistry() {
     }
@@ -42,17 +39,11 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
     }
 
     /// Calculates the total makespan of completed Cloudlets
-    /// Makespan is the difference between start time and end time of 2 workflows.
-    /// Total makespan is the sum of makespan of all workflows.
-    public double getTotalMakespan() {
-        var totalMakespan = 0d;
-        var groupedCloudlets = itemStream().collect(Collectors.groupingBy(c -> cloudletMap.get(c.getCloudletId()).workflowId()));
-        for (var cloudlets : groupedCloudlets.values()) {
-            var startTime = cloudlets.stream().mapToDouble(Cloudlet::getExecStartTime).min().orElse(0);
-            var endTime = cloudlets.stream().mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
-            totalMakespan += (endTime - startTime);
-        }
-        return totalMakespan;
+    /// This the difference between starting cloudlet and ending cloudlet start end times.
+    public double getMakespan() {
+        var minStartTime = itemStream().filter(Cloudlet::isFinished).mapToDouble(Cloudlet::getExecStartTime).min().orElse(0);
+        var maxEndTime = itemStream().filter(Cloudlet::isFinished).mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
+        return maxEndTime - minStartTime;
     }
 
     /// Gets the finish time of the last completed Cloudlet.
@@ -61,34 +52,32 @@ public class CloudletRegistry extends AbstractRegistry<Cloudlet> {
                 .mapToDouble(Cloudlet::getExecFinishTime).max().orElse(0);
     }
 
-    /// Gets the variance of completion times of all Cloudlets in the current timestep.
-    public double getCompletionTimeVarianceInCurrentTimestep() {
-        // Collect completion times of all cloudlets in the current timestep
-        var completionTimes = itemStream().filter(c -> c.getExecFinishTime() > -1)
-                .filter(c -> c.getSubmissionTime() >= timestepStartAt.get())
-                .map(cloudlet -> cloudlet.getExecFinishTime() - cloudlet.getExecStartTime()).toList();
+    public double getMakespanDelta(Cloudlet cloudlet) {
+        if (!cloudlet.isFinished()) {
+            return 0;
+        }
 
-        // Calculate mean = sum(x) / n
-        var mean = completionTimes.stream().mapToDouble(v -> v).average().orElse(0);
-        // Calculate variance = sum((x - mean)^2) / n
-        return completionTimes.stream().mapToDouble(v -> v).map(time -> Math.pow(time - mean, 2)).average().orElse(0);
+        var vmRegistry = VmRegistry.getInstance();
+        var actualMakespan = cloudlet.getExecFinishTime() - cloudlet.getExecStartTime();
+        var estMakespan = vmRegistry.estimateMakespan(cloudlet.getGuestId(), cloudlet.getCloudletLength());
+        return actualMakespan - estMakespan;
     }
 
     @Override
     protected SummaryTable<Cloudlet> buildSummaryTable() {
-        var vmRegistry = VmRegistry.getInstance();
-
         var summaryTable = new SummaryTable<Cloudlet>();
 
         summaryTable.addColumn("Cloudlet", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, Cloudlet::getCloudletId);
-        summaryTable.addColumn("Guest", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, Cloudlet::getGuestId);
+        summaryTable.addColumn("Workflow", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, cloudlet -> cloudletMap.get(cloudlet.getCloudletId()).workflowId());
+        summaryTable.addColumn("Task    ", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, cloudlet -> cloudletMap.get(cloudlet.getCloudletId()).taskId());
+        summaryTable.addColumn("Guest   ", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, Cloudlet::getGuestId);
         summaryTable.addColumn("    Status    ", SummaryTable.ID_UNIT, SummaryTable.STRING_FORMAT, cloudlet -> cloudlet.getStatus().name());
         summaryTable.addColumn("Cloudlet Len", SummaryTable.MI_UNIT, SummaryTable.INTEGER_FORMAT, Cloudlet::getCloudletLength);
         summaryTable.addColumn("Finished Len", SummaryTable.MI_UNIT, SummaryTable.INTEGER_FORMAT, Cloudlet::getCloudletFinishedSoFar);
         summaryTable.addColumn("Start Time", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, Cloudlet::getExecStartTime);
         summaryTable.addColumn("End Time  ", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, Cloudlet::getExecFinishTime);
         summaryTable.addColumn("Makespan  ", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, cloudlet -> cloudlet.isFinished() ? cloudlet.getExecFinishTime() - cloudlet.getExecStartTime() : 0);
-        summaryTable.addColumn("Estimated Makespan", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, cloudlet -> vmRegistry.estimateMakespan(cloudlet.getGuestId(), cloudlet.getCloudletLength()));
+        summaryTable.addColumn("Makespan Delta", SummaryTable.S_UNIT, SummaryTable.DECIMAL_FORMAT, this::getMakespanDelta);
 
         return summaryTable;
     }

@@ -77,7 +77,7 @@ public class SimulatedWorld {
 
         // Prints the results when the simulation is over
         cloudletRegistry.printSummaryTable();
-        System.err.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getTotalMakespan());
+        System.err.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getMakespan());
         System.err.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
         System.err.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), broker.getGuestList().size());
         System.err.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
