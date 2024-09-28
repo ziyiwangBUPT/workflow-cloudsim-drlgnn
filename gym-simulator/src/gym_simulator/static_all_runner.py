@@ -2,7 +2,9 @@ import tyro
 import copy
 import dataclasses
 import random
+import time
 
+from pandas import DataFrame
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -55,8 +57,10 @@ def main(args: Args):
         "fjssp_mwkr_spt",
         "fjssp_mwkr_eet",
         "cp_sat",
+        "heft",
     ]
 
+    stats: list[dict[str, float]] = []
     for algorithm in algorithms:
         random.seed(0)
         np.random.seed(0)
@@ -65,7 +69,9 @@ def main(args: Args):
         scheduler = algorithm_strategy.get_scheduler(algorithm)
 
         (tasks, vms), _ = env.reset()
+        t1 = time.time()
         action = scheduler.schedule(tasks, vms)
+        t2 = time.time()
         _, reward, terminated, truncated, info = env.step(action)
         assert terminated or truncated, "Static environment should terminate after one step"
 
@@ -76,11 +82,40 @@ def main(args: Args):
         fig.set_figwidth(12)
         fig.set_figheight(8)
         plt.savefig(f"{args.gantt_chart_prefix}_{algorithm}.png")
+        plt.close(fig)
 
         makespan = max([assignment.end_time for assignment in solution.vm_assignments])
-        print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}")
+        print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}, Time: {t2 - t1:.5f}s")
+        stats.append({"Algorithm": algorithm, "Reward": reward, "Makespan": makespan, "Time": t2 - t1})
 
     env.close()
+
+    # Plotting the comparison
+    df = DataFrame(stats).sort_values(by="Makespan", ascending=True).reset_index(drop=True)
+
+    fig, ax1 = plt.subplots(figsize=(14, 7))
+    bar_width = 0.35
+    index = range(len(df["Algorithm"]))
+
+    # Plotting Makespan
+    ax1.bar(index, df["Makespan"], width=bar_width, label="Makespan", alpha=0.6, color="tab:blue")
+    ax1.set_xlabel("Algorithm")
+    ax1.set_ylabel("Makespan", color="tab:blue")
+    ax1.tick_params(axis="y", labelcolor="tab:blue")
+    ax1.set_xticks([i + bar_width / 2 for i in index])
+    ax1.set_xticklabels(df["Algorithm"], rotation=45, ha="right")
+
+    # Creating a secondary y-axis for Time (log scale)
+    ax2 = ax1.twinx()
+    ax2.bar([i + bar_width for i in index], df["Time"], width=bar_width, label="Time (s)", alpha=0.6, color="tab:red")
+    ax2.set_ylabel("Time (s)", color="tab:red")
+    ax2.set_yscale("log")  # Set log scale for time
+    ax2.tick_params(axis="y", labelcolor="tab:red")
+
+    fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
+    plt.title("Comparison of Algorithms by Makespan and Time")
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
