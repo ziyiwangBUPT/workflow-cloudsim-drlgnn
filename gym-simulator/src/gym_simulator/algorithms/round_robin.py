@@ -1,5 +1,5 @@
-from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler, TaskIdType
-from gym_simulator.algorithms.types import TaskDto, VmDto
+from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
+from gym_simulator.algorithms.types import TaskDto, VmDto, TaskIdType
 
 
 class RoundRobinScheduler(BaseReadyQueueScheduler):

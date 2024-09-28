@@ -24,3 +24,7 @@ class VmAssignmentDto:
     vm_id: int
     workflow_id: int
     task_id: int
+
+
+TaskIdType = tuple[int, int]
+VmIdType = int

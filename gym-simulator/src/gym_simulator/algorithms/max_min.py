@@ -1,5 +1,5 @@
-from gym_simulator.algorithms.base_ready_queue import TaskIdType
 from gym_simulator.algorithms.min_min import MinMinScheduler
+from gym_simulator.algorithms.types import TaskIdType
 
 
 class MaxMinScheduler(MinMinScheduler):

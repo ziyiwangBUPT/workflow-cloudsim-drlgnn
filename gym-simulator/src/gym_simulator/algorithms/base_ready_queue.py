@@ -1,11 +1,7 @@
 from abc import ABC, abstractmethod
 
 from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
-
-
-TaskIdType = tuple[int, int]
-VmIdType = int
+from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto, TaskIdType, VmIdType
 
 
 class BaseReadyQueueScheduler(BaseScheduler, ABC):
