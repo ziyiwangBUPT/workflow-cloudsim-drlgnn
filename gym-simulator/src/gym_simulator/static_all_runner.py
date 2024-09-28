@@ -3,9 +3,11 @@ import copy
 import dataclasses
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from dataset_generator.core.models import Solution
+from dataset_generator.visualizers.plotters import plot_gantt_chart
 from gym_simulator.algorithms import algorithm_strategy
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
@@ -22,6 +24,8 @@ class Args:
     """number of workflows"""
     task_limit: int = 5
     """maximum number of tasks"""
+    gantt_chart_prefix: str = "tmp/gantt_chart"
+    """prefix for the Gantt chart files"""
 
 
 def main(args: Args):
@@ -67,8 +71,13 @@ def main(args: Args):
 
         solution = info.get("solution")
         assert solution is not None and isinstance(solution, Solution), "Solution is not available"
-        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
+        fig, ax = plt.subplots()
+        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
+        fig.set_figwidth(12)
+        fig.set_figheight(8)
+        plt.savefig(f"{args.gantt_chart_prefix}_{algorithm}.png")
 
+        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
         print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}")
 
     env.close()
