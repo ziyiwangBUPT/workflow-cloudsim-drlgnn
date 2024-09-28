@@ -16,6 +16,7 @@ class HeftScheduler(BaseScheduler):
     Implementation of the HEFT scheduling algorithm.
 
     HEFT is a scheduling algorithm that uses a combination of task-level and workflow-level scheduling.
+    Following implementation uses library: https://github.com/mackncheesiest/heft
     """
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
@@ -24,18 +25,22 @@ class HeftScheduler(BaseScheduler):
         for task in tasks:
             grouped_tasks[task.workflow_id].append(task)
 
+        # Schedule each workflow
         sched: ScheduleType | None = None
         assignments: list[tuple[np.float64, VmAssignmentDto]] = []
         assigning_task_start_id = 0
         for workflow_id, task_list in grouped_tasks.items():
             sched = self.schedule_workflow(task_list, vms, sched)
+            # Convert the schedule to a list of assignments
             for vm_id, events in sched.items():
                 for event in events:
                     actual_task_id = event.task - assigning_task_start_id
+                    # We only care about tasks from the current workflow (events has old workflows + dummy tasks)
                     if 0 <= actual_task_id < len(task_list):
                         assignments.append((event.start, VmAssignmentDto(vm_id, workflow_id, actual_task_id)))
             assigning_task_start_id += len(task_list) + 1
 
+        # Sort assignments by start time (make sure the order is correct)
         assignments.sort(key=lambda x: x[0])
         return [assignment for _, assignment in assignments]
 
