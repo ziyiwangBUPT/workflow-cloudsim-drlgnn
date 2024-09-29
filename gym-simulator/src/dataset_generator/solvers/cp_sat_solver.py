@@ -6,9 +6,13 @@ from ortools.sat.python import cp_model
 from dataset_generator.core.models import VmAssignment, Task, Vm, Workflow
 
 
-def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]:
+def solve_cp_sat(
+    workflows: list[Workflow], vms: list[Vm], timeout: int | None = None
+) -> tuple[bool, list[VmAssignment]]:
     """
     Solve the VM assignment problem using CP-SAT solver.
+
+    Returns a tuple of (isOptimal, assignments).
     """
 
     def is_assignable(task: Task, vm: Vm):
@@ -102,10 +106,11 @@ def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]
     solver.parameters.interleave_search = True
     solver.parameters.num_search_workers = 16
     solver.parameters.share_binary_clauses = False
+    if timeout is not None:
+        solver.parameters.max_time_in_seconds = timeout
 
     status = solver.Solve(model)
-    if status != cp_model.OPTIMAL:
-        print("No optimal solution found.")
+    is_optimal = status == cp_model.OPTIMAL
 
     assigned_tasks: list[VmAssignment] = []
     for workflow in workflows:
@@ -122,4 +127,4 @@ def solve_cp_sat(workflows: list[Workflow], vms: list[Vm]) -> list[VmAssignment]
             else:
                 raise Exception("Task not assigned to any VM.")
 
-    return assigned_tasks
+    return is_optimal, assigned_tasks

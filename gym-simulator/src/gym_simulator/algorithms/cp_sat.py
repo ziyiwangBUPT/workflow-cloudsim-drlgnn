@@ -1,15 +1,10 @@
 from collections import defaultdict
-from multiprocessing import Process, Manager, Queue
+from typing import override
 
 from dataset_generator.core.models import Task, Vm, VmAssignment, Workflow
 from dataset_generator.solvers.cp_sat_solver import solve_cp_sat
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
-
-
-def solve_cp_sat_queue(workflows: list[Workflow], vms: list[Vm], queue: Queue):
-    assignments = solve_cp_sat(workflows, vms)
-    queue.put(assignments)
 
 
 class CpSatScheduler(BaseScheduler):
@@ -19,7 +14,11 @@ class CpSatScheduler(BaseScheduler):
     CP-SAT is a scheduling algorithm that uses constraint programming to solve the scheduling problem.
     """
 
+    _is_optimal: bool | None = None
+
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
+        self._is_optimal = None
+
         grouped_task_objs: defaultdict[int, list[Task]] = defaultdict(list)
         for task in tasks:
             grouped_task_objs[task.workflow_id].append(
@@ -56,20 +55,9 @@ class CpSatScheduler(BaseScheduler):
                 )
             )
 
-        # Run the solver in a separate process and stop after 1 minute, also get the output
-        with Manager() as manager:
-            queue = manager.Queue()
-            process = Process(target=solve_cp_sat_queue, args=(workflow_objs, vm_objs, queue))
-            process.start()
-            process.join(60)
-            if process.is_alive():
-                process.terminate()
-                process.join()
-
-            result = queue.get()
-
         # We have to sort since we lose start time and the assignments are supposed to be in temporal order
-        assignment_objs: list[VmAssignment] = sorted(result, key=lambda t: t.start_time)
+        self._is_optimal, assignment_objs = solve_cp_sat(workflow_objs, vm_objs, timeout=60)
+        assignment_objs = list(sorted(assignment_objs, key=lambda t: t.start_time))
 
         assignments: list[VmAssignmentDto] = []
         for assignment_obj in assignment_objs:
@@ -82,3 +70,9 @@ class CpSatScheduler(BaseScheduler):
             )
 
         return assignments
+
+    @override
+    def is_optimal(self) -> bool:
+        if self._is_optimal is None:
+            raise Exception("Schedule the tasks first")
+        return self._is_optimal

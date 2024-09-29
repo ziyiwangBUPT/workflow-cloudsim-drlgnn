@@ -12,3 +12,7 @@ class BaseScheduler(ABC):
     def is_vm_suitable(self, vm: VmDto, task: TaskDto) -> bool:
         """Check if the VM is suitable for the task."""
         return vm.memory_mb >= task.req_memory_mb
+
+    def is_optimal(self) -> bool:
+        """Check if the scheduling algorithm is optimal."""
+        return False

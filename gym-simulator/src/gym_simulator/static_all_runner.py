@@ -86,7 +86,15 @@ def main(args: Args):
 
         makespan = max([assignment.end_time for assignment in solution.vm_assignments])
         print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}, Time: {t2 - t1:.5f}s")
-        stats.append({"Algorithm": algorithm, "Reward": reward, "Makespan": makespan, "Time": t2 - t1})
+        stats.append(
+            {
+                "Algorithm": algorithm,
+                "Reward": reward,
+                "Makespan": makespan,
+                "Time": t2 - t1,
+                "IsOptimal": scheduler.is_optimal(),
+            }
+        )
 
     env.close()
 
@@ -103,7 +111,9 @@ def main(args: Args):
     ax1.set_ylabel("Makespan", color="tab:blue")
     ax1.tick_params(axis="y", labelcolor="tab:blue")
     ax1.set_xticks([i + bar_width / 2 for i in index])
-    ax1.set_xticklabels(df["Algorithm"], rotation=45, ha="right")
+    # Algorithm name should be df["Algorithm"] for non-optimal solutions, and df["Algorithm*"] for optimal solutions
+    algorithm_names = [f"{df['Algorithm'][i]}*" if df["IsOptimal"][i] else df["Algorithm"][i] for i in index]
+    ax1.set_xticklabels(algorithm_names, rotation=45, ha="right")
 
     # Creating a secondary y-axis for Time (log scale)
     ax2 = ax1.twinx()
