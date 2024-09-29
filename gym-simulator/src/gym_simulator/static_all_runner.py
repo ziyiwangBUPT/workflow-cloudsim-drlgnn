@@ -1,3 +1,4 @@
+from typing import Any
 import tyro
 import copy
 import dataclasses
@@ -60,7 +61,7 @@ def main(args: Args):
         "heft",
     ]
 
-    stats: list[dict[str, float]] = []
+    stats: list[dict[str, Any]] = []
     for algorithm in algorithms:
         random.seed(0)
         np.random.seed(0)

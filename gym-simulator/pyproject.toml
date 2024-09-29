@@ -30,6 +30,7 @@ dev-dependencies = [
     "mypy>=1.11.2",
     "types-networkx>=3.2.1.20240918",
     "pyqt6>=6.7.1",
+    "pandas-stubs>=2.2.2.240909",
 ]
 
 [tool.uv.sources]
@@ -49,4 +50,8 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "pygraphviz.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "heft.*"
 ignore_missing_imports = true

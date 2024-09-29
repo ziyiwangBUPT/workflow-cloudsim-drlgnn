@@ -62,7 +62,7 @@ class HeftScheduler(BaseScheduler):
         # Communication startup for VMs - 0 for all VMs
         comm_startup = np.zeros(total_vms)
 
-        dag = nx.DiGraph()
+        dag: nx.DiGraph = nx.DiGraph()
         dag.add_node(dummy_task_id)  # Add a dummy node to represent the end of the workflow
 
         for task in tasks:
@@ -74,4 +74,5 @@ class HeftScheduler(BaseScheduler):
                 dag.add_edge(task.id, child_id, weight=1)
 
         sched, _, _ = heft.schedule_dag(dag, comp_matrix, comm_matrix, comm_startup, proc_schedules=sched)
+        assert sched is not None, "HEFT scheduling failed"
         return sched
