@@ -142,6 +142,9 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             solution_json = raw_info["solution"]
             solution_dict = json.loads(solution_json)
             parsed_info["solution"] = Solution.from_json(solution_dict)
+        if raw_info.get("total_power_consumption_watt") is not None:
+            power_cons_str = raw_info["total_power_consumption_watt"]
+            parsed_info["total_power_consumption_watt"] = float(power_cons_str)
 
         return parsed_info
 

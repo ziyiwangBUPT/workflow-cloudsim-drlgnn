@@ -77,6 +77,7 @@ def main(args: Args):
         assert terminated or truncated, "Static environment should terminate after one step"
 
         solution = info.get("solution")
+        power_watt = info.get("total_power_consumption_watt")
         assert solution is not None and isinstance(solution, Solution), "Solution is not available"
         fig, ax = plt.subplots()
         plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
@@ -87,16 +88,16 @@ def main(args: Args):
         plt.close(fig)
 
         makespan = max([assignment.end_time for assignment in solution.vm_assignments])
-        print(f"Algorithm: {algorithm}, Reward: {reward}, Makespan: {makespan}, Time: {t2 - t1:.5f}s")
-        stats.append(
-            {
-                "Algorithm": algorithm,
-                "Reward": reward,
-                "Makespan": makespan,
-                "Time": t2 - t1,
-                "IsOptimal": scheduler.is_optimal(),
-            }
-        )
+        entry = {
+            "Algorithm": algorithm,
+            "Reward": reward,
+            "Makespan": makespan,
+            "Time": t2 - t1,
+            "IsOptimal": scheduler.is_optimal(),
+            "Power_W": power_watt,
+        }
+        print(entry)
+        stats.append(entry)
 
     env.close()
 
@@ -104,11 +105,11 @@ def main(args: Args):
     df = DataFrame(stats).sort_values(by="Makespan", ascending=True).reset_index(drop=True)
 
     fig, ax1 = plt.subplots(figsize=(14, 7))
-    bar_width = 0.35
+    bar_width = 0.25
     index = range(len(df["Algorithm"]))
 
     # Plotting Makespan
-    ax1.bar(index, df["Makespan"], width=bar_width, label="Makespan", alpha=0.6, color="tab:blue")
+    ax1.bar(index, df["Makespan"], width=bar_width, label="Makespan", color="tab:blue")
     ax1.set_xlabel("Algorithm")
     ax1.set_ylabel("Makespan", color="tab:blue")
     ax1.tick_params(axis="y", labelcolor="tab:blue")
@@ -117,15 +118,22 @@ def main(args: Args):
     algorithm_names = [f"{df['Algorithm'][i]}*" if df["IsOptimal"][i] else df["Algorithm"][i] for i in index]
     ax1.set_xticklabels(algorithm_names, rotation=45, ha="right")
 
-    # Creating a secondary y-axis for Time (log scale)
+    # Adding Energy consumption to the plot
     ax2 = ax1.twinx()
-    ax2.bar([i + bar_width for i in index], df["Time"], width=bar_width, label="Time (s)", alpha=0.6, color="tab:red")
-    ax2.set_ylabel("Time (s)", color="tab:red")
-    ax2.set_yscale("log")  # Set log scale for time
-    ax2.tick_params(axis="y", labelcolor="tab:red")
+    ax2.bar([i + bar_width for i in index], df["Power_W"], width=bar_width, label="Power (W)", color="tab:green")
+    ax2.set_ylabel("Power (W)", color="tab:green")
+    ax2.tick_params(axis="y", labelcolor="tab:green")
+
+    # Creating a secondary y-axis for Time (log scale)
+    ax3 = ax1.twinx()
+    ax3.spines["right"].set_position(("axes", 1.2))
+    ax3.bar([i + 2 * bar_width for i in index], df["Time"], width=bar_width, label="Time (s)", color="tab:red")
+    ax3.set_ylabel("Time (s)", color="tab:red")
+    ax3.set_yscale("log")  # Set log scale for time
+    ax3.tick_params(axis="y", labelcolor="tab:red")
 
     fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
-    plt.title("Comparison of Algorithms by Makespan and Time")
+    plt.title("Comparison of Algorithms by Makespan, Power and Time")
     plt.tight_layout()
     plt.show()
 

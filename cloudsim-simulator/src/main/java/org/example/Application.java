@@ -8,6 +8,7 @@ import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.StaticAction;
 import org.example.api.scheduler.gym.types.StaticObservation;
 import org.example.api.executor.LocalWorkflowExecutor;
+import org.example.core.registries.HostRegistry;
 import org.example.dataset.Dataset;
 import org.example.sensors.RewardSensor;
 import org.example.simulation.SimulatedWorld;
@@ -74,10 +75,12 @@ public class Application implements Callable<Integer> {
         System.out.println(solution.toJson());
 
         var rewardSensor = RewardSensor.getInstance();
+        var hostRegistry = HostRegistry.getInstance();
         var reward = rewardSensor.finalReward(duration);
 
         AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
         finalAgentResult.addInfo("solution", solution.toJson());
+        finalAgentResult.addInfo("total_power_consumption_watt", Double.toString(hostRegistry.getTotalPowerConsumptionW()));
         gymSharedQueue.setObservation(finalAgentResult);
 
         // Stop Py4J connector
