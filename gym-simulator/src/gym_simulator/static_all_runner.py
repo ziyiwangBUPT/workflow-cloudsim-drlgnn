@@ -81,7 +81,8 @@ def main(args: Args):
         fig, ax = plt.subplots()
         plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
         fig.set_figwidth(12)
-        fig.set_figheight(8)
+        fig.set_figheight(7)
+        fig.tight_layout()
         plt.savefig(f"{args.gantt_chart_prefix}_{algorithm}.png")
         plt.close(fig)
 

@@ -120,13 +120,13 @@ def plot_gantt_chart(ax: plt.Axes, workflows: list[Workflow], vms: list[Vm], res
                 ax.text(
                     x=assigned_task.start_time + (assigned_task.end_time - assigned_task.start_time) / 2,
                     y=int(assigned_task.vm_id),
-                    s=f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_memory_mb // 1024} GB\n{assigned_task.end_time - assigned_task.start_time:.0f}s",
+                    s=f"W{workflow.id} T{task.id} ({assigned_task.end_time - assigned_task.start_time:.0f}s)\n{task.length}MI {task.req_memory_mb // 1024}GB",
                     ha="center",
                     va="center",
                 )
 
     ax.set_yticks(range(len(vms)))
-    ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)} MIPS\n{vm.memory_mb // 1024} GB" for vm in vms])
+    ax.set_yticklabels([f"VM {vm.id}\n{int(vm.cpu_speed_mips)}MIPS {vm.memory_mb // 1024}GB" for vm in vms])
     ax.set_xlabel("Time")
 
 
