@@ -62,6 +62,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                             "cpu_speed_mips": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_idle_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_peak_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
+                            "host_cpu_speed_mips": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                         }
                     )
                 ),
@@ -126,6 +127,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                     "cpu_speed_mips": float(vm.getCpuSpeedMips()),
                     "host_power_idle_watt": float(vm.getHost().getPowerIdleWatt()),
                     "host_power_peak_watt": float(vm.getHost().getPowerPeakWatt()),
+                    "host_cpu_speed_mips": float(vm.getHost().getCpuSpeedMips()),
                 }
                 for vm in obs.getVms()
             ],

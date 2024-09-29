@@ -5,6 +5,7 @@ from gym_simulator.algorithms.fjssp import FjsspScheduler
 from gym_simulator.algorithms.heft import HeftScheduler
 from gym_simulator.algorithms.max_min import MaxMinScheduler
 from gym_simulator.algorithms.min_min import MinMinScheduler
+from gym_simulator.algorithms.power_saving import PowerSavingScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
 
 
@@ -21,6 +22,8 @@ def get_scheduler(algorithm: str) -> BaseScheduler:
         return CpSatScheduler()
     elif algorithm == "heft":
         return HeftScheduler()
+    elif algorithm == "power_saving":
+        return PowerSavingScheduler()
     elif algorithm.startswith("fjssp_"):
         split_args = algorithm.split("_")
         assert len(split_args) == 3, "Invalid FJSSP algorithm format (expected: fjssp_<task_algo>_<vm_algo>)"

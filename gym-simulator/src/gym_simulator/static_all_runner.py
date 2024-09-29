@@ -59,6 +59,7 @@ def main(args: Args):
         "fjssp_mwkr_eet",
         "cp_sat",
         "heft",
+        "power_saving",
     ]
 
     stats: list[dict[str, Any]] = []

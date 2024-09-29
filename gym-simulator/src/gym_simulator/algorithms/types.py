@@ -8,6 +8,7 @@ class VmDto:
     cpu_speed_mips: float
     host_power_idle_watt: float
     host_power_peak_watt: float
+    host_cpu_speed_mips: float
 
 
 @dataclass
