@@ -1,13 +1,10 @@
-from collections import defaultdict
-
-from matplotlib import pyplot as plt
 import networkx as nx
-from heft import heft, gantt
+from heft import heft
 import numpy as np
 
-from dataset_generator.visualizers.utils import draw_agraph
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
+from gym_simulator.utils.task_mapper import TaskMapper
 
 
 ScheduleType = dict[int, list[heft.ScheduleEvent]]
@@ -23,65 +20,18 @@ class HeftOneScheduler(BaseScheduler):
     """
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
-        tasks_in_workflow = [0] * (max(_task.workflow_id for _task in tasks) + 1)
-        for task in tasks:
-            tasks_in_workflow[task.workflow_id] += 1
-
-        def _map(workflow_id: int, task_id: int) -> int:
-            mapped_task_id = sum(tasks_in_workflow[:workflow_id]) + task_id
-            mapped_task_id += 1  # Dummy start task has ID 0 (offset 1)
-            return mapped_task_id
-
-        def _unmap(mapped_task_id: int) -> tuple[int, int]:
-            mapped_task_id -= 1  # Remove offset by dummy start task
-            for workflow_id in range(len(tasks_in_workflow)):
-                tasks_upto_now = sum(tasks_in_workflow[:workflow_id])
-                current_workflow_tasks = tasks_in_workflow[workflow_id]
-                if tasks_upto_now <= mapped_task_id < tasks_upto_now + current_workflow_tasks:
-                    return (workflow_id, mapped_task_id - tasks_upto_now)
-
-            raise Exception("Out of range")
-
-        dummy_start_task = TaskDto(
-            id=0,
-            workflow_id=0,
-            length=0,
-            req_memory_mb=0,
-            child_ids=[_map(_task.workflow_id, 0) for _task in tasks if _task.id == 0],
-        )
-        dummy_end_task = TaskDto(
-            id=sum(tasks_in_workflow) + 1,
-            workflow_id=0,
-            length=0,
-            req_memory_mb=0,
-            child_ids=[],
-        )
-
-        mapped_tasks: list[TaskDto] = [dummy_start_task]
-        for task in tasks:
-            mapped_child_ids = [_map(task.workflow_id, child_id) for child_id in task.child_ids]
-            if not mapped_child_ids:
-                mapped_child_ids = [dummy_end_task.id]
-
-            mapped_task = TaskDto(
-                id=_map(task.workflow_id, task.id),
-                workflow_id=0,
-                length=task.length,
-                req_memory_mb=task.req_memory_mb,
-                child_ids=mapped_child_ids,
-            )
-            mapped_tasks.append(mapped_task)
-        mapped_tasks.append(dummy_end_task)
+        task_mapper = TaskMapper(tasks)
+        mapped_tasks = task_mapper.map_tasks()
 
         assignments: list[tuple[np.float64, VmAssignmentDto]] = []
         sched = self.schedule_workflow(mapped_tasks, vms)
         for vm_id, events in sched.items():
             for event in events:
-                if event.task == 0:  # Dummy start
+                if event.task == task_mapper.dummy_start_task_id():
                     continue
-                if event.task > sum(tasks_in_workflow):
+                if event.task == task_mapper.dummy_end_task_id():
                     continue
-                workflow_id, task_id = _unmap(event.task)
+                workflow_id, task_id = task_mapper.unmap_id(event.task)
                 assignments.append((event.start, VmAssignmentDto(vm_id, workflow_id, task_id)))
 
         # Sort assignments by start time (make sure the order is correct)
