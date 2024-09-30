@@ -39,4 +39,10 @@ public class Dataset {
         System.err.println("OK");
         return dataset;
     }
+
+    public int maximumHorizon() {
+        var minimumVmSpeed = vms.stream().mapToInt(DatasetVm::getCpuSpeedMips).min().orElse(0);
+        var totalLength = workflows.stream().mapToInt(workflow -> workflow.getTasks().stream().mapToInt(DatasetTask::getLength).sum()).sum();
+        return (int) (totalLength / (double) minimumVmSpeed) + 1000;
+    }
 }

@@ -29,9 +29,6 @@ public class Application implements Callable<Integer> {
     @Option(names = {"-f", "--file"}, description = "Dataset file")
     private File datasetFile;
 
-    @Option(names = {"-d", "--duration"}, description = "Duration of the simulation", defaultValue = "1000")
-    private int duration;
-
     @Option(names = {"-p", "--port"}, description = "Py4J port", defaultValue = "25333")
     private int py4JPort;
 
@@ -50,7 +47,7 @@ public class Application implements Callable<Integer> {
 
         // Configure simulation
         var config = SimulatedWorldConfig.builder()
-                .simulationDuration(duration)
+                .simulationDuration(dataset.maximumHorizon())
                 .monitoringUpdateInterval(5)
                 .build();
 
@@ -76,7 +73,7 @@ public class Application implements Callable<Integer> {
 
         var rewardSensor = RewardSensor.getInstance();
         var hostRegistry = HostRegistry.getInstance();
-        var reward = rewardSensor.finalReward(duration);
+        var reward = rewardSensor.finalReward(dataset.maximumHorizon());
 
         AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
         finalAgentResult.addInfo("solution", solution.toJson());
