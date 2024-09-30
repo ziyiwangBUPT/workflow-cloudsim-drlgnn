@@ -34,8 +34,8 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         self._processed_tasks: set[TaskIdType] = set()
 
         while self._ready_tasks:
-            read_task_objs = [self.get_task(task_id) for task_id in self._ready_tasks]
-            next_task = self.select_task(read_task_objs)
+            ready_task_objs = [self.get_task(task_id) for task_id in self._ready_tasks]
+            next_task = self.select_task(ready_task_objs)
             next_task_id = self.tid(next_task)
             self._ready_tasks.remove(next_task_id)
             self._processed_tasks.add(next_task_id)
