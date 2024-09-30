@@ -1,7 +1,7 @@
 from typing import override
 
 from gym_simulator.algorithms.min_min import MinMinScheduler
-from gym_simulator.algorithms.types import TaskDto
+from gym_simulator.core.types import TaskDto
 
 
 class MaxMinScheduler(MinMinScheduler):

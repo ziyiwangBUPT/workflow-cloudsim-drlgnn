@@ -1,7 +1,7 @@
 import dataclasses
 
 from typing import Any, override
-from gym_simulator.algorithms.types import VmDto, TaskDto, VmAssignmentDto
+from gym_simulator.core.types import VmDto, TaskDto, VmAssignmentDto
 from gym_simulator.environments.basic import BasicCloudSimEnvironment
 
 

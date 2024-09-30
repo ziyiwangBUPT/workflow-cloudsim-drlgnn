@@ -1,6 +1,6 @@
 from typing import override
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
-from gym_simulator.algorithms.types import TaskDto, VmDto
+from gym_simulator.core.types import TaskDto, VmDto
 
 
 class PowerSavingScheduler(BaseReadyQueueScheduler):

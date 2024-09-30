@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from gym_simulator.algorithms.types import VmDto, TaskDto, VmAssignmentDto
+from gym_simulator.core.types import VmDto, TaskDto, VmAssignmentDto
 
 
 class BaseScheduler(ABC):

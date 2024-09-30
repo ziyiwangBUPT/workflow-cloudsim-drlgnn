@@ -7,7 +7,7 @@ import numpy as np
 
 from dataset_generator.visualizers.utils import draw_agraph
 from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
+from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 
 
 ScheduleType = dict[int, list[heft.ScheduleEvent]]

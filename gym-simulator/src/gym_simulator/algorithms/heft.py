@@ -5,7 +5,7 @@ from heft import heft
 import numpy as np
 
 from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
+from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 
 
 ScheduleType = dict[int, list[heft.ScheduleEvent]]

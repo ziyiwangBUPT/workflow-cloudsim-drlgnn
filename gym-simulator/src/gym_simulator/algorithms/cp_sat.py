@@ -4,7 +4,7 @@ from typing import override
 from dataset_generator.core.models import Task, Vm, VmAssignment, Workflow
 from dataset_generator.solvers.cp_sat_solver import solve_cp_sat
 from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.types import TaskDto, VmAssignmentDto, VmDto
+from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 
 
 class CpSatScheduler(BaseScheduler):
