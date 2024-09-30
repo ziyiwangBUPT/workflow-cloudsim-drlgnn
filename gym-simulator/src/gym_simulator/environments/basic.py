@@ -27,17 +27,17 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": []}
 
     def __init__(self, env_config: dict[str, Any]):
-        host_count = env_config["host_count"]
-        vm_count = env_config["vm_count"]
-        workflow_count = env_config["workflow_count"]
-        task_limit = env_config["task_limit"]
+        self.host_count: int = env_config["host_count"]
+        self.vm_count: int = env_config["vm_count"]
+        self.workflow_count: int = env_config["workflow_count"]
+        self.task_limit: int = env_config["task_limit"]
 
         self.action_space = spaces.Sequence(
             spaces.Dict(
                 {
-                    "vm_id": spaces.Discrete(vm_count),
-                    "workflow_id": spaces.Discrete(workflow_count),
-                    "task_id": spaces.Discrete(task_limit),
+                    "vm_id": spaces.Discrete(self.vm_count),
+                    "workflow_id": spaces.Discrete(self.workflow_count),
+                    "task_id": spaces.Discrete(self.task_limit),
                 }
             )
         )
@@ -46,18 +46,18 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                 "tasks": spaces.Sequence(
                     spaces.Dict(
                         {
-                            "id": spaces.Discrete(task_limit),
-                            "workflow_id": spaces.Discrete(workflow_count),
+                            "id": spaces.Discrete(self.task_limit),
+                            "workflow_id": spaces.Discrete(self.workflow_count),
                             "length": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "req_cores": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
-                            "child_ids": spaces.Sequence(spaces.Discrete(task_limit)),
+                            "child_ids": spaces.Sequence(spaces.Discrete(self.task_limit)),
                         }
                     )
                 ),
                 "vms": spaces.Sequence(
                     spaces.Dict(
                         {
-                            "id": spaces.Discrete(vm_count),
+                            "id": spaces.Discrete(self.vm_count),
                             "cores": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "cpu_speed_mips": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_idle_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
@@ -80,11 +80,11 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             assert "workflow_count" not in simulator_kwargs["dataset_args"], "workflow_count is set by the environment"
             assert "dag_method" not in simulator_kwargs["dataset_args"], "dag_method is set by the environment"
             assert "gnp_max_n" not in simulator_kwargs["dataset_args"], "gnp_max_n is set by the environment"
-            simulator_kwargs["dataset_args"]["host_count"] = host_count
-            simulator_kwargs["dataset_args"]["vm_count"] = vm_count
-            simulator_kwargs["dataset_args"]["workflow_count"] = workflow_count
+            simulator_kwargs["dataset_args"]["host_count"] = self.host_count
+            simulator_kwargs["dataset_args"]["vm_count"] = self.vm_count
+            simulator_kwargs["dataset_args"]["workflow_count"] = self.workflow_count
             simulator_kwargs["dataset_args"]["dag_method"] = "gnp"
-            simulator_kwargs["dataset_args"]["gnp_max_n"] = task_limit
+            simulator_kwargs["dataset_args"]["gnp_max_n"] = self.task_limit
 
             # Set Simulator args
             assert "jvm_port" not in simulator_kwargs, "jvm_port is set by the environment"
