@@ -96,7 +96,7 @@ def main(args: Args):
             "Makespan": makespan,
             "Time": t2 - t1,
             "IsOptimal": scheduler.is_optimal(),
-            "Power_W": power_watt,
+            "PowerW": power_watt,
         }
         print(entry)
         stats.append(entry)
@@ -122,7 +122,7 @@ def main(args: Args):
 
     # Adding Energy consumption to the plot
     ax2 = ax1.twinx()
-    ax2.bar([i + bar_width for i in index], df["Power_W"], width=bar_width, label="Power (W)", color="tab:green")
+    ax2.bar([i + bar_width for i in index], df["PowerW"], width=bar_width, label="Power (W)", color="tab:green")
     ax2.set_ylabel("Power (W)", color="tab:green")
     ax2.tick_params(axis="y", labelcolor="tab:green")
 
