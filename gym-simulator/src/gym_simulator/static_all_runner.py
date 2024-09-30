@@ -59,6 +59,7 @@ def main(args: Args):
         "fjssp_mwkr_eet",
         "cp_sat",
         "heft",
+        "heft_one",
         "power_saving",
     ]
 

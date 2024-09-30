@@ -3,6 +3,7 @@ from gym_simulator.algorithms.best_fit import BestFitScheduler
 from gym_simulator.algorithms.cp_sat import CpSatScheduler
 from gym_simulator.algorithms.fjssp import FjsspScheduler
 from gym_simulator.algorithms.heft import HeftScheduler
+from gym_simulator.algorithms.heft_one import HeftOneScheduler
 from gym_simulator.algorithms.max_min import MaxMinScheduler
 from gym_simulator.algorithms.min_min import MinMinScheduler
 from gym_simulator.algorithms.power_saving import PowerSavingScheduler
@@ -22,6 +23,8 @@ def get_scheduler(algorithm: str) -> BaseScheduler:
         return CpSatScheduler()
     elif algorithm == "heft":
         return HeftScheduler()
+    elif algorithm == "heft_one":
+        return HeftOneScheduler()
     elif algorithm == "power_saving":
         return PowerSavingScheduler()
     elif algorithm.startswith("fjssp_"):
