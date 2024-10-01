@@ -2,6 +2,7 @@ import random
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pygraphviz as pgv
 
 from dataset_generator.core.models import Workflow, VmAssignment, Vm
@@ -162,3 +163,21 @@ def plot_pegasus_dag(graph: dict[int, set[int]], node_numbers: dict[str, int]) -
             n.attr["label"] = ""
 
     return A
+
+
+# -------------------------------------------------------------------------------------------------
+
+
+def plot_2d_matrix(ax: plt.Axes, title: str, matrix: np.ndarray):
+    ax.matshow(matrix)
+    ax.set_yticks(np.arange(matrix.shape[0]))
+    ax.set_xticks(np.arange(matrix.shape[1]))
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if int(matrix[i, j]) == matrix[i, j]:
+                label = f"{int(matrix[i, j])}"
+            else:
+                label = f"{matrix[i, j]:.1f}"
+            ax.text(j, i, label, ha="center", va="center", color="w", fontsize=8)
+
+    ax.set_title(title)
