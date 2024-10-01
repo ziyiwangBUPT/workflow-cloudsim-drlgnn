@@ -1,9 +1,6 @@
 import tyro
-import random
 import json
 import dataclasses
-
-import numpy as np
 
 from dataset_generator.core.gen_dataset import generate_dataset
 
@@ -43,10 +40,8 @@ class Args:
 
 
 def main(args: Args):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-
     dataset = generate_dataset(
+        seed=args.seed,
         host_count=args.host_count,
         vm_count=args.vm_count,
         max_memory_gb=args.max_memory_gb,

@@ -1,9 +1,13 @@
+import random
+
+import numpy as np
 from dataset_generator.core.models import Dataset
 from dataset_generator.core.gen_workflow import generate_workflows
 from dataset_generator.core.gen_vm import generate_hosts, generate_vms, allocate_vms
 
 
 def generate_dataset(
+    seed: int,
     host_count: int,
     vm_count: int,
     max_memory_gb: int,
@@ -22,6 +26,9 @@ def generate_dataset(
     """
     Generate a dataset.
     """
+
+    random.seed(seed)
+    np.random.seed(seed)
 
     hosts = generate_hosts(host_count)
     vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips)

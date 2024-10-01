@@ -1,10 +1,7 @@
 import tyro
-import json
 import dataclasses
-import random
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
@@ -16,6 +13,8 @@ from gym_simulator.environments.static import StaticCloudSimEnvironment
 class Args:
     simulator: str
     """path to the simulator JAR file"""
+    seed: int = 0
+    """random seed"""
     render_mode: str | None = None
     """render mode"""
     host_count: int = 10
@@ -33,9 +32,6 @@ class Args:
 
 
 def main(args: Args):
-    random.seed(0)
-    np.random.seed(0)
-
     env = StaticCloudSimEnvironment(
         env_config={
             "host_count": args.host_count,
@@ -47,6 +43,7 @@ def main(args: Args):
                 "simulator_jar_path": args.simulator,
                 "verbose": True,
                 "remote_debug": args.remote_debug,
+                "dataset_args": {"seed": args.seed},
             },
             "render_mode": args.render_mode,
         },

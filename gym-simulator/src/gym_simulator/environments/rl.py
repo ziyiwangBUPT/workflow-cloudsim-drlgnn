@@ -182,6 +182,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             combined_action.sort(key=lambda x: x[0])
             dict_action = [dataclasses.asdict(a[1]) for a in combined_action]
             obs, final_reward, terminated, truncated, info = super().step(dict_action)
+            info["vm_assignments"] = [a[1] for a in combined_action]
             return obs, reward + final_reward, terminated, truncated, info
 
         return self.state.to_observation(), reward, False, False, {}

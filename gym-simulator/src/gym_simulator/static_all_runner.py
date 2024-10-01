@@ -19,6 +19,8 @@ from gym_simulator.environments.static import StaticCloudSimEnvironment
 class Args:
     simulator: str
     """path to the simulator JAR file"""
+    seed: int = 0
+    """random seed"""
     host_count: int = 10
     """number of hosts"""
     vm_count: int = 10
@@ -42,6 +44,7 @@ def main(args: Args):
             "simulator_jar_path": args.simulator,
             "verbose": False,
             "remote_debug": False,
+            "dataset_args": {"seed": args.seed},
         },
     }
     algorithms = [
@@ -61,15 +64,13 @@ def main(args: Args):
         "heft",
         "heft_one",
         "power_saving",
+        "rl",
     ]
 
     stats: list[dict[str, Any]] = []
     for algorithm in algorithms:
-        random.seed(0)
-        np.random.seed(0)
-
         env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
-        scheduler = algorithm_strategy.get_scheduler(algorithm)
+        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config)
 
         (tasks, vms), _ = env.reset()
         t1 = time.time()

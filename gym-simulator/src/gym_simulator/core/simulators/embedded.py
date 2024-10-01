@@ -157,6 +157,7 @@ class EmbeddedSimulator(BaseSimulator):
     def _generate_dataset_json(self) -> str:
         default_args = DatasetArgs()
         dataset = generate_dataset(
+            seed=self.dataset_args.get("seed", default_args.seed),
             host_count=self.dataset_args.get("host_count", default_args.host_count),
             vm_count=self.dataset_args.get("vm_count", default_args.vm_count),
             max_memory_gb=self.dataset_args.get("max_memory_gb", default_args.max_memory_gb),
