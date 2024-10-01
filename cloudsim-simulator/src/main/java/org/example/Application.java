@@ -44,10 +44,11 @@ public class Application implements Callable<Integer> {
         var dataset = datasetFile != null
                 ? Dataset.fromFile(datasetFile)
                 : Dataset.fromStdin();
+        var duration = dataset.maximumHorizon();
 
         // Configure simulation
         var config = SimulatedWorldConfig.builder()
-                .simulationDuration(dataset.maximumHorizon())
+                .simulationDuration(duration)
                 .monitoringUpdateInterval(5)
                 .build();
 
@@ -73,7 +74,7 @@ public class Application implements Callable<Integer> {
 
         var rewardSensor = RewardSensor.getInstance();
         var hostRegistry = HostRegistry.getInstance();
-        var reward = rewardSensor.finalReward(dataset.maximumHorizon());
+        var reward = rewardSensor.finalReward(duration);
 
         AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
         finalAgentResult.addInfo("solution", solution.toJson());

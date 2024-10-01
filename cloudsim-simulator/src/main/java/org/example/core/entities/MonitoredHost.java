@@ -28,10 +28,10 @@ public class MonitoredHost extends Host {
 
     /// Update the utilization of the host.
     /// This method should be called periodically to update the host's utilization.
-    public void updateUtilization(double timeMs) {
+    public void updateUtilization(double time) {
         var totalAllocationMips = 0d;
         for (var vm : getGuestList()) {
-            totalAllocationMips += vm.getTotalUtilizationOfCpuMips(timeMs);
+            totalAllocationMips += vm.getTotalUtilizationOfCpuMips(time);
         }
 
         this.currentAllocatedMips = totalAllocationMips;
@@ -59,5 +59,9 @@ public class MonitoredHost extends Host {
     public double getAveragePowerConsumption() {
         if (getAverageCpuUtilization() == 0) return 0.0;
         return powerModel.getPower(getAverageCpuUtilization());
+    }
+
+    public double getTotalEnergyConsumption(double time) {
+        return getAveragePowerConsumption() * time;
     }
 }

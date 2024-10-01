@@ -19,8 +19,8 @@ public class HostRegistry extends AbstractRegistry<MonitoredHost> {
     }
 
     /// Update the utilization of all hosts in the registry.
-    public void updateUtilizationOfHosts(double timeMs) {
-        itemStream().forEach(host -> host.updateUtilization(timeMs));
+    public void updateUtilizationOfHosts(double time) {
+        itemStream().forEach(host -> host.updateUtilization(time));
     }
 
     /// Register a new list of hosts.
@@ -36,6 +36,11 @@ public class HostRegistry extends AbstractRegistry<MonitoredHost> {
     /// Get the total power consumption of all hosts.
     public double getTotalPowerConsumptionW() {
         return itemStream().mapToDouble(MonitoredHost::getAveragePowerConsumption).sum();
+    }
+
+    /// Get the total energy consumption of all hosts.
+    public double getTotalEnergyConsumptionJ(double time) {
+        return itemStream().mapToDouble(host -> host.getTotalEnergyConsumption(time)).sum();
     }
 
     @Override
