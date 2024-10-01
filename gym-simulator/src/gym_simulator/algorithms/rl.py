@@ -8,6 +8,13 @@ from gym_simulator.environments.rl import RlCloudSimEnvironment
 
 
 class RlScheduler(BaseScheduler):
+    """
+    RL Env based scheduler.
+
+    This scheduler runs the RL environment instance internally to schedule the tasks.
+    The algorithm is not a reinforcement learning algorithm, just a simple heuristic algorithm.
+    """
+
     def __init__(self, env_config: dict[str, Any]):
         self.env_config = env_config
 
