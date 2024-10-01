@@ -75,7 +75,6 @@ def main(args: Args):
         assert min_comp_time == min_comp_time_of_ready_tasks
 
         action = {"vm_id": next_vm_id, "task_id": next_task_id}
-        print(action)
         obs, reward, terminated, truncated, info = env.step(action)
         print("Reward:", reward)
         if terminated or truncated:
