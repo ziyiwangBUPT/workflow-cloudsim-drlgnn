@@ -7,7 +7,7 @@ from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.rl import RlCloudSimEnvironment
 
 
-class RlScheduler(BaseScheduler):
+class RlStaticScheduler(BaseScheduler):
     """
     RL Env based scheduler.
 

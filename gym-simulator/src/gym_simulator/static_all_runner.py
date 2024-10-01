@@ -64,7 +64,7 @@ def main(args: Args):
         "heft",
         "heft_one",
         "power_saving",
-        "rl",
+        "rl_static",
     ]
 
     stats: list[dict[str, Any]] = []
