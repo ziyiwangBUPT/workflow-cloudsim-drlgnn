@@ -34,7 +34,7 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
     # ----------------------- Reset method ----------------------------------------------------------------------------
 
-    def reset(
+    def reset(  # type: ignore[override]
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         obs, info = super().reset(seed=seed, options=options)
@@ -44,7 +44,7 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
     # ----------------------- Step method -----------------------------------------------------------------------------
 
-    def step(self, action: Any) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+    def step(self, action: Any) -> tuple[np.ndarray | None, float, bool, bool, dict[str, Any]]:  # type: ignore[override]
         action_dict = {"vm_id": action, "task_id": self.task_action}
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
