@@ -14,6 +14,18 @@ from dataset_generator.core.gen_dataset import generate_dataset
 from dataset_generator.gen_dataset import Args as DatasetArgs
 
 
+# Taken from Selenium's utils.py
+# https://github.com/SeleniumHQ/selenium/blob/35dd34afbdd96502066d0f7b6a2460a11e5fb73a/py/selenium/webdriver/common/utils.py#L31
+def free_port() -> int:
+    """Determines a free port using sockets."""
+    free_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    free_socket.bind(("127.0.0.1", 0))
+    free_socket.listen(5)
+    port: int = free_socket.getsockname()[1]
+    free_socket.close()
+    return port
+
+
 class EmbeddedSimulator(BaseSimulator):
     """
     A simulator that runs CloudSim using a Java process embedded in the Python process.
@@ -28,7 +40,6 @@ class EmbeddedSimulator(BaseSimulator):
 
     def __init__(
         self,
-        jvm_port: int,
         simulator_jar_path: str,
         dataset_args: dict[str, Any],
         verbose: bool = False,
@@ -38,7 +49,7 @@ class EmbeddedSimulator(BaseSimulator):
         self.dataset_args = dataset_args
         self.simulator_process = None
 
-        gateway_params = GatewayParameters(port=jvm_port)
+        gateway_params = GatewayParameters(port=free_port())
         self.java_gateway = JavaGateway(gateway_parameters=gateway_params)
         self.env_connector = self.java_gateway.entry_point
 
@@ -102,6 +113,18 @@ class EmbeddedSimulator(BaseSimulator):
         self._print_if_verbose(self.simulator_process.stderr.read(), file=sys.stderr)
         self.simulator_process = None
         return output
+
+    # --------------------- Simulator Reboot --------------------------------------------------------------------------
+
+    def reboot(self):
+        if self.is_running():
+            self.stop()
+
+        self.simulator_process = None
+        gateway_params = GatewayParameters(port=free_port())
+        self.java_gateway = JavaGateway(gateway_parameters=gateway_params)
+        self.env_connector = self.java_gateway.entry_point
+        self.start()
 
     # --------------------- Simulator Status -------------------------------------------------------------------------
 

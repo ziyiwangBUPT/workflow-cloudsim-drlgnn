@@ -13,23 +13,24 @@ from gym_simulator.utils.task_mapper import TaskMapper
 
 
 class RlCloudSimEnvironment(BasicCloudSimEnvironment):
-    metadata = {"render_modes": ["human", "rgb_array"], "video.frames_per_second": 1}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 1}
     state: RlEnvState | None = None
 
     # ----------------------- Initialization --------------------------------------------------------------------------
 
     def __init__(self, env_config: dict[str, Any]):
+        assert env_config["simulator_mode"] == "embedded", "Only embedded simulator mode is supported"
+
         # Override args
-        if env_config["simulator_mode"] == "embedded":
-            simulator_kwargs = env_config.get("simulator_kwargs", {})
-            simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
-            assert "task_arrival" not in simulator_kwargs["dataset_args"], "task_arrival is set by the environment"
-            simulator_kwargs["dataset_args"]["task_arrival"] = "static"
+        simulator_kwargs = env_config.get("simulator_kwargs", {})
+        simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
+        assert "task_arrival" not in simulator_kwargs["dataset_args"], "task_arrival is set by the environment"
+        simulator_kwargs["dataset_args"]["task_arrival"] = "static"
 
         super().__init__(env_config)
         self.parent_observation_space = copy.deepcopy(self.observation_space)
         self.parent_action_space = copy.deepcopy(self.action_space)
-        self.renderer = RlEnvironmentRenderer(render_fps=1, width=1200, height=800)
+        self.renderer = RlEnvironmentRenderer(render_fps=self.metadata["render_fps"], width=1200, height=800)
 
         max_vm_count = self.vm_count
         # Reserve 0 for dummy start, N+1 for dummy end, Nmax=W*T
@@ -69,7 +70,8 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
-        assert self.state is None, "State must be None"
+        self.simulator.reboot()
+        self.state = None
 
         dict_observation, info = super().reset(seed=seed, options=options)
         tasks = [TaskDto(**task) for task in dict_observation["tasks"]]
@@ -122,12 +124,13 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         vm_id = action["vm_id"]
 
         # Validate action
+        penalty = 10000 + 1000 * sum(self.state.task_state_scheduled == 0)
         if self.state.task_state_scheduled[task_id] == 1:
-            return {}, -1000, True, False, {"error": f"Task {task_id} is already scheduled"}
+            return {}, -penalty, True, False, {"error": f"Task {task_id} is already scheduled"}
         if self.state.task_state_ready[task_id] == 0:
-            return {}, -1000, True, False, {"error": f"Task {task_id} is not ready"}
+            return {}, -penalty, True, False, {"error": f"Task {task_id} is not ready"}
         if self.state.task_vm_compatibility[task_id, vm_id] == 0:
-            return {}, -1000, True, False, {"error": f"Task {task_id} is not compatible with VM {vm_id}"}
+            return {}, -penalty, True, False, {"error": f"Task {task_id} is not compatible with VM {vm_id}"}
 
         mapped_tasks = self.state.tasks
 

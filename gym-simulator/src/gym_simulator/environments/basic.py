@@ -11,18 +11,6 @@ from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
 
-# Taken from Selenium's utils.py
-# https://github.com/SeleniumHQ/selenium/blob/35dd34afbdd96502066d0f7b6a2460a11e5fb73a/py/selenium/webdriver/common/utils.py#L31
-def free_port() -> int:
-    """Determines a free port using sockets."""
-    free_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    free_socket.bind(("127.0.0.1", 0))
-    free_socket.listen(5)
-    port: int = free_socket.getsockname()[1]
-    free_socket.close()
-    return port
-
-
 class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": []}
 
@@ -87,9 +75,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             simulator_kwargs["dataset_args"]["gnp_max_n"] = self.task_limit
 
             # Set Simulator args
-            assert "jvm_port" not in simulator_kwargs, "jvm_port is set by the environment"
             assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
-            simulator_kwargs["jvm_port"] = free_port()
             self.simulator = EmbeddedSimulator(**simulator_kwargs)
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)

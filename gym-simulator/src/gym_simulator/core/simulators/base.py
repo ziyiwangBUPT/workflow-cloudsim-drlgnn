@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from io import UnsupportedOperation
 from typing import Any, Callable
 
 
@@ -35,3 +36,7 @@ class BaseSimulator(ABC):
     def step(self, action_creator: Callable[[Any], Any]) -> Any:
         """Step the environment dynamics with the given action creator and return the new observation."""
         raise NotImplementedError
+
+    def reboot(self):
+        """Reboot the simulator. Not all simulators support this operation."""
+        raise UnsupportedOperation("Reboot operation is not supported by this simulator.")
