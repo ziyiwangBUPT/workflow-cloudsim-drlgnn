@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 import tyro
@@ -37,27 +38,28 @@ def main(args: Args):
     random.seed(args.seed)
     np.random.seed(args.seed)
 
-    env = StaticCloudSimEnvironment(
-        env_config={
-            "host_count": args.host_count,
-            "vm_count": args.vm_count,
-            "workflow_count": args.workflow_count,
-            "task_limit": args.task_limit,
-            "simulator_mode": "embedded",
-            "simulator_kwargs": {
-                "simulator_jar_path": args.simulator,
-                "verbose": True,
-                "remote_debug": args.remote_debug,
-            },
-            "render_mode": args.render_mode,
+    env_config = {
+        "host_count": args.host_count,
+        "vm_count": args.vm_count,
+        "workflow_count": args.workflow_count,
+        "task_limit": args.task_limit,
+        "simulator_mode": "embedded",
+        "simulator_kwargs": {
+            "simulator_jar_path": args.simulator,
+            "verbose": True,
+            "remote_debug": args.remote_debug,
         },
-    )
+        "render_mode": args.render_mode,
+    }
+    env = StaticCloudSimEnvironment(copy.deepcopy(env_config))
 
     # Choose the algorithm
-    scheduler = algorithm_strategy.get_scheduler(args.algorithm)
+    scheduler = algorithm_strategy.get_scheduler(args.algorithm, copy.deepcopy(env_config))
 
     # Since this is static, the step will be only called once
     (tasks, vms), _ = env.reset()
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     action = scheduler.schedule(tasks, vms)
     _, reward, terminated, truncated, info = env.step(action)
     assert terminated or truncated, "Static environment should terminate after one step"

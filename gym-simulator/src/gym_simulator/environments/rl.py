@@ -70,8 +70,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
-        self.simulator.reboot()
-        self.state = None
+        if self.state is not None:
+            self.simulator.reboot()
+            self.state = None
 
         dict_observation, info = super().reset(seed=seed, options=options)
         tasks = [TaskDto(**task) for task in dict_observation["tasks"]]
