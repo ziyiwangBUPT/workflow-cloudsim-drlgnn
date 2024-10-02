@@ -154,7 +154,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             new_task_state_ready[-1] = 0
             new_assignments[-1] = 0
 
-        reward = self.state.task_completion_time[-1] - new_task_completion_time[-1]
+        reward = 0
         self.state = RlEnvState(
             task_mapper=self.state.task_mapper,
             task_state_scheduled=new_task_state_scheduled,
@@ -184,9 +184,10 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
                 combined_action.append((comp_time, VmAssignmentDto(int(vm_id), u_workflow_id, u_vm_id)))
             combined_action.sort(key=lambda x: x[0])
             dict_action = [dataclasses.asdict(a[1]) for a in combined_action]
-            obs, final_reward, terminated, truncated, info = super().step(dict_action)
+            obs, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
-            return obs, reward + final_reward, terminated, truncated, info
+            reward = -new_task_completion_time[-1]
+            return obs, reward, terminated, truncated, info
 
         return self.state.to_observation(), reward, False, False, {}
 

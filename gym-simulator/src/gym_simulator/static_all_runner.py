@@ -34,6 +34,9 @@ class Args:
 
 
 def main(args: Args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     env_config = {
         "host_count": args.host_count,
         "vm_count": args.vm_count,
@@ -44,7 +47,6 @@ def main(args: Args):
             "simulator_jar_path": args.simulator,
             "verbose": False,
             "remote_debug": False,
-            "dataset_args": {"seed": args.seed},
         },
     }
     algorithms = [
@@ -74,6 +76,8 @@ def main(args: Args):
 
         (tasks, vms), _ = env.reset()
         t1 = time.time()
+        random.seed(args.seed)
+        np.random.seed(args.seed)
         action = scheduler.schedule(tasks, vms)
         t2 = time.time()
         _, reward, terminated, truncated, info = env.step(action)

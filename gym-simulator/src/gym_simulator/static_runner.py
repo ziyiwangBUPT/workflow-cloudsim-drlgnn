@@ -1,3 +1,5 @@
+import random
+import numpy as np
 import tyro
 import dataclasses
 
@@ -32,6 +34,9 @@ class Args:
 
 
 def main(args: Args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     env = StaticCloudSimEnvironment(
         env_config={
             "host_count": args.host_count,
@@ -43,7 +48,6 @@ def main(args: Args):
                 "simulator_jar_path": args.simulator,
                 "verbose": True,
                 "remote_debug": args.remote_debug,
-                "dataset_args": {"seed": args.seed},
             },
             "render_mode": args.render_mode,
         },

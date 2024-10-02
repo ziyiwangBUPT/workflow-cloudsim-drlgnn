@@ -1,3 +1,5 @@
+import random
+import numpy as np
 import tyro
 import json
 import dataclasses
@@ -40,8 +42,10 @@ class Args:
 
 
 def main(args: Args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     dataset = generate_dataset(
-        seed=args.seed,
         host_count=args.host_count,
         vm_count=args.vm_count,
         max_memory_gb=args.max_memory_gb,
