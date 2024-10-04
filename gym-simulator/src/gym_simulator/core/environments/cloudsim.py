@@ -87,6 +87,8 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
 
     @override
     def close(self):
+        if not hasattr(self, "simulator"):
+            return
         if self.simulator.is_running():
             self.simulator.stop()
         if self.renderer is not None:
