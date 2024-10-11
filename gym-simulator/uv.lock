@@ -15,6 +15,18 @@ wheels = [
 ]
 
 [[package]]
+name = "asttokens"
+version = "2.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/45/1d/f03bcb60c4a3212e15f99a56085d93093a497718adf828d050b9d675da81/asttokens-2.4.1.tar.gz", hash = "sha256:b03869718ba9a6eb027e134bfdf69f38a236d681c83c160d510768af11254ba0", size = 62284 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/86/4736ac618d82a20d87d2f92ae19441ebc7ac9e7a581d7e58bbe79233b24a/asttokens-2.4.1-py2.py3-none-any.whl", hash = "sha256:051ed49c3dcae8913ea7cd08e46a606dba30b79993209636c4875bc1d637bc24", size = 27764 },
+]
+
+[[package]]
 name = "certifi"
 version = "2024.8.30"
 source = { registry = "https://pypi.org/simple" }
@@ -156,6 +168,15 @@ wheels = [
 ]
 
 [[package]]
+name = "executing"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/e3/7d45f492c2c4a0e8e0fad57d081a7c8a0286cdd86372b070cca1ec0caa1e/executing-2.1.0.tar.gz", hash = "sha256:8ea27ddd260da8150fa5a708269c4a10e76161e2496ec3e587da9e3c0fe4b9ab", size = 977485 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/fd/afcd0496feca3276f509df3dbd5dae726fcc756f1a08d9e25abe1733f962/executing-2.1.0-py2.py3-none-any.whl", hash = "sha256:8d63781349375b5ebccc3142f4b30350c0cd9c79f921cde38be2be4637e98eaf", size = 25805 },
+]
+
+[[package]]
 name = "farama-notifications"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -247,6 +268,7 @@ source = { editable = "." }
 dependencies = [
     { name = "gymnasium" },
     { name = "heft" },
+    { name = "icecream" },
     { name = "matplotlib" },
     { name = "moviepy" },
     { name = "networkx" },
@@ -258,7 +280,6 @@ dependencies = [
     { name = "tensorboard" },
     { name = "tensordict" },
     { name = "torch" },
-    { name = "torchrl" },
     { name = "tyro" },
     { name = "wandb" },
 ]
@@ -275,6 +296,7 @@ dev = [
 requires-dist = [
     { name = "gymnasium", specifier = ">=0.28.1" },
     { name = "heft", git = "https://github.com/mackncheesiest/heft" },
+    { name = "icecream", specifier = ">=2.1.3" },
     { name = "matplotlib", specifier = ">=3.9.2" },
     { name = "moviepy", specifier = ">=1.0.3" },
     { name = "networkx", specifier = ">=3.3" },
@@ -286,7 +308,6 @@ requires-dist = [
     { name = "tensorboard", specifier = ">=2.17.1" },
     { name = "tensordict", specifier = ">=0.5.0" },
     { name = "torch", specifier = ">=2.4.1" },
-    { name = "torchrl", specifier = ">=0.5.0" },
     { name = "tyro", specifier = ">=0.8.10" },
     { name = "wandb", specifier = ">=0.18.1" },
 ]
@@ -323,6 +344,21 @@ dependencies = [
     { name = "matplotlib" },
     { name = "networkx" },
     { name = "numpy" },
+]
+
+[[package]]
+name = "icecream"
+version = "2.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asttokens" },
+    { name = "colorama" },
+    { name = "executing" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/8b/ae6ebc9fc423f9397a0982990c86f1fe94077df729ef452c9a847fb16ae6/icecream-2.1.3.tar.gz", hash = "sha256:0aa4a7c3374ec36153a1d08f81e3080e83d8ac1eefd97d2f4fe9544e8f9b49de", size = 14722 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/4e/21e309c7087695cf500a1827597f8510641f2c9a50ed7741bf7fc38736ff/icecream-2.1.3-py2.py3-none-any.whl", hash = "sha256:757aec31ad4488b949bc4f499d18e6e5973c40cc4d4fc607229e78cfaec94c34", size = 8425 },
 ]
 
 [[package]]
@@ -1235,23 +1271,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/16/d23a689e5ef8001ed2ace1a3a59f2fda842889b0c3f3877799089925282a/torch-2.4.1-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:18835374f599207a9e82c262153c20ddf42ea49bc76b6eadad8e5f49729f6e4d", size = 89613802 },
     { url = "https://files.pythonhosted.org/packages/a8/e0/ca8354dfb8d834a76da51b06e8248b70fc182bc163540507919124974bdf/torch-2.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:ebea70ff30544fc021d441ce6b219a88b67524f01170b1c538d7d3ebb5e7f56c", size = 199387694 },
     { url = "https://files.pythonhosted.org/packages/ac/30/8b6f77ea4ce84f015ee024b8dfef0dac289396254e8bfd493906d4cbb848/torch-2.4.1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:72b484d5b6cec1a735bf3fa5a1c4883d01748698c5e9cfdbeb4ffab7c7987e0d", size = 62123443 },
-]
-
-[[package]]
-name = "torchrl"
-version = "0.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cloudpickle" },
-    { name = "numpy" },
-    { name = "packaging" },
-    { name = "tensordict" },
-    { name = "torch" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/36/304e289401994071a6dfe3b3d599beec6707e68dc8df0bcc039b8479eb6f/torchrl-0.5.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:bb1bf91ddfee986fb9976e3039dcdab69f644cfd8e208616739306170fd6e4e9", size = 1301810 },
-    { url = "https://files.pythonhosted.org/packages/76/7f/b4ec109f63360140099f7d9bead9dbdea1ccf974815acc37001f2942023d/torchrl-0.5.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:e6f78fdb7ff35308b46ecd51b089cda894efb80a12195b30e0a5d7062bd6cb83", size = 982171 },
-    { url = "https://files.pythonhosted.org/packages/97/b7/3994cbb286796386c5c810da47eb362dc6baffe1e9bb94b29f9fd0bafdc4/torchrl-0.5.0-cp312-cp312-win_amd64.whl", hash = "sha256:3537e1795b421192f0da10dfde14832739078c88ec9d37201b75dc082eeaf5e4", size = 962193 },
 ]
 
 [[package]]

@@ -43,6 +43,8 @@ def main(args: Args):
         "workflow_count": args.workflow_count,
         "task_limit": args.task_limit,
         "simulator_mode": "embedded",
+        "model_dir": "rl_vm_clean_rl_train__1__1728550737",
+        "seed": args.seed,
         "simulator_kwargs": {
             "simulator_jar_path": args.simulator,
             "verbose": False,
@@ -67,17 +69,16 @@ def main(args: Args):
         "heft_one",
         "power_saving",
         "rl_static",
+        "rl_test",
     ]
 
     stats: list[dict[str, Any]] = []
     for algorithm in algorithms:
         env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
-        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config)
+        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(env_config))
 
-        (tasks, vms), _ = env.reset()
+        (tasks, vms), _ = env.reset(seed=args.seed)
         t1 = time.time()
-        random.seed(args.seed)
-        np.random.seed(args.seed)
         action = scheduler.schedule(tasks, vms)
         t2 = time.time()
         _, reward, terminated, truncated, info = env.step(action)

@@ -46,7 +46,7 @@ class RemoteSimulator(BaseSimulator):
     # --------------------- Simulator Interaction ---------------------------------------------------------------------
 
     @override
-    def reset(self) -> Any:
+    def reset(self, seed: int) -> Any:
         self.start()
 
         return self.env_connector.reset()

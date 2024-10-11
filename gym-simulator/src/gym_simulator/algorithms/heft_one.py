@@ -20,10 +20,16 @@ class HeftOneScheduler(BaseScheduler):
     """
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
+        assignments = self.schedule_with_time(tasks, vms)
+        # Sort assignments by start time (make sure the order is correct)
+        assignments.sort(key=lambda x: x[0])
+        return [assignment for _, __, assignment in assignments]
+
+    def schedule_with_time(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[tuple[float, float, VmAssignmentDto]]:
         task_mapper = TaskMapper(tasks)
         mapped_tasks = task_mapper.map_tasks()
 
-        assignments: list[tuple[np.float64, VmAssignmentDto]] = []
+        assignments: list[tuple[float, float, VmAssignmentDto]] = []
         sched = self.schedule_workflow(mapped_tasks, vms)
         for vm_id, events in sched.items():
             for event in events:
@@ -32,11 +38,9 @@ class HeftOneScheduler(BaseScheduler):
                 if event.task == task_mapper.dummy_end_task_id():
                     continue
                 workflow_id, task_id = task_mapper.unmap_id(event.task)
-                assignments.append((event.start, VmAssignmentDto(vm_id, workflow_id, task_id)))
+                assignments.append((float(event.start), float(event.end), VmAssignmentDto(vm_id, workflow_id, task_id)))
 
-        # Sort assignments by start time (make sure the order is correct)
-        assignments.sort(key=lambda x: x[0])
-        return [assignment for _, assignment in assignments]
+        return assignments
 
     def schedule_workflow(self, tasks: list[TaskDto], vms: list[VmDto]) -> ScheduleType:
         total_tasks = len(tasks)

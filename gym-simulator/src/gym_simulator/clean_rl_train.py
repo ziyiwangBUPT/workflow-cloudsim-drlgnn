@@ -20,6 +20,8 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     simulator: str
     """the path to the simulator jar file"""
+    vm_count: int = 10
+    """the number of virtual machines"""
 
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
@@ -87,7 +89,7 @@ def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         env_config = {
             "host_count": 10,
-            "vm_count": 10,
+            "vm_count": args.vm_count,
             "workflow_count": 5,
             "task_limit": 5,
             "simulator_mode": "embedded",
@@ -112,10 +114,11 @@ def layer_init(layer: nn.Linear, std=np.sqrt(2), bias_const=0.0):
 
 
 class Agent(nn.Module):
-    def __init__(self, obs_space_shape: tuple[int, ...], n_actions: int):
+    def __init__(self, vm_count: int):
         super().__init__()
+        self.vm_count = vm_count
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(np.array(obs_space_shape).prod(), 64)),
+            layer_init(nn.Linear(np.array((vm_count * 3,)).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
@@ -124,20 +127,24 @@ class Agent(nn.Module):
             layer_init(nn.Linear(64, 1), std=1.0),
         )
         self.actor = nn.Sequential(
-            layer_init(nn.Linear(np.array(obs_space_shape).prod(), 64)),
+            layer_init(nn.Linear(np.array((vm_count * 3,)).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, n_actions), std=0.01),
+            layer_init(nn.Linear(64, vm_count), std=0.01),
         )
 
     def get_value(self, x: torch.Tensor):
+        x = x[:, self.vm_count :]
         return self.critic(x)
 
     def get_action_and_value(self, x: torch.Tensor, action: torch.Tensor | None = None):
-        logits = self.actor(x)
+        mask = x[:, : self.vm_count]
+        x = x[:, self.vm_count :]
+
+        logits = self.actor(x) - (1 - mask) * 1e8
         probs = Categorical(logits=logits)
         if action is None:
             action = probs.sample()
@@ -186,7 +193,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = Agent(obs_space.shape, int(act_space.n)).to(device)
+    agent = Agent(args.vm_count).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup

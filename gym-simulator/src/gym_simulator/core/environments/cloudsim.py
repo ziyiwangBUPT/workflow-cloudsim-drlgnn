@@ -33,7 +33,7 @@ class BaseCloudSimEnvironment(gym.Env, Generic[ObsType, ActType]):
         super().reset(seed=seed)
 
         # Send the reset command to the simulator
-        result = self.simulator.reset()
+        result = self.simulator.reset(seed)
         obs = self.parse_obs(result)
         info: dict[str, Any] = {}
 

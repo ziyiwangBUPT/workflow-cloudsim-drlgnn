@@ -9,6 +9,7 @@ from gym_simulator.algorithms.max_min import MaxMinScheduler
 from gym_simulator.algorithms.min_min import MinMinScheduler
 from gym_simulator.algorithms.power_saving import PowerSavingScheduler
 from gym_simulator.algorithms.rl_static import RlStaticScheduler
+from gym_simulator.algorithms.rl_test import RlTestScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
 
 
@@ -32,6 +33,9 @@ def get_scheduler(algorithm: str, env_config: dict[str, Any] | None = None) -> B
     elif algorithm == "rl_static":
         assert env_config is not None, "env_config is required for RL algorithm"
         return RlStaticScheduler(env_config)
+    elif algorithm == "rl_test":
+        assert env_config is not None, "env_config is required for RL algorithm"
+        return RlTestScheduler(env_config)
     elif algorithm.startswith("fjssp_"):
         split_args = algorithm.split("_")
         assert len(split_args) == 3, "Invalid FJSSP algorithm format (expected: fjssp_<task_algo>_<vm_algo>)"

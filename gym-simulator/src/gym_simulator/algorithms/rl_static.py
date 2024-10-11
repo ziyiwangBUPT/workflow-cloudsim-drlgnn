@@ -21,7 +21,7 @@ class RlStaticScheduler(BaseScheduler):
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
         env = RlCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
 
-        obs, _ = env.reset()
+        obs, _ = env.reset(seed=self.env_config["seed"])
         while True:
             task_state_ready = obs["task_state_ready"]
             task_completion_time = obs["task_completion_time"]

@@ -23,20 +23,12 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
         vm_count = self.vm_count
 
-        obs_space_low = np.zeros((vm_count, 4))
-        obs_space_high = np.zeros((vm_count, 4))
-        obs_space_high[0] = np.inf
-        obs_space_high[1] = 1
-        obs_space_high[2] = np.inf
-        obs_space_high[3] = np.inf
-        self.observation_space = spaces.Box(low=obs_space_low.flatten(), high=obs_space_high.flatten())
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(4 * vm_count,), dtype=np.float32)
         self.action_space = spaces.Discrete(vm_count)
 
     # ----------------------- Reset method ----------------------------------------------------------------------------
 
-    def reset(  # type: ignore[override]
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+    def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
         obs, info = super().reset(seed=seed, options=options)
         self.task_action = self._calc_task_action(obs)
         new_obs = self._transform_observation(obs)
@@ -44,11 +36,11 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
     # ----------------------- Step method -----------------------------------------------------------------------------
 
-    def step(self, action: Any) -> tuple[np.ndarray | None, float, bool, bool, dict[str, Any]]:  # type: ignore[override]
+    def step(self, action: Any):
         action_dict = {"vm_id": action, "task_id": self.task_action}
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
-            return None, reward, terminated, truncated, info
+            return self.observation_space.sample(), reward, terminated, truncated, info
 
         self.task_action = self._calc_task_action(obs)
         new_obs = self._transform_observation(obs)
@@ -66,9 +58,9 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
         return np.vstack(
             [
-                obs["vm_completion_time"],
                 obs["task_vm_compatibility"][self.task_action],
+                obs["vm_completion_time"],
                 obs["task_vm_time_cost"][self.task_action],
                 obs["task_vm_power_cost"][self.task_action],
             ]
-        ).T.flatten()
+        ).flatten()
