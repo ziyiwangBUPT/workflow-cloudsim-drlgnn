@@ -157,6 +157,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
 
         old_makespan = self.state.task_completion_time[-1]
         new_makespan = new_task_completion_time[-1]
+        reward = old_makespan - new_makespan
         self.state = RlEnvState(
             task_mapper=self.state.task_mapper,
             task_state_scheduled=new_task_state_scheduled,
@@ -188,11 +189,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             dict_action = [dataclasses.asdict(a[1]) for a in combined_action]
             obs, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
-            baseline_makespan = self.simulator.get_baseline_makespan()
-            reward = (baseline_makespan - new_makespan) / baseline_makespan
-            return obs, reward, terminated, truncated, info
+            return obs, -new_makespan, terminated, truncated, info
 
-        return self.state.to_observation(), 0, False, False, {}
+        return self.state.to_observation(), reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 

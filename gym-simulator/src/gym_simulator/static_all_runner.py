@@ -43,7 +43,6 @@ def main(args: Args):
         "workflow_count": args.workflow_count,
         "task_limit": args.task_limit,
         "simulator_mode": "embedded",
-        "model_dir": "rl_vm_clean_rl_train__1__1728550737",
         "seed": args.seed,
         "simulator_kwargs": {
             "simulator_jar_path": args.simulator,
@@ -69,7 +68,8 @@ def main(args: Args):
         "heft_one",
         "power_saving",
         "rl_static",
-        "rl_test",
+        "rl_rl_vm_clean_rl_train__1__1728550737",
+        "rl_rl_vm_clean_rl_train__1__1728678033",
     ]
 
     stats: list[dict[str, Any]] = []

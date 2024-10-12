@@ -17,8 +17,8 @@ class RlTestScheduler(BaseScheduler):
     This scheduler runs the RL environment instance internally to schedule the tasks.
     """
 
-    def __init__(self, env_config: dict[str, Any]):
-        self.model_dir = env_config.pop("model_dir")
+    def __init__(self, env_config: dict[str, Any], model_dir: str):
+        self.model_dir = model_dir
         self.env_config = env_config
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:

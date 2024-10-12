@@ -33,9 +33,13 @@ def get_scheduler(algorithm: str, env_config: dict[str, Any] | None = None) -> B
     elif algorithm == "rl_static":
         assert env_config is not None, "env_config is required for RL algorithm"
         return RlStaticScheduler(env_config)
-    elif algorithm == "rl_test":
+    elif algorithm.startswith("rl_"):
         assert env_config is not None, "env_config is required for RL algorithm"
-        return RlTestScheduler(env_config)
+        split_args = algorithm.split("_")
+        assert len(split_args) > 1, "Invalid RL algorithm format (expected: rl_<model_dir>)"
+        _, *model_dir_parts = split_args
+        model_dir = "_".join(model_dir_parts)
+        return RlTestScheduler(env_config, model_dir)
     elif algorithm.startswith("fjssp_"):
         split_args = algorithm.split("_")
         assert len(split_args) == 3, "Invalid FJSSP algorithm format (expected: fjssp_<task_algo>_<vm_algo>)"
