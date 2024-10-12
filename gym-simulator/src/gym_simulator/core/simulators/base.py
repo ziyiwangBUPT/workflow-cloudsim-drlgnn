@@ -28,7 +28,7 @@ class BaseSimulator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def reset(self, seed: int) -> Any:
+    def reset(self, seed: int | None) -> Any:
         """Reset the environment and return the initial observation."""
         raise NotImplementedError
 

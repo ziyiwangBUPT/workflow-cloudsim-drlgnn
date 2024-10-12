@@ -1,3 +1,4 @@
+import random
 import sys
 import json
 import time
@@ -151,7 +152,7 @@ class EmbeddedSimulator(BaseSimulator):
     # --------------------- Simulator Control -------------------------------------------------------------------------
 
     @override
-    def reset(self, seed: int) -> Any:
+    def reset(self, seed: int | None) -> Any:
         if self.is_running():
             self.stop()
         self.dataset_seed = seed
@@ -169,6 +170,7 @@ class EmbeddedSimulator(BaseSimulator):
     def get_baseline_makespan(self):
         from gym_simulator.algorithms.heft_one import HeftOneScheduler
 
+        assert self.current_dataset is not None
         tasks = [
             TaskDto(**dataclasses.asdict(task))
             for workflow in self.current_dataset.workflows
@@ -209,7 +211,7 @@ class EmbeddedSimulator(BaseSimulator):
     def _generate_dataset_json(self) -> str:
         default_args = DatasetArgs()
         dataset = generate_dataset(
-            seed=self.dataset_seed,
+            seed=random.randint(1, 2**31) if self.dataset_seed is None else self.dataset_seed,
             host_count=self.dataset_args.get("host_count", default_args.host_count),
             vm_count=self.dataset_args.get("vm_count", default_args.vm_count),
             max_memory_gb=self.dataset_args.get("max_memory_gb", default_args.max_memory_gb),
