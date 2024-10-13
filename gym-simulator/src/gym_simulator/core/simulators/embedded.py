@@ -8,13 +8,12 @@ import dataclasses
 import hashlib
 
 from typing import Any, Callable, override
-from py4j.java_gateway import JavaGateway, DEFAULT_PORT, DEFAULT_ADDRESS, GatewayParameters
+from py4j.java_gateway import JavaGateway, GatewayParameters
 
 from dataset_generator.core.models import Dataset
 from gym_simulator.core.simulators.base import BaseSimulator
 from dataset_generator.core.gen_dataset import generate_dataset
 from dataset_generator.gen_dataset import Args as DatasetArgs
-from gym_simulator.core.types import TaskDto, VmDto
 
 
 # Taken from Selenium's utils.py
@@ -166,29 +165,6 @@ class EmbeddedSimulator(BaseSimulator):
 
         action = action_creator(self.java_gateway.jvm)
         return self.env_connector.step(action)
-
-    def get_baseline_makespan(self):
-        from gym_simulator.algorithms.heft_one import HeftOneScheduler
-
-        assert self.current_dataset is not None
-        tasks = [
-            TaskDto(**dataclasses.asdict(task))
-            for workflow in self.current_dataset.workflows
-            for task in workflow.tasks
-        ]
-        vms = [
-            VmDto(
-                id=vm.id,
-                memory_mb=vm.memory_mb,
-                cpu_speed_mips=vm.cpu_speed_mips,
-                host_cpu_speed_mips=-1,
-                host_power_peak_watt=-1,
-                host_power_idle_watt=-1,
-            )
-            for vm in self.current_dataset.vms
-        ]
-        assignments = HeftOneScheduler().schedule_with_time(tasks, vms)
-        return max([assignment[1] for assignment in assignments])
 
     # --------------------- Private Helpers --------------------------------------------------------------------------
 

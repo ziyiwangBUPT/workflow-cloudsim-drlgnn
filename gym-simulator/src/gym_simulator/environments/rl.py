@@ -5,10 +5,13 @@ from typing import Any
 from gymnasium import spaces
 import numpy as np
 
+from gym_simulator.algorithms.round_robin import RoundRobinScheduler
+from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.basic import BasicCloudSimEnvironment
 from gym_simulator.environments.states.rl import RlEnvState
 from gym_simulator.renderers.rl import RlEnvironmentRenderer
+from gym_simulator.utils import makespan_calculator
 from gym_simulator.utils.task_mapper import TaskMapper
 
 
@@ -155,9 +158,6 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             new_task_state_ready[-1] = 0
             new_assignments[-1] = 0
 
-        old_makespan = self.state.task_completion_time[-1]
-        new_makespan = new_task_completion_time[-1]
-        reward = old_makespan - new_makespan
         self.state = RlEnvState(
             task_mapper=self.state.task_mapper,
             task_state_scheduled=new_task_state_scheduled,
@@ -189,9 +189,14 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             dict_action = [dataclasses.asdict(a[1]) for a in combined_action]
             obs, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
-            return obs, -new_makespan, terminated, truncated, info
 
-        return self.state.to_observation(), reward, False, False, {}
+            baseline_makespan = self._calculate_baseline_makespan()
+            makespan = self.state.task_completion_time[-1]
+            reward = -makespan / baseline_makespan
+
+            return obs, reward, terminated, truncated, info
+
+        return self.state.to_observation(), 0, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 
@@ -363,3 +368,26 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     def _is_vm_suitable(self, vm: VmDto, task: TaskDto) -> bool:
         """Check if the VM is suitable for the task."""
         return vm.memory_mb >= task.req_memory_mb
+
+    def _calculate_baseline_makespan(self):
+        assert isinstance(self.simulator, EmbeddedSimulator)
+        assert self.simulator.current_dataset is not None
+
+        tasks = [
+            TaskDto(**dataclasses.asdict(task))
+            for workflow in self.simulator.current_dataset.workflows
+            for task in workflow.tasks
+        ]
+        vms = [
+            VmDto(
+                id=vm.id,
+                memory_mb=vm.memory_mb,
+                cpu_speed_mips=vm.cpu_speed_mips,
+                host_cpu_speed_mips=-1,
+                host_power_peak_watt=-1,
+                host_power_idle_watt=-1,
+            )
+            for vm in self.simulator.current_dataset.vms
+        ]
+        assignments = RoundRobinScheduler().schedule(tasks, vms)
+        return makespan_calculator.makespan_calculator(tasks, vms, assignments)
