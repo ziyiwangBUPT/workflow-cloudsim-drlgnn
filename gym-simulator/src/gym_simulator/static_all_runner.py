@@ -68,8 +68,10 @@ def main(args: Args):
         "heft_one",
         "power_saving",
         "rl_static",
-        "rl_rl_vm_clean_rl_train__1__1728550737",
-        "rl_rl_vm_clean_rl_train__1__1728678033",
+        "rl_vmonly_heftonereward_1728550737",  # RL - trained on heft_one reward: reward = 0, final reward = (baseline - makespan) / baseline
+        "rl_vmonly_makespandiffreward_1728678033",  # RL - trained on makespan diff: reward = oldmakespan - makespan, final reward = -makespan
+        "rl_vmonly_roundrobinreward_1728758255",  # RL - trained on round_robin reward: reward = 0, final reward = -makespan / baseline
+        "rl_rl_vm_clean_rl_train__1__1728834561",
     ]
 
     stats: list[dict[str, Any]] = []

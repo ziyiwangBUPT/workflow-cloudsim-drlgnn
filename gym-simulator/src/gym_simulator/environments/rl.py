@@ -5,6 +5,7 @@ from typing import Any
 from gymnasium import spaces
 import numpy as np
 
+from gym_simulator.algorithms.heft_one import HeftOneScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
@@ -389,5 +390,5 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             )
             for vm in self.simulator.current_dataset.vms
         ]
-        assignments = RoundRobinScheduler().schedule(tasks, vms)
+        assignments = HeftOneScheduler().schedule(tasks, vms)
         return makespan_calculator.makespan_calculator(tasks, vms, assignments)
