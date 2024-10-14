@@ -38,7 +38,9 @@ class VmActorCriticAgent(nn.Module):
         x = x[:, self.vm_count :]
         return self.critic(x)
 
-    def get_action_and_value(self, x: torch.Tensor, action: torch.Tensor | None = None):
+    def get_action_and_value(
+        self, x: torch.Tensor, action: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         mask = x[:, : self.vm_count]
         x = x[:, self.vm_count :]
 
@@ -47,3 +49,24 @@ class VmActorCriticAgent(nn.Module):
         if action is None:
             action = probs.sample()
         return action, probs.log_prob(action), probs.entropy(), self.critic(x)
+
+
+class VmQNetworkAgent(nn.Module):
+    def __init__(self, vm_count: int):
+        super().__init__()
+        self.vm_count = vm_count
+        self.network = nn.Sequential(
+            nn.Linear(np.array((vm_count * 3,)).prod(), 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, vm_count),
+        )
+
+    def forward(self, x):
+        mask = x[:, : self.vm_count]
+        x = x[:, self.vm_count :]
+
+        return self.network(x) - (1 - mask) * 1e8

@@ -277,6 +277,7 @@ dependencies = [
     { name = "pygame" },
     { name = "pygraphviz" },
     { name = "scipy" },
+    { name = "stable-baselines3" },
     { name = "tensorboard" },
     { name = "tensordict" },
     { name = "torch" },
@@ -305,6 +306,7 @@ requires-dist = [
     { name = "pygame", specifier = ">=2.6.0" },
     { name = "pygraphviz", specifier = ">=1.13" },
     { name = "scipy", specifier = ">=1.14.1" },
+    { name = "stable-baselines3" },
     { name = "tensorboard", specifier = ">=2.17.1" },
     { name = "tensordict", specifier = ">=0.5.0" },
     { name = "torch", specifier = ">=2.4.1" },
@@ -1181,6 +1183,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/88/04/b5bf6d21dc4041000ccba7eb17dd3055feb237e7ffc2c20d3fae3af62baa/smmap-5.0.1.tar.gz", hash = "sha256:dceeb6c0028fdb6734471eb07c0cd2aae706ccaecab45965ee83f11c8d3b1f62", size = 22291 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a5/10f97f73544edcdef54409f1d839f6049a0d79df68adbc1ceb24d1aaca42/smmap-5.0.1-py3-none-any.whl", hash = "sha256:e6d8668fa5f93e706934a62d7b4db19c8d9eb8cf2adbb75ef1b675aa332b69da", size = 24282 },
+]
+
+[[package]]
+name = "stable-baselines3"
+version = "2.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudpickle" },
+    { name = "gymnasium" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ea/bd/8b6fd663cca67793c7a651b7929f987cee021e72a8d910e8851ea0b4d9c2/stable_baselines3-2.3.2.tar.gz", hash = "sha256:2f8188916e607571c4c24f88a9ff6f84edafb2cf22d5d24f9c199563c12ff168", size = 209821 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/6a/c3098a78a63b5a48e18c11d80b8c532f8b7785d6abb1329cfe3034572161/stable_baselines3-2.3.2-py3-none-any.whl", hash = "sha256:a1cafff6ec23bd4e8f4f20dd829008dc1af58ec2d5d8fc0cd0929b4b4544c9b2", size = 182272 },
 ]
 
 [[package]]
