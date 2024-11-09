@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional, Tuple
 import torch
 import torch.nn as nn
@@ -7,8 +6,9 @@ from torch.distributions.categorical import Categorical
 
 from icecream import ic
 
-from torch_geometric.nn import GCNConv, global_mean_pool
-from torch_geometric.utils import dense_to_sparse
+from torch_geometric.nn import GINConv, global_mean_pool
+
+from gym_simulator.algorithms.graph.decode import decode_observation
 
 
 class GnnJobActor(nn.Module):
@@ -20,9 +20,9 @@ class GnnJobActor(nn.Module):
         # Define Encoder, Actor, and Critic
         self.encoder = nn.ModuleList(
             [
-                GCNConv(input_dim, hidden_dim),
-                GCNConv(hidden_dim, hidden_dim),
-                GCNConv(hidden_dim, hidden_dim),
+                GINConv(nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, hidden_dim))),
+                GINConv(nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, hidden_dim))),
+                GINConv(nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, hidden_dim))),
             ]
         )
         self.actor = nn.Sequential(
@@ -38,52 +38,17 @@ class GnnJobActor(nn.Module):
             nn.Linear(critic_hidden_dim, 1),
         )
 
-    # Encode Graph ------------------------------------------------------------
-
-    def encode_features_to_graph(self, features: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        :param features: (n_jobs, input_dim)
-        :param adj: (n_jobs, n_jobs)
-
-        :return mean_pool: (hidden_dim,)
-        :return node_embedding: (n_jobs, hidden_dim)
-        """
-        edge_index, _ = dense_to_sparse(adj)
-
-        h = features.clone()
-        for layer in self.encoder:
-            h = F.relu(layer(h, edge_index))
-
-        batch = torch.zeros(adj.shape[0], dtype=torch.long)
-        mean_pool_batched = global_mean_pool(h, batch)
-        mean_pool = mean_pool_batched.squeeze(0)
-
-        node_embedding = h.clone()
-
-        return mean_pool, node_embedding
-
     # Extract Features --------------------------------------------------------
 
     def extract_features(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        :param x: (N,)
+        task_state_scheduled, candidate, task_completion_time, _, _, _, _, adj = decode_observation(x)
 
-        :return features: (n_jobs, 2)
-        :return adj: (n_jobs, n_jobs)
-        :return candidates: (n_jobs,)
-        """
-        n_jobs = x[0].long().item()
-        x = x[2:]
+        features = torch.cat(
+            [task_completion_time.reshape(-1, 1), task_state_scheduled.reshape(-1, 1)],
+            dim=-1,
+        ).flatten()
 
-        features_size = n_jobs * self.input_dim
-        adj_size = n_jobs * n_jobs
-        candidates_size = n_jobs
-
-        return (
-            x[:features_size].reshape(n_jobs, self.input_dim),
-            x[features_size : features_size + adj_size].reshape(n_jobs, n_jobs),
-            x[features_size + adj_size : features_size + adj_size + candidates_size].long(),
-        )
+        return (features, adj, candidate)
 
     # Get Value ---------------------------------------------------------------
 

@@ -12,6 +12,8 @@ import torch.optim as optim
 import tyro
 from torch.utils.tensorboard import SummaryWriter
 
+from icecream import ic
+
 from gym_simulator.algorithms.graph.job_actor import GnnJobActor
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
@@ -47,7 +49,7 @@ class Args:
     """total timesteps of the experiments"""
     learning_rate: float = 2.5e-4
     """the learning rate of the optimizer"""
-    num_envs: int = 1
+    num_envs: int = 4
     """the number of parallel game environments"""
     num_steps: int = 128
     """the number of steps to run in each environment per policy rollout"""
@@ -98,7 +100,7 @@ def make_env(idx: int, args: Args, video_dir: str):
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
             base_env = RlVmCloudSimEnvironment(env_config=env_config)
-            env = gym.wrappers.RecordVideo(base_env, video_dir, episode_trigger=lambda x: x % 10 == 0)
+            env = gym.wrappers.RecordVideo(base_env, video_dir, episode_trigger=lambda x: x % 1000 == 0)
             return gym.wrappers.RecordEpisodeStatistics(env)
 
         base_env = RlVmCloudSimEnvironment(env_config=env_config)
@@ -195,9 +197,12 @@ def main(args: Args):
             if "final_info" in infos:
                 for info in infos["final_info"]:
                     if info and "episode" in info:
-                        print(f"global_step={global_step}, episodic_return={info['episode']['r']}")
-                        writer.add_scalar("charts/episodic_return", info["episode"]["r"], global_step)
-                        writer.add_scalar("charts/episodic_length", info["episode"]["l"], global_step)
+                        episodic_return = info["episode"]["r"]
+                        episodic_length = info["episode"]["l"]
+                        ic(global_step, episodic_return)
+
+                        writer.add_scalar("charts/episodic_return", episodic_return, global_step)
+                        writer.add_scalar("charts/episodic_length", episodic_length, global_step)
 
         # bootstrap value if not done
         with torch.no_grad():
@@ -290,8 +295,9 @@ def main(args: Args):
         writer.add_scalar("losses/approx_kl", approx_kl.item(), global_step)
         writer.add_scalar("losses/clipfrac", np.mean(clipfracs), global_step)
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
-        print("SPS:", int(global_step / (time.time() - start_time)))
+        sps = int(global_step / (time.time() - start_time))
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
+        ic(sps)
 
     torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model.pt")
 

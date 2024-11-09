@@ -21,13 +21,18 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         self.parent_observation_space = copy.deepcopy(self.observation_space)
         self.parent_action_space = copy.deepcopy(self.action_space)
 
-        max_tasks = (self.task_limit + 1) * self.workflow_count
+        max_tasks = (self.task_limit + 2) * self.workflow_count
+        max_machines = self.vm_count
         self.observation_space_size = (
             2  # headers
-            + max_tasks * 2  # features
+            + max_tasks  # task_state_scheduled
+            + max_tasks  # task_state_ready
+            + max_tasks  # task_completion_time
+            + max_machines  # vm_completion_time
+            + max_machines * max_tasks  # task_vm_compatibility
+            + max_machines * max_tasks  # task_vm_time_cost
+            + max_machines * max_tasks  # task_vm_power_cost
             + max_tasks**2  # adjacency matrix
-            + max_tasks  # candidate
-            + max_tasks  # mask
         )
         self.observation_space = spaces.Box(low=0, high=np.inf, shape=(self.observation_space_size,), dtype=np.float32)
         self.action_space = spaces.Discrete(self.vm_count)
@@ -54,7 +59,8 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
-            ic("Terminated", info.get("error", "OK"))
+            error = info.get("error")
+            ic("Terminated", error)
             return np.zeros(self.observation_space_size), reward, terminated, truncated, info
 
         new_obs = self._transform_observation(obs)
@@ -62,30 +68,25 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         return new_obs, reward, terminated, truncated, info
 
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
-        # Features = [LB_t(O_ij), I_t(O_ij)]
-        features = np.concatenate(
-            [
-                obs["task_completion_time"].reshape(-1, 1),
-                obs["task_state_scheduled"].reshape(-1, 1),
-            ],
-            axis=1,
-        ).flatten()
-        adj = np.array(obs["task_graph_edges"]).flatten()
-        candidate = np.array(obs["task_state_ready"], dtype=np.int32)
-        mask = np.array(obs["task_state_scheduled"], dtype=np.int32)
-
         num_tasks = obs["task_completion_time"].size
         num_machines = self.vm_count
 
         arr = np.concatenate(
             [
                 [num_tasks, num_machines],
-                features.flatten(),
-                adj.flatten(),
-                candidate.flatten(),
-                mask.flatten(),
+                np.array(obs["task_state_scheduled"], dtype=np.int32).flatten(),
+                np.array(obs["task_state_ready"], dtype=np.int32).flatten(),
+                np.array(obs["task_completion_time"]).flatten(),
+                np.array(obs["vm_completion_time"]).flatten(),
+                np.array(obs["task_vm_compatibility"]).flatten(),
+                np.array(obs["task_vm_time_cost"]).flatten(),
+                np.array(obs["task_vm_power_cost"]).flatten(),
+                np.array(obs["task_graph_edges"], dtype=np.int32).flatten(),
             ]
         )
 
         ic(num_tasks, num_machines)
-        return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
+        if self.observation_space_size > len(arr):
+            return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
+
+        return arr
