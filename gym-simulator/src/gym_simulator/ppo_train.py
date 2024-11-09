@@ -12,7 +12,7 @@ import torch.optim as optim
 import tyro
 from torch.utils.tensorboard import SummaryWriter
 
-from gym_simulator.algorithms.graph.job_actor import JobActorCriticAgent
+from gym_simulator.algorithms.graph.job_actor import GnnJobActor
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -47,7 +47,7 @@ class Args:
     """total timesteps of the experiments"""
     learning_rate: float = 2.5e-4
     """the learning rate of the optimizer"""
-    num_envs: int = 4
+    num_envs: int = 1
     """the number of parallel game environments"""
     num_steps: int = 128
     """the number of steps to run in each environment per policy rollout"""
@@ -149,7 +149,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = JobActorCriticAgent(input_dim=2).to(device)
+    agent = GnnJobActor(input_dim=2).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup

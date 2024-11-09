@@ -37,25 +37,28 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
         obs, info = super().reset(seed=seed, options=options)
         new_obs = self._transform_observation(obs)
-        self.last_obs = obs
+        self.prev_obs = obs
         return new_obs, info
 
     # ----------------------- Step method -----------------------------------------------------------------------------
 
     def step(self, action: Any):
         # VM with the minimum completion time amoung compatible VMs
-        compatible_vms = self.last_obs["task_vm_compatibility"][action]
-        vm_completion_times = self.last_obs["vm_completion_time"]
+        compatible_vms = self.prev_obs["task_vm_compatibility"][action]
+        vm_completion_times = self.prev_obs["vm_completion_time"]
         vm_completion_times = np.where(compatible_vms, vm_completion_times, float("inf"))
-        vm_action = np.argmin([vm_completion_times[vm] for vm in compatible_vms])
+        vm_action = np.argmin(vm_completion_times)
 
         action_dict = {"vm_id": vm_action, "task_id": action}
+        ic(action_dict)
+
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
+            ic("Terminated", info.get("error", "OK"))
             return np.zeros(self.observation_space_size), reward, terminated, truncated, info
 
         new_obs = self._transform_observation(obs)
-        self.last_obs = obs
+        self.prev_obs = obs
         return new_obs, reward, terminated, truncated, info
 
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
@@ -85,27 +88,4 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         )
 
         ic(num_tasks, num_machines)
-        ic(self.observation_space_size, arr.shape)
         return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
-
-
-if __name__ == "__main__":
-    env_config = {
-        "host_count": 10,
-        "vm_count": 3,
-        "workflow_count": 5,
-        "task_limit": 5,
-        "simulator_mode": "embedded",
-        "simulator_kwargs": {
-            "simulator_jar_path": "../cloudsim-simulator/target/cloudsim-simulator-1.0-SNAPSHOT.jar",
-            "verbose": False,
-            "remote_debug": False,
-        },
-    }
-    env = RlVmCloudSimEnvironment(env_config)
-    obs, info = env.reset()
-    ic(obs, info)
-
-    action = 1
-    obs, reward, terminated, truncated, info = env.step(action)
-    ic(obs, reward, terminated, truncated, info)
