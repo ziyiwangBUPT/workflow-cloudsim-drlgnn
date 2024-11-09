@@ -7,6 +7,7 @@ from torch.distributions.categorical import Categorical
 from icecream import ic
 
 from torch_geometric.nn import GINConv, global_mean_pool
+from torch_geometric.utils import dense_to_sparse
 
 from gym_simulator.algorithms.graph.decode import decode_observation
 
@@ -37,6 +38,30 @@ class GnnJobActor(nn.Module):
             nn.ReLU(),
             nn.Linear(critic_hidden_dim, 1),
         )
+
+    # Encode Graph ------------------------------------------------------------
+
+    def encode_features_to_graph(self, features: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        """
+        :param features: (n_jobs, input_dim)
+        :param adj: (n_jobs, n_jobs)
+
+        :return mean_pool: (hidden_dim,)
+        :return node_embedding: (n_jobs, hidden_dim)
+        """
+        edge_index, _ = dense_to_sparse(adj)
+
+        h = features.clone()
+        for layer in self.encoder:
+            h = F.relu(layer(h, edge_index))
+
+        batch = torch.zeros(adj.shape[0], dtype=torch.long)
+        mean_pool_batched = global_mean_pool(h, batch)
+        mean_pool = mean_pool_batched.squeeze(0)
+
+        node_embedding = h.clone()
+
+        return mean_pool, node_embedding
 
     # Extract Features --------------------------------------------------------
 
