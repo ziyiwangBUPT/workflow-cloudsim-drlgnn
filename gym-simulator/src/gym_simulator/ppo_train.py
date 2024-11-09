@@ -12,7 +12,7 @@ import torch.optim as optim
 import tyro
 from torch.utils.tensorboard import SummaryWriter
 
-from gym_simulator.algorithms.rl_agents.vm_agent import VmActorCriticAgent
+from gym_simulator.algorithms.graph.job_actor import JobActorCriticAgent
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -149,7 +149,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = VmActorCriticAgent(args.vm_count).to(device)
+    agent = JobActorCriticAgent(input_dim=2).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup

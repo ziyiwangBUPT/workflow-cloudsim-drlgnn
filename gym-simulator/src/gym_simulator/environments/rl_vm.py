@@ -4,6 +4,8 @@ from typing import Any
 from gymnasium import spaces
 import numpy as np
 
+from icecream import ic
+
 from gym_simulator.environments.rl import RlCloudSimEnvironment
 
 
@@ -13,54 +15,97 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
     The task action is the task with the minimum completion time among the ready tasks.
     """
 
-    task_action: int = 0
-
     def __init__(self, env_config: dict[str, Any]):
         # Override args
         super().__init__(env_config)
         self.parent_observation_space = copy.deepcopy(self.observation_space)
         self.parent_action_space = copy.deepcopy(self.action_space)
 
-        vm_count = self.vm_count
-
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(4 * vm_count,), dtype=np.float32)
-        self.action_space = spaces.Discrete(vm_count)
+        max_tasks = (self.task_limit + 1) * self.workflow_count
+        self.observation_space_size = (
+            2  # headers
+            + max_tasks * 2  # features
+            + max_tasks**2  # adjacency matrix
+            + max_tasks  # candidate
+            + max_tasks  # mask
+        )
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(self.observation_space_size,), dtype=np.float32)
+        self.action_space = spaces.Discrete(self.vm_count)
 
     # ----------------------- Reset method ----------------------------------------------------------------------------
 
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):
         obs, info = super().reset(seed=seed, options=options)
-        self.task_action = self._calc_task_action(obs)
         new_obs = self._transform_observation(obs)
+        self.last_obs = obs
         return new_obs, info
 
     # ----------------------- Step method -----------------------------------------------------------------------------
 
     def step(self, action: Any):
-        action_dict = {"vm_id": action, "task_id": self.task_action}
+        # VM with the minimum completion time amoung compatible VMs
+        compatible_vms = self.last_obs["task_vm_compatibility"][action]
+        vm_completion_times = self.last_obs["vm_completion_time"]
+        vm_completion_times = np.where(compatible_vms, vm_completion_times, float("inf"))
+        vm_action = np.argmin([vm_completion_times[vm] for vm in compatible_vms])
+
+        action_dict = {"vm_id": vm_action, "task_id": action}
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
-            return self.observation_space.sample(), reward, terminated, truncated, info
+            return np.zeros(self.observation_space_size), reward, terminated, truncated, info
 
-        self.task_action = self._calc_task_action(obs)
         new_obs = self._transform_observation(obs)
+        self.last_obs = obs
         return new_obs, reward, terminated, truncated, info
 
-    def _calc_task_action(self, obs: dict[str, Any]) -> int:
-        task_state_ready = obs["task_state_ready"]
-        task_completion_time = obs["task_completion_time"]
-
-        # Task ID is the ready task with the minimum completion time
-        ready_task_ids = np.where(task_state_ready == 1)
-        min_comp_time_of_ready_tasks = np.min(task_completion_time[ready_task_ids])
-        return np.where(task_completion_time == min_comp_time_of_ready_tasks)[0][0]
-
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
-        return np.vstack(
+        # Features = [LB_t(O_ij), I_t(O_ij)]
+        features = np.concatenate(
             [
-                obs["task_vm_compatibility"][self.task_action],
-                obs["vm_completion_time"],
-                obs["task_vm_time_cost"][self.task_action],
-                obs["task_vm_power_cost"][self.task_action],
-            ]
+                obs["task_completion_time"].reshape(-1, 1),
+                obs["task_state_scheduled"].reshape(-1, 1),
+            ],
+            axis=1,
         ).flatten()
+        adj = np.array(obs["task_graph_edges"]).flatten()
+        candidate = np.array(obs["task_state_ready"], dtype=np.int32)
+        mask = np.array(obs["task_state_scheduled"], dtype=np.int32)
+
+        num_tasks = obs["task_completion_time"].size
+        num_machines = self.vm_count
+
+        arr = np.concatenate(
+            [
+                [num_tasks, num_machines],
+                features.flatten(),
+                adj.flatten(),
+                candidate.flatten(),
+                mask.flatten(),
+            ]
+        )
+
+        ic(num_tasks, num_machines)
+        ic(self.observation_space_size, arr.shape)
+        return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
+
+
+if __name__ == "__main__":
+    env_config = {
+        "host_count": 10,
+        "vm_count": 3,
+        "workflow_count": 5,
+        "task_limit": 5,
+        "simulator_mode": "embedded",
+        "simulator_kwargs": {
+            "simulator_jar_path": "../cloudsim-simulator/target/cloudsim-simulator-1.0-SNAPSHOT.jar",
+            "verbose": False,
+            "remote_debug": False,
+        },
+    }
+    env = RlVmCloudSimEnvironment(env_config)
+    obs, info = env.reset()
+    ic(obs, info)
+
+    action = 1
+    obs, reward, terminated, truncated, info = env.step(action)
+    ic(obs, reward, terminated, truncated, info)
