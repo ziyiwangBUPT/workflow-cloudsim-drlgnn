@@ -10,7 +10,7 @@ from gym_simulator.algorithms.graph.decode import decode_observation
 from gym_simulator.algorithms.graph.network import Network
 
 
-class JobActor2(nn.Module):
+class Actor(nn.Module):
     def __init__(self, max_jobs: int, max_machines: int, hidden_dim: int = 64):
         super().__init__()
 
