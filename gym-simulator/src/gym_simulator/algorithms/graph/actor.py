@@ -11,13 +11,15 @@ from gym_simulator.algorithms.graph.network import Network
 
 
 class Actor(nn.Module):
-    def __init__(self, max_jobs: int, max_machines: int, hidden_dim: int = 64):
+    def __init__(self, max_jobs: int, max_machines: int):
         super().__init__()
 
         self.max_jobs = max_jobs
         self.max_machines = max_machines
-        self.actor = Network(max_jobs, max_machines, hidden_dim, max_jobs * max_machines)
-        self.critic = Network(max_jobs, max_machines, hidden_dim, 1)
+
+        action_dim = max_jobs * max_machines
+        self.actor = Network(max_jobs, max_machines, hidden_dim=action_dim, out_dim=action_dim)
+        self.critic = Network(max_jobs, max_machines, hidden_dim=action_dim, out_dim=1)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         """
