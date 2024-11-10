@@ -15,6 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 from icecream import ic
 
 from gym_simulator.algorithms.graph.job_actor import GnnJobActor
+from gym_simulator.algorithms.graph.job_actor2 import JobActor2
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -151,7 +152,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = GnnJobActor(input_dim=2).to(device)
+    agent = JobActor2(max_machines=args.vm_count, max_jobs=7 * 5).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup

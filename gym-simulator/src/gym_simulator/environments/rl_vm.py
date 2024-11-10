@@ -21,18 +21,17 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         self.parent_observation_space = copy.deepcopy(self.observation_space)
         self.parent_action_space = copy.deepcopy(self.action_space)
 
-        max_tasks = (self.task_limit + 2) * self.workflow_count
-        max_machines = self.vm_count
+        self.max_tasks = (self.task_limit + 2) * self.workflow_count
         self.observation_space_size = (
             2  # headers
-            + max_tasks  # task_state_scheduled
-            + max_tasks  # task_state_ready
-            + max_tasks  # task_completion_time
-            + max_machines  # vm_completion_time
-            + max_machines * max_tasks  # task_vm_compatibility
-            + max_machines * max_tasks  # task_vm_time_cost
-            + max_machines * max_tasks  # task_vm_power_cost
-            + max_tasks**2  # adjacency matrix
+            + self.max_tasks  # task_state_scheduled
+            + self.max_tasks  # task_state_ready
+            + self.max_tasks  # task_completion_time
+            + self.vm_count  # vm_completion_time
+            + self.vm_count * self.max_tasks  # task_vm_compatibility
+            + self.vm_count * self.max_tasks  # task_vm_time_cost
+            + self.vm_count * self.max_tasks  # task_vm_power_cost
+            + self.max_tasks**2  # adjacency matrix
         )
         self.observation_space = spaces.Box(low=0, high=np.inf, shape=(self.observation_space_size,), dtype=np.float32)
         self.action_space = spaces.Discrete(self.vm_count)
@@ -49,12 +48,8 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
     def step(self, action: Any):
         # VM with the minimum completion time amoung compatible VMs
-        compatible_vms = self.prev_obs["task_vm_compatibility"][action]
-        vm_completion_times = self.prev_obs["vm_completion_time"]
-        vm_completion_times = np.where(compatible_vms, vm_completion_times, float("inf"))
-        vm_action = np.argmin(vm_completion_times)
-
-        action_dict = {"vm_id": vm_action, "task_id": action}
+        ic(action)
+        action_dict = {"vm_id": action % self.vm_count, "task_id": action // self.vm_count}
         ic(action_dict)
 
         obs, reward, terminated, truncated, info = super().step(action_dict)
@@ -68,24 +63,29 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         return new_obs, reward, terminated, truncated, info
 
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
-        num_tasks = obs["task_completion_time"].size
+        num_tasks = self.max_tasks
         num_machines = self.vm_count
+
+        def pad(arr, req_len, fill_value):
+            new_arr = np.ones(req_len, dtype=arr.dtype) * fill_value
+            new_arr[: arr.shape[0]] = arr
+            return new_arr
 
         arr = np.concatenate(
             [
                 [num_tasks, num_machines],
-                np.array(obs["task_state_scheduled"], dtype=np.int32).flatten(),
-                np.array(obs["task_state_ready"], dtype=np.int32).flatten(),
-                np.array(obs["task_completion_time"]).flatten(),
-                np.array(obs["vm_completion_time"]).flatten(),
-                np.array(obs["task_vm_compatibility"]).flatten(),
-                np.array(obs["task_vm_time_cost"]).flatten(),
-                np.array(obs["task_vm_power_cost"]).flatten(),
-                np.array(obs["task_graph_edges"], dtype=np.int32).flatten(),
+                pad(np.array(obs["task_state_scheduled"], dtype=np.int32).flatten(), num_tasks, 0),
+                pad(np.array(obs["task_state_ready"], dtype=np.int32).flatten(), num_tasks, 0),
+                pad(np.array(obs["task_completion_time"]).flatten(), num_tasks, 0),
+                pad(np.array(obs["vm_completion_time"]).flatten(), num_machines, 0),
+                pad(np.array(obs["task_vm_compatibility"]).flatten(), num_tasks * num_machines, 0),
+                pad(np.array(obs["task_vm_time_cost"]).flatten(), num_tasks * num_machines, 1e8),
+                pad(np.array(obs["task_vm_power_cost"]).flatten(), num_tasks * num_machines, 1e8),
+                pad(np.array(obs["task_graph_edges"], dtype=np.int32).flatten(), num_tasks**2, 0),
             ]
         )
 
-        ic(num_tasks, num_machines)
+        ic(num_tasks, num_machines, arr.shape)
         if self.observation_space_size > len(arr):
             return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
 
