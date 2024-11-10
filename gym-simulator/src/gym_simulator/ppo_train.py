@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from tqdm import tqdm
 import tyro
 from torch.utils.tensorboard import SummaryWriter
 
@@ -98,8 +99,17 @@ def make_env(idx: int, args: Args, video_dir: str):
             "vm_count": args.vm_count,
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
+            "gnp_min_n": 3,
             "simulator_mode": "embedded",
-            "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": False, "remote_debug": False},
+            "simulator_kwargs": {
+                "dataset_args": {
+                    # Force the number of tasks to exactly be the same number
+                    # "gnp_min_n": args.task_limit
+                },
+                "simulator_jar_path": args.simulator,
+                "verbose": False,
+                "remote_debug": False,
+            },
         }
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
@@ -114,6 +124,8 @@ def make_env(idx: int, args: Args, video_dir: str):
 
 
 def main(args: Args):
+    pbar = tqdm(total=args.total_timesteps)
+
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
@@ -201,12 +213,9 @@ def main(args: Args):
             if "final_info" in infos:
                 for info in infos["final_info"]:
                     if info and "episode" in info:
-                        episodic_return = info["episode"]["r"]
-                        episodic_length = info["episode"]["l"]
-                        ic(global_step, episodic_return)
-
-                        writer.add_scalar("charts/episodic_return", episodic_return, global_step)
-                        writer.add_scalar("charts/episodic_length", episodic_length, global_step)
+                        pbar.update(global_step - pbar.n)
+                        writer.add_scalar("charts/episodic_return", info["episode"]["r"], global_step)
+                        writer.add_scalar("charts/episodic_length", info["episode"]["l"], global_step)
 
         # bootstrap value if not done
         with torch.no_grad():
@@ -301,12 +310,13 @@ def main(args: Args):
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
         sps = int(global_step / (time.time() - start_time))
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
-        ic(sps)
 
     torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model.pt")
 
     envs.close()
     writer.close()
+
+    pbar.close()
 
 
 if __name__ == "__main__":
