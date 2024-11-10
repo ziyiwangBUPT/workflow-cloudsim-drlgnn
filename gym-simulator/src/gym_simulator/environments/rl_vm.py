@@ -53,7 +53,8 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
             error = info.get("error")
-            ic("Terminated", error)
+            if error is not None:
+                ic("Terminated", error)
             return np.zeros(self.observation_space_size), reward, terminated, truncated, info
 
         new_obs = self._transform_observation(obs)
