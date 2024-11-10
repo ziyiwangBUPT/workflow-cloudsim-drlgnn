@@ -197,11 +197,11 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
 
             baseline_makespan = self._calculate_baseline_makespan()
             makespan = self.state.task_completion_time[-1]
-            reward = 1 - (makespan / baseline_makespan)
+            reward = -makespan / baseline_makespan
 
             return obs, reward, terminated, truncated, info
 
-        immediate_reward = (old_makespan - new_makespan) * 1e-5
+        immediate_reward = (old_makespan - new_makespan) * 1e-6
         return self.state.to_observation(), immediate_reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
