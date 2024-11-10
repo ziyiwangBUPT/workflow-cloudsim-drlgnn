@@ -13,11 +13,10 @@ class CnnNetwork(nn.Module):
         self.width = width
         self.channels = channels
 
-        conv_out_size = 16 * ((self.height - 2) // 2 - 2) // 2 * ((self.width - 2) // 2 - 2) // 2
-
         self.conv1 = nn.Conv2d(channels, 8, 3)
         self.conv2 = nn.Conv2d(8, 16, 3)
-        self.fc1 = nn.Linear(conv_out_size, 128)
+        self.pool = nn.AdaptiveAvgPool2d((8, 8))
+        self.fc1 = nn.Linear(1024, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, out_dim)
 
@@ -39,7 +38,8 @@ class CnnNetwork(nn.Module):
         s1 = F.max_pool2d(c1, (2, 2))  # s1: (B, 8, (h - 2)//2, (w - 2)//2)
         c2 = F.relu(self.conv2(s1))  # c2: (B, 16, (h - 2)//2 - 2, (w - 2)//2 - 2)
         s2 = F.max_pool2d(c2, (2, 2))  # s2: (B, 16, ((h - 2)//2 - 2)//2, ((w - 2)//2 - 2)//2)
-        s3 = torch.flatten(s2, start_dim=1)  # s3: (B, 16 * ((h - 2)//2 - 2)//2 * ((w - 2)//2 - 2)//2)
+        p3 = self.pool(s2)  # p3: (B, 16, 8, 8)
+        s3 = torch.flatten(p3, start_dim=1)  # s3: (B, 1024)
         f4 = F.relu(self.fc1(s3))  # f4: (B, 128)
         f5 = F.relu(self.fc2(f4))  # f4: (B, 64)
-        return F.relu(self.fc3(f5))  # f4: (B, out_dim)
+        return self.fc3(f5)  # f4: (B, out_dim)

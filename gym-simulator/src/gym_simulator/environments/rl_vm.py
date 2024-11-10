@@ -48,9 +48,7 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
 
     def step(self, action: Any):
         # VM with the minimum completion time amoung compatible VMs
-        ic(action)
         action_dict = {"vm_id": action % self.vm_count, "task_id": action // self.vm_count}
-        ic(action_dict)
 
         obs, reward, terminated, truncated, info = super().step(action_dict)
         if terminated or truncated:
@@ -79,13 +77,12 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
                 pad(np.array(obs["task_completion_time"]).flatten(), num_tasks, 0),
                 pad(np.array(obs["vm_completion_time"]).flatten(), num_machines, 0),
                 pad(np.array(obs["task_vm_compatibility"]).flatten(), num_tasks * num_machines, 0),
-                pad(np.array(obs["task_vm_time_cost"]).flatten(), num_tasks * num_machines, 1e8),
-                pad(np.array(obs["task_vm_power_cost"]).flatten(), num_tasks * num_machines, 1e8),
+                pad(np.array(obs["task_vm_time_cost"]).flatten(), num_tasks * num_machines, 0),
+                pad(np.array(obs["task_vm_power_cost"]).flatten(), num_tasks * num_machines, 0),
                 pad(np.array(obs["task_graph_edges"], dtype=np.int32).flatten(), num_tasks**2, 0),
             ]
         )
 
-        ic(num_tasks, num_machines, arr.shape)
         if self.observation_space_size > len(arr):
             return np.pad(arr, (0, self.observation_space_size - len(arr)), "constant")
 

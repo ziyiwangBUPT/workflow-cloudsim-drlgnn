@@ -18,14 +18,12 @@ class Network(nn.Module):
             nn.Linear(n_machines, 64),
             nn.ReLU(),
             nn.Linear(64, hidden_dim),
-            nn.ReLU(),
         )
 
         self.cat_network = nn.Sequential(
             nn.Linear(3 * hidden_dim, 64),
             nn.ReLU(),
             nn.Linear(64, out_dim),
-            nn.ReLU(),
         )
 
     def forward(
@@ -54,7 +52,6 @@ class Network(nn.Module):
             ),
             dim=-1,
         )
-        ic(cnn_in)
         # graph_in: (batch_size, n_tasks, 3)
         graph_in = torch.cat(
             (
@@ -64,16 +61,12 @@ class Network(nn.Module):
             ),
             dim=-1,
         )
-        ic(graph_in)
         # lin_in: (batch_size, n_machines)
         lin_in = vm_completion_time.unsqueeze(0)
-        ic(lin_in)
-
         cnn_out = self.cnn_network(cnn_in)
         graph_out = self.graph_network(graph_in, adj)
         lin_out = self.linear_network(lin_in)
 
         # cocat: (batch_size, hidden_dim*3)
         concat = torch.cat((cnn_out, graph_out, lin_out), dim=-1)
-        ic(cnn_out, graph_out, lin_out)
         return self.cat_network(concat)

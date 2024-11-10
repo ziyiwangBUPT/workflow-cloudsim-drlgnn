@@ -10,38 +10,38 @@ from torch_geometric.utils import dense_to_sparse
 
 
 class GraphNetwork(nn.Module):
-    def __init__(self, input_dim: int, out_dim: int):
+    def __init__(self, input_dim: int, out_dim: int, hidden_dim: int = 64):
         super().__init__()
 
         self.conv1 = GINConv(
             nn.Sequential(
-                nn.Linear(input_dim, 64),
-                nn.BatchNorm1d(64),
+                nn.Linear(input_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
                 nn.ReLU(),
-                nn.Linear(64, 64),
+                nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(),
             )
         )
         self.conv2 = GINConv(
             nn.Sequential(
-                nn.Linear(64, 64),
-                nn.BatchNorm1d(64),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
                 nn.ReLU(),
-                nn.Linear(64, 64),
+                nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(),
             )
         )
         self.conv3 = GINConv(
             nn.Sequential(
-                nn.Linear(64, 64),
-                nn.BatchNorm1d(64),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
                 nn.ReLU(),
-                nn.Linear(64, 64),
+                nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(),
             )
         )
-        self.fc1 = nn.Linear(64 * 3, 128)
-        self.fc2 = nn.Linear(128, out_dim)
+        self.fc1 = nn.Linear(hidden_dim * 3, hidden_dim * 3)
+        self.fc2 = nn.Linear(hidden_dim * 3, out_dim)
 
     def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
         """
@@ -64,8 +64,8 @@ class GraphNetwork(nn.Module):
         h3_pool = global_mean_pool(h3, batch)
 
         h_pool = torch.cat((h1_pool, h2_pool, h3_pool), dim=1)
-        h_pool = F.relu(self.fc1(h_pool))
+        h_pool = self.fc1(h_pool)
         h_pool = F.dropout(h_pool, p=0.5, training=self.training)
-        h_pool = F.relu(self.fc2(h_pool))
+        h_pool = self.fc2(h_pool)
 
         return h_pool

@@ -51,7 +51,6 @@ class Actor(nn.Module):
             features = decode_observation(x[batch_index])
             action_scores: torch.Tensor = self.actor(*features)
             action_scores = action_scores.squeeze(-1)
-            ic(action_scores)
 
             mask = torch.zeros((self.max_jobs, self.max_machines))
             task_state_ready = features[1]
@@ -59,26 +58,18 @@ class Actor(nn.Module):
             mask[task_state_ready == 0, :] = 1
             mask = mask.masked_fill(~task_vm_compatibility.bool(), 1)
 
-            action_scores = action_scores.reshape(self.max_jobs, self.max_machines)
-            ic(action_scores)
-            action_scores = action_scores.masked_fill(mask.bool(), -1e8)
-            action_scores = action_scores.flatten()
-
             action_probabilities = F.softmax(action_scores, dim=0)
             action_probabilities = action_probabilities.reshape(self.max_jobs, self.max_machines)
-            action_probabilities = action_probabilities.masked_fill(mask.bool(), -1e8)
+            action_probabilities = action_probabilities.masked_fill(mask.bool(), 1e-8)
             action_probabilities = action_probabilities.flatten()
 
             probs = Categorical(logits=action_probabilities)
             chosen_action = action[batch_index] if action is not None else probs.sample()
-
-            log_prob = torch.log(action_probabilities[chosen_action])
-            entropy = -(action_probabilities * torch.log(action_probabilities + 1e-10)).sum()
             value = self.critic(*features)
 
             all_chosen_actions.append(chosen_action)
-            all_log_probs.append(log_prob)
-            all_entropies.append(entropy)
+            all_log_probs.append(probs.log_prob(chosen_action))
+            all_entropies.append(probs.entropy())
             all_values.append(value)
 
         chosen_actions = torch.stack(all_chosen_actions)

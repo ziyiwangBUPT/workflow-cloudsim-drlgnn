@@ -130,6 +130,8 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
 
         # Validate action
         penalty = 10000 + 1000 * sum(self.state.task_state_scheduled == 0)
+        if len(self.state.task_state_scheduled) <= task_id:
+            return {}, -penalty, True, False, {"error": f"Task {task_id} is is a banned task"}
         if self.state.task_state_scheduled[task_id] == 1:
             return {}, -penalty, True, False, {"error": f"Task {task_id} is already scheduled"}
         if self.state.task_state_ready[task_id] == 0:

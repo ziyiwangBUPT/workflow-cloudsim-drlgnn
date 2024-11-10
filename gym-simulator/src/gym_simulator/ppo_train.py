@@ -24,6 +24,10 @@ class Args:
     """the path to the simulator jar file"""
     vm_count: int = 10
     """the number of virtual machines"""
+    workflow_count: int = 5
+    """the number of workflows"""
+    task_limit: int = 5
+    """the maximum number of tasks per workflow"""
 
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
     """the name of this experiment"""
@@ -92,8 +96,8 @@ def make_env(idx: int, args: Args, video_dir: str):
         env_config = {
             "host_count": 10,
             "vm_count": args.vm_count,
-            "workflow_count": 5,
-            "task_limit": 5,
+            "workflow_count": args.workflow_count,
+            "task_limit": args.task_limit,
             "simulator_mode": "embedded",
             "simulator_kwargs": {"simulator_jar_path": args.simulator, "verbose": False, "remote_debug": False},
         }
@@ -151,7 +155,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = Actor(max_machines=args.vm_count, max_jobs=7 * 5).to(device)
+    agent = Actor(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup
