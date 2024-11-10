@@ -62,25 +62,22 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
         return new_obs, reward, terminated, truncated, info
 
     def _transform_observation(self, obs: dict[str, Any]) -> np.ndarray:
-        num_tasks = self.max_tasks
-        num_machines = self.vm_count
+        num_tasks = obs["task_state_scheduled"].shape[0]
 
-        def pad(arr, req_len, fill_value):
-            new_arr = np.ones(req_len, dtype=arr.dtype) * fill_value
-            new_arr[: arr.shape[0]] = arr
-            return new_arr
+        task_pad = (0, self.max_tasks - num_tasks)
+        machine_pad = (0, 0)  # Since max_machines = vm_count
 
         arr = np.concatenate(
             [
-                [num_tasks, num_machines],
-                pad(np.array(obs["task_state_scheduled"], dtype=np.int32).flatten(), num_tasks, 0),
-                pad(np.array(obs["task_state_ready"], dtype=np.int32).flatten(), num_tasks, 0),
-                pad(np.array(obs["task_completion_time"]).flatten(), num_tasks, 0),
-                pad(np.array(obs["vm_completion_time"]).flatten(), num_machines, 0),
-                pad(np.array(obs["task_vm_compatibility"]).flatten(), num_tasks * num_machines, 0),
-                pad(np.array(obs["task_vm_time_cost"]).flatten(), num_tasks * num_machines, 0),
-                pad(np.array(obs["task_vm_power_cost"]).flatten(), num_tasks * num_machines, 0),
-                pad(np.array(obs["task_graph_edges"], dtype=np.int32).flatten(), num_tasks**2, 0),
+                [self.max_tasks, self.vm_count],
+                np.pad(np.array(obs["task_state_scheduled"], dtype=np.int32), task_pad),
+                np.pad(np.array(obs["task_state_ready"], dtype=np.int32), task_pad),
+                np.pad(np.array(obs["task_completion_time"]), task_pad),
+                np.pad(np.array(obs["vm_completion_time"]), machine_pad),
+                np.pad(np.array(obs["task_vm_compatibility"]), (task_pad, machine_pad)).flatten(),
+                np.pad(np.array(obs["task_vm_time_cost"]), (task_pad, machine_pad)).flatten(),
+                np.pad(np.array(obs["task_vm_power_cost"]), (task_pad, machine_pad)).flatten(),
+                np.pad(np.array(obs["task_graph_edges"]), (task_pad, task_pad)).flatten(),
             ]
         )
 
