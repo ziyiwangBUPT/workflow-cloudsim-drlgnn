@@ -35,9 +35,8 @@ class CnnNetwork(nn.Module):
 
         # Rule: out = (in - K + 1) = (in - 2)
         c1 = F.relu(self.conv1(x))  # c1: (B, 8, h - 2, w - 2)
-        s1 = F.max_pool2d(c1, (2, 2))  # s1: (B, 8, (h - 2)//2, (w - 2)//2)
-        c2 = F.relu(self.conv2(s1))  # c2: (B, 16, (h - 2)//2 - 2, (w - 2)//2 - 2)
-        s2 = F.max_pool2d(c2, (2, 2))  # s2: (B, 16, ((h - 2)//2 - 2)//2, ((w - 2)//2 - 2)//2)
+        c2 = F.relu(self.conv2(c1))  # c2: (B, 16, h - 4, w - 4)
+        s2 = F.max_pool2d(c2, (2, 2))  # s2: (B, 16, (h - 4)//2, (w - 4)//2)
         p3 = self.pool(s2)  # p3: (B, 16, 8, 8)
         s3 = torch.flatten(p3, start_dim=1)  # s3: (B, 1024)
         f4 = F.relu(self.fc1(s3))  # f4: (B, 128)
