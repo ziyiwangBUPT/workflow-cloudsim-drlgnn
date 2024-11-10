@@ -60,7 +60,7 @@ def generate_dag_gnp(n: int, p: float | None = None) -> dict[int, set[int]]:
     """
     Generate a random Directed Acyclic Graph (DAG) using the G(n, p) model.
     The resulting graph is represented as an adjacency list. <br/>
-    The resulting graph has n + 1 nodes, with node 0 being the starting node. <br/>
+    The resulting graph has n nodes, with node 0 being the starting node. <br/>
     If p is None, it is set to log(n + eps) / n where n is the number of generated nodes.
     """
 
@@ -70,11 +70,11 @@ def generate_dag_gnp(n: int, p: float | None = None) -> dict[int, set[int]]:
     if p is None:
         p = math.log(n + 0.1) / n
 
-    nodes: dict[int, set[int]] = {i: set() for i in range(n + 1)}
-    start_nodes: set[int] = set(range(1, n + 1))
+    nodes: dict[int, set[int]] = {i: set() for i in range(n)}
+    start_nodes: set[int] = set(range(1, n))
 
-    for i in range(1, n + 1):
-        for j in range(i + 1, n + 1):
+    for i in range(1, n):
+        for j in range(i + 1, n):
             if random.random() < p:
                 nodes[i].add(j)
                 start_nodes.discard(j)
