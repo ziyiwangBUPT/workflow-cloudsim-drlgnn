@@ -49,8 +49,6 @@ class Actor(nn.Module):
 
         for batch_index in range(batch_size):
             features = decode_observation(x[batch_index])
-            action_scores: torch.Tensor = self.actor(*features)
-            action_scores = action_scores.squeeze(-1)
 
             mask = torch.zeros((self.max_jobs, self.max_machines))
             task_state_ready = features[1]
@@ -58,12 +56,16 @@ class Actor(nn.Module):
             mask[task_state_ready == 0, :] = 1
             mask = mask.masked_fill(~task_vm_compatibility.bool(), 1)
 
-            action_probabilities = F.softmax(action_scores, dim=0)
-            action_probabilities = action_probabilities.reshape(self.max_jobs, self.max_machines)
-            action_probabilities = action_probabilities.masked_fill(mask.bool(), 1e-8)
-            action_probabilities = action_probabilities.flatten()
+            action_scores: torch.Tensor = self.actor(*features)
+            action_scores = action_scores.squeeze(-1)
 
-            probs = Categorical(logits=action_probabilities)
+            action_scores = action_scores.reshape(self.max_jobs, self.max_machines)
+            action_scores = action_scores.masked_fill(mask.bool(), -1e8)
+            action_scores = action_scores.flatten()
+
+            action_probabilities = F.softmax(action_scores, dim=0)
+
+            probs = Categorical(action_probabilities)
             chosen_action = action[batch_index] if action is not None else probs.sample()
             value = self.critic(*features)
 
