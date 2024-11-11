@@ -24,10 +24,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     # ----------------------- Initialization --------------------------------------------------------------------------
 
     def __init__(self, env_config: dict[str, Any]):
-        assert (
-            env_config["simulator_mode"] in ["embedded", "internal"],
-            "Only embedded or internal simulator modes are supported",
-        )
+        assert env_config["simulator_mode"] in ["embedded", "internal"]
 
         # Override args
         simulator_kwargs = env_config.get("simulator_kwargs", {})
@@ -196,14 +193,14 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
                 combined_action.append((comp_time, VmAssignmentDto(int(vm_id), u_workflow_id, u_vm_id)))
             combined_action.sort(key=lambda x: x[0])
             dict_action = [dataclasses.asdict(a[1]) for a in combined_action]
-            obs, _, terminated, truncated, info = super().step(dict_action)
+            _, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
 
             baseline_makespan = self._calculate_baseline_makespan()
             makespan = self.state.task_completion_time[-1]
             reward = -makespan / baseline_makespan
 
-            return obs, reward, terminated, truncated, info
+            return self.state.to_observation(), reward, terminated, truncated, info
 
         immediate_reward = (old_makespan - new_makespan) * 1e-6
         return self.state.to_observation(), immediate_reward, False, False, {}

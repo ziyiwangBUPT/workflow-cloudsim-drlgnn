@@ -21,7 +21,7 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 @dataclass
 class Args:
-    simulator: str
+    simulator: str = ""
     """the path to the simulator jar file"""
     vm_count: int = 10
     """the number of virtual machines"""
@@ -100,7 +100,7 @@ def make_env(idx: int, args: Args, video_dir: str):
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
             "gnp_min_n": 3,
-            "simulator_mode": "embedded",
+            "simulator_mode": "internal",
             "simulator_kwargs": {
                 "dataset_args": {
                     # Force the number of tasks to exactly be the same number
