@@ -39,7 +39,7 @@ def main(args: Args):
             "vm_count": args.vm_count,
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
-            "simulator_mode": "embedded",
+            "simulator_mode": "internal",
             "simulator_kwargs": {
                 "simulator_jar_path": args.simulator,
                 "verbose": False,
