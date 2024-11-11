@@ -8,6 +8,7 @@ import numpy as np
 from dataset_generator.core.models import Solution
 from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
+from gym_simulator.core.simulators.internal import InternalSimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
 
@@ -37,7 +38,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                             "id": spaces.Discrete(self.task_limit),
                             "workflow_id": spaces.Discrete(self.workflow_count),
                             "length": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
-                            "req_cores": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
+                            "req_memory_mb": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "child_ids": spaces.Sequence(spaces.Discrete(self.task_limit)),
                         }
                     )
@@ -46,7 +47,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                     spaces.Dict(
                         {
                             "id": spaces.Discrete(self.vm_count),
-                            "cores": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
+                            "memory_mb": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "cpu_speed_mips": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_idle_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_peak_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
@@ -60,7 +61,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
         # Initialize the simulator
         simulator_mode = env_config["simulator_mode"]
         simulator_kwargs = env_config.get("simulator_kwargs", {})
-        if simulator_mode == "embedded":
+        if simulator_mode == "embedded" or simulator_mode == "internal":
             # Set dataset args
             simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
             assert "host_count" not in simulator_kwargs["dataset_args"], "host_count is set by the environment"
@@ -75,8 +76,11 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             simulator_kwargs["dataset_args"]["gnp_max_n"] = self.task_limit
 
             # Set Simulator args
-            assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
-            self.simulator = EmbeddedSimulator(**simulator_kwargs)
+            if simulator_mode == "embedded":
+                assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
+                self.simulator = EmbeddedSimulator(**simulator_kwargs)
+            elif simulator_mode == "internal":
+                self.simulator = InternalSimulator(simulator_kwargs["dataset_args"])
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)
         else:
@@ -91,6 +95,9 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
 
     @override
     def parse_obs(self, obs: Any | None) -> dict[str, list[dict[str, Any]]]:
+        if isinstance(obs, dict):
+            return obs
+
         if obs is None:
             if self.last_obs is not None:
                 return self.last_obs
@@ -123,6 +130,9 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
 
     @override
     def parse_info(self, info: Any | None) -> dict[str, Any]:
+        if isinstance(info, dict):
+            return info
+
         raw_info = super().parse_info(info)
         parsed_info: dict[str, Any] = {}
 
@@ -140,6 +150,9 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
 
     @override
     def create_action(self, jvm: Any, action: list[dict[str, Any]]) -> Any:
+        if jvm is None:
+            return action
+
         assignments = jvm.java.util.ArrayList()
         for act in action:
             assignment = jvm.org.example.api.dtos.VmAssignmentDto(act["vm_id"], act["workflow_id"], act["task_id"])

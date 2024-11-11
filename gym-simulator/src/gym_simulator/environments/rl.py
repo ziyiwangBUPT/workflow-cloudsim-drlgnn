@@ -5,6 +5,7 @@ from typing import Any
 from gymnasium import spaces
 import numpy as np
 
+from dataset_generator.core.models import Dataset
 from gym_simulator.algorithms.heft_one import HeftOneScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
@@ -23,7 +24,10 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     # ----------------------- Initialization --------------------------------------------------------------------------
 
     def __init__(self, env_config: dict[str, Any]):
-        assert env_config["simulator_mode"] == "embedded", "Only embedded simulator mode is supported"
+        assert (
+            env_config["simulator_mode"] in ["embedded", "internal"],
+            "Only embedded or internal simulator modes are supported",
+        )
 
         # Override args
         simulator_kwargs = env_config.get("simulator_kwargs", {})
@@ -376,13 +380,11 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         return vm.memory_mb >= task.req_memory_mb
 
     def _calculate_baseline_makespan(self):
-        assert isinstance(self.simulator, EmbeddedSimulator)
-        assert self.simulator.current_dataset is not None
+        current_dataset = getattr(self.simulator, "current_dataset", None)
+        assert isinstance(current_dataset, Dataset)
 
         tasks = [
-            TaskDto(**dataclasses.asdict(task))
-            for workflow in self.simulator.current_dataset.workflows
-            for task in workflow.tasks
+            TaskDto(**dataclasses.asdict(task)) for workflow in current_dataset.workflows for task in workflow.tasks
         ]
         vms = [
             VmDto(
@@ -393,7 +395,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
                 host_power_peak_watt=-1,
                 host_power_idle_watt=-1,
             )
-            for vm in self.simulator.current_dataset.vms
+            for vm in current_dataset.vms
         ]
         assignments = HeftOneScheduler().schedule(tasks, vms)
         return makespan_calculator.makespan_calculator(tasks, vms, assignments)
