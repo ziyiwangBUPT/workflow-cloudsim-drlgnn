@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import GINConv
+from torch_geometric.nn import GIN
 
 from icecream import ic
 
@@ -13,16 +12,12 @@ class GraphNetwork(nn.Module):
     def __init__(self, input_dim: int, out_dim: int, hidden_dim: int = 32):
         super().__init__()
 
-        self.conv1 = GINConv(
-            nn.Sequential(
-                nn.Linear(input_dim, hidden_dim),
-                nn.BatchNorm1d(hidden_dim),
-                nn.ReLU(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.ReLU(),
-            )
+        self.gin = GIN(
+            in_channels=input_dim,
+            hidden_channels=hidden_dim,
+            num_layers=3,
+            out_channels=out_dim,
         )
-        self.fc = nn.Linear(hidden_dim, out_dim)
 
     def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
         """
@@ -36,8 +31,6 @@ class GraphNetwork(nn.Module):
         edge_index, _ = dense_to_sparse(adj)
         batch = torch.zeros(adj.shape[0], dtype=torch.long)
 
-        h: torch.Tensor = self.conv1(x, edge_index)
+        h: torch.Tensor = self.gin(x, edge_index)
         h_pool = global_mean_pool(h, batch)
-        h_pool = self.fc(h_pool)
-
         return h_pool

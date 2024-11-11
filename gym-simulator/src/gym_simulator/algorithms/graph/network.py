@@ -12,24 +12,11 @@ class Network(nn.Module):
     def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int, out_dim: int):
         super().__init__()
 
-        self.cost_embedding = nn.Sequential(
-            nn.Linear(n_jobs * n_machines * 3, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, hidden_dim),
-        )
-        self.graph_network = GraphNetwork(3, hidden_dim)
-        self.linear_network = nn.Sequential(
-            nn.Linear(n_machines, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, hidden_dim),
-        )
+        self.graph_network = GraphNetwork(input_dim=3, out_dim=hidden_dim)
+        self.cnn_network = CnnNetwork(height=n_jobs, width=n_machines, channels=4, out_dim=hidden_dim)
 
         self.cat_network = nn.Sequential(
-            nn.Linear(3 * hidden_dim, 64),
+            nn.Linear(2 * hidden_dim, 64),
             nn.ReLU(),
             nn.Linear(64, 64),
             nn.ReLU(),
@@ -53,15 +40,19 @@ class Network(nn.Module):
         :return: (1, 1)
         """
 
+        n_tasks = task_vm_time_cost.shape[0]
+        task_vm_completion_time = vm_completion_time.reshape(1, -1).expand(n_tasks, -1)
+
         # cnn_in: (batch_size, n_tasks, n_machines, 3)
         cnn_in = torch.cat(
             (
                 task_vm_compatibility.unsqueeze(-1).unsqueeze(0),
                 task_vm_time_cost.unsqueeze(-1).unsqueeze(0),
                 task_vm_power_cost.unsqueeze(-1).unsqueeze(0),
+                task_vm_completion_time.unsqueeze(-1).unsqueeze(0),
             ),
             dim=-1,
-        ).reshape(1, -1)
+        )
         # graph_in: (batch_size, n_tasks, 3)
         graph_in = torch.cat(
             (
@@ -72,11 +63,9 @@ class Network(nn.Module):
             dim=-1,
         )
         # lin_in: (batch_size, n_machines)
-        lin_in = vm_completion_time.unsqueeze(0)
-        cnn_out = self.cost_embedding(cnn_in)
+        cnn_out = self.cnn_network(cnn_in)
         graph_out = self.graph_network(graph_in, adj)
-        lin_out = self.linear_network(lin_in)
 
         # cocat: (batch_size, hidden_dim*3)
-        concat = torch.cat((cnn_out, graph_out, lin_out), dim=-1)
+        concat = torch.cat((cnn_out, graph_out), dim=-1)
         return self.cat_network(concat)

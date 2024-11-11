@@ -168,6 +168,7 @@ def main(args: Args):
     assert act_space.shape is not None
 
     agent = Actor(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
+    ic(agent)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup
@@ -310,7 +311,8 @@ def main(args: Args):
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
-    torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model.pt")
+        if global_step % 10_000 == 0 and global_step > 0:
+            torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model_{global_step}.pt")
 
     envs.close()
     writer.close()

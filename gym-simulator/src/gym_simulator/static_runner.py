@@ -43,8 +43,9 @@ def main(args: Args):
         "vm_count": args.vm_count,
         "workflow_count": args.workflow_count,
         "task_limit": args.task_limit,
+        "seed": args.seed,
         "simulator_mode": "embedded",
-        "model_dir": "rl_vm_clean_rl_train__1__1728550737",
+        "model_dir": "XXX",
         "simulator_kwargs": {
             "simulator_jar_path": args.simulator,
             "verbose": True,
