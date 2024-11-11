@@ -1,4 +1,3 @@
-from typing import override
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.core.types import TaskDto, VmDto
 
@@ -11,11 +10,9 @@ class PowerSavingScheduler(BaseReadyQueueScheduler):
     This is guaranteed to be the most energy-efficient scheduling algorithm, but it may not be the fastest.
     """
 
-    @override
     def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         return ready_tasks[0]
 
-    @override
     def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         return min(vms, key=self._power_consumption_per_processed_mip)
 

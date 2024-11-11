@@ -7,7 +7,7 @@ import subprocess
 import dataclasses
 import hashlib
 
-from typing import Any, Callable, override
+from typing import Any, Callable
 from py4j.java_gateway import JavaGateway, GatewayParameters
 
 from dataset_generator.core.models import Dataset
@@ -64,7 +64,6 @@ class EmbeddedSimulator(BaseSimulator):
 
     # --------------------- Simulator Start ---------------------------------------------------------------------------
 
-    @override
     def start(self):
         self._verify_stopped()
         self._verify_port_free()
@@ -97,7 +96,6 @@ class EmbeddedSimulator(BaseSimulator):
 
     # --------------------- Simulator Stop ----------------------------------------------------------------------------
 
-    @override
     def stop(self) -> str | None:
         self._verify_running()
 
@@ -134,7 +132,6 @@ class EmbeddedSimulator(BaseSimulator):
 
     # --------------------- Simulator Status -------------------------------------------------------------------------
 
-    @override
     def is_running(self) -> bool:
         if self.simulator_process is None:
             return False
@@ -150,7 +147,6 @@ class EmbeddedSimulator(BaseSimulator):
 
     # --------------------- Simulator Control -------------------------------------------------------------------------
 
-    @override
     def reset(self, seed: int | None) -> Any:
         if self.is_running():
             self.stop()
@@ -159,7 +155,6 @@ class EmbeddedSimulator(BaseSimulator):
 
         return self.env_connector.reset()
 
-    @override
     def step(self, action_creator: Callable[[Any], Any]) -> Any:
         self._verify_running()
 

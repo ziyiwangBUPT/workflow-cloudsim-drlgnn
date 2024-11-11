@@ -1,5 +1,3 @@
-from typing import override
-
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.core.types import TaskDto, VmDto
 
@@ -12,7 +10,6 @@ class MinMinScheduler(BaseReadyQueueScheduler):
     on the VM that will complete the task the fastest.
     """
 
-    @override
     def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the task with the smallest length."""
         smallest_task = None
@@ -25,7 +22,6 @@ class MinMinScheduler(BaseReadyQueueScheduler):
 
         return smallest_task
 
-    @override
     def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         """Schedule the task on the VM that will complete the task the fastest."""
         assert self.est_vm_completion_times is not None

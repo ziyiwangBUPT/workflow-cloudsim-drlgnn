@@ -1,5 +1,3 @@
-from typing import override
-
 from gym_simulator.algorithms.min_min import MinMinScheduler
 from gym_simulator.core.types import TaskDto
 
@@ -13,7 +11,6 @@ class MaxMinScheduler(MinMinScheduler):
     This is a variant of the MinMin algorithm choosing the task with the largest length first.
     """
 
-    @override
     def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         """Choose the task with the largest length."""
         largest_task = None

@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import override
 
 from dataset_generator.core.models import Task, Vm, VmAssignment, Workflow
 from dataset_generator.solvers.cp_sat_solver import solve_cp_sat
@@ -71,7 +70,6 @@ class CpSatScheduler(BaseScheduler):
 
         return assignments
 
-    @override
     def is_optimal(self) -> bool:
         if self._is_optimal is None:
             raise Exception("Schedule the tasks first")

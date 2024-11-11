@@ -1,6 +1,6 @@
 import time
 
-from typing import Any, Callable, override
+from typing import Any, Callable
 from gym_simulator.core.simulators.base import BaseSimulator
 from py4j.java_gateway import JavaGateway
 
@@ -22,19 +22,16 @@ class RemoteSimulator(BaseSimulator):
 
     # --------------------- Simulator Control -------------------------------------------------------------------------
 
-    @override
     def start(self):
         while not self.is_running():
             time.sleep(0.1)
 
-    @override
     def stop(self) -> str | None:
         self.java_gateway.close()
         return None
 
     # --------------------- Simulator Status -------------------------------------------------------------------------
 
-    @override
     def is_running(self) -> bool:
         try:
             # Try to do a simple operation to check if the connection is still alive
@@ -45,13 +42,11 @@ class RemoteSimulator(BaseSimulator):
 
     # --------------------- Simulator Interaction ---------------------------------------------------------------------
 
-    @override
     def reset(self, seed: int | None) -> Any:
         self.start()
 
         return self.env_connector.reset()
 
-    @override
     def step(self, action_creator: Callable[[Any], Any]) -> Any:
         if not self.is_running():
             raise Exception("Simulator is not running")

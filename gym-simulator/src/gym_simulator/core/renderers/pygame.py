@@ -5,7 +5,6 @@ from matplotlib.figure import Figure
 import numpy.typing as npt
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Any, override
 import pygame
 
 from gym_simulator.core.renderers.base import BaseRenderer
@@ -31,7 +30,6 @@ class PygameRenderer(BaseRenderer, ABC):
 
     # --------------------- Renderer Update ---------------------------------------------------------------------------
 
-    @override
     def update(self, obs: Any):
         # Lazy initialization
         if self.window is None or self.clock is None:
@@ -51,7 +49,6 @@ class PygameRenderer(BaseRenderer, ABC):
 
     # --------------------- Renderer Close ---------------------------------------------------------------------------
 
-    @override
     def close(self):
         if self.window is not None:
             pygame.display.quit()
@@ -59,7 +56,6 @@ class PygameRenderer(BaseRenderer, ABC):
 
     # --------------------- Draw Chart -------------------------------------------------------------------------------
 
-    @override
     def draw(self, obs: Any) -> npt.NDArray[np.uint8]:
         fig = self.draw_chart(obs)
 

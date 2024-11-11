@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import override
 
 from gym_simulator.algorithms.base_ready_queue import BaseReadyQueueScheduler
 from gym_simulator.core.types import TaskDto, VmDto
@@ -13,7 +12,6 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         self.task_select_algo = task_select_algo
         self.vm_select_algo = vm_select_algo
 
-    @override
     def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:
         assert self.task_map is not None
         pending_tasks = [task for task_id, task in self.task_map.items() if self.is_pending(task_id)]
@@ -28,7 +26,6 @@ class FjsspScheduler(BaseReadyQueueScheduler):
         else:
             raise ValueError(f"Unknown task selection algorithm: {self.task_select_algo}")
 
-    @override
     def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
         if self.vm_select_algo == "spt":
             return self.select_vm_spt(task, vms)
