@@ -40,6 +40,7 @@ class InternalSimulator(BaseSimulator):
     def stop(self) -> str | None:
         assert self.is_running()
         self.running = False
+        return None
 
     def is_running(self) -> bool:
         return self.running

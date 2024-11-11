@@ -9,8 +9,8 @@ def decode_observation(
 ) -> Tuple[
     torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
 ]:
-    n_jobs = x[0].long().item()
-    n_machines = x[1].long().item()
+    n_jobs = int(x[0].long().item())
+    n_machines = int(x[1].long().item())
     x = x[2:]
 
     task_state_scheduled = x[:n_jobs].long()

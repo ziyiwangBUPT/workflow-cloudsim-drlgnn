@@ -393,6 +393,7 @@ dev = [
     { name = "pandas-stubs" },
     { name = "pyqt6" },
     { name = "types-networkx" },
+    { name = "types-tqdm" },
 ]
 
 [package.metadata]
@@ -424,6 +425,7 @@ dev = [
     { name = "pandas-stubs", specifier = ">=2.2.2.240909" },
     { name = "pyqt6", specifier = ">=6.7.1" },
     { name = "types-networkx", specifier = ">=3.2.1.20240918" },
+    { name = "types-tqdm", specifier = ">=4.66.0.20240417" },
 ]
 
 [[package]]
@@ -1537,6 +1539,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/da/cf/a4811b07d7309d9eecf0f383ca5747ce90f8a0d860acb2050bc57f3c9379/types-pytz-2024.2.0.20240913.tar.gz", hash = "sha256:4433b5df4a6fc587bbed41716d86a5ba5d832b4378e506f40d34bc9c81df2c24", size = 5462 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b6/a6/8846372f55c6bb470ff7207e4dc601017e264e5fe7d79a441ece3545b36c/types_pytz-2024.2.0.20240913-py3-none-any.whl", hash = "sha256:a1eebf57ebc6e127a99d2fa2ba0a88d2b173784ef9b3defcc2004ab6855a44df", size = 5251 },
+]
+
+[[package]]
+name = "types-tqdm"
+version = "4.66.0.20240417"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/65/f14716c07d40f51be63cb46d89a71c4c5314bcf501506930b7fa5201ece0/types-tqdm-4.66.0.20240417.tar.gz", hash = "sha256:16dce9ef522ea8d40e4f5b8d84dd8a1166eefc13ceee7a7e158bf0f1a1421a31", size = 11916 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/dd/39a411628bfdeeac54587aa013a83a446a2ecf8e7e324744b9ba3bf076f3/types_tqdm-4.66.0.20240417-py3-none-any.whl", hash = "sha256:248aef1f9986b7b8c2c12b3cb4399fc17dba0a29e7e3f3f9cd704babb879383d", size = 19163 },
 ]
 
 [[package]]
