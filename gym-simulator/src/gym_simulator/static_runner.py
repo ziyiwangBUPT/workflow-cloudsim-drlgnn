@@ -59,7 +59,7 @@ def main(args: Args):
     scheduler = algorithm_strategy.get_scheduler(args.algorithm, copy.deepcopy(env_config))
 
     # Since this is static, the step will be only called once
-    (tasks, vms), _ = env.reset()
+    (tasks, vms), _ = env.reset(seed=args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
     action = scheduler.schedule(tasks, vms)

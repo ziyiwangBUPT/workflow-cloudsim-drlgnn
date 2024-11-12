@@ -24,7 +24,10 @@ class RlTestScheduler(BaseScheduler):
         env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
         next_obs, _ = env.reset(seed=self.env_config["seed"])
 
-        agent = Actor(max_machines=self.env_config["vm_count"], max_jobs=(self.env_config["task_limit"] + 2))
+        agent = Actor(
+            max_machines=self.env_config["vm_count"],
+            max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
+        )
         model_path = Path(__file__).parent.parent.parent.parent / "logs" / self.model_dir / "model.pt"
         agent.load_state_dict(torch.load(str(model_path), weights_only=True))
         while True:
