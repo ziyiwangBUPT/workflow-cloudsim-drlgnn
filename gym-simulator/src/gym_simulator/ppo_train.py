@@ -125,6 +125,7 @@ def make_env(idx: int, args: Args, video_dir: str):
 
 def main(args: Args):
     pbar = tqdm(total=args.total_timesteps)
+    last_model_save = 0
 
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -311,8 +312,11 @@ def main(args: Args):
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
-        if global_step % 10_000 == 0 and global_step > 0:
+        if (global_step - last_model_save) >= 10_000:
             torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model_{global_step}.pt")
+            last_model_save = global_step
+
+    torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model.pt")
 
     envs.close()
     writer.close()
