@@ -4,7 +4,7 @@ from typing import Any
 
 import torch
 from gym_simulator.algorithms.base import BaseScheduler
-from gym_simulator.algorithms.graph.actor import Actor
+from gym_simulator.algorithms.rl_agents.agent import Agent
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
@@ -24,7 +24,7 @@ class RlTestScheduler(BaseScheduler):
         env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
         next_obs, _ = env.reset(seed=self.env_config["seed"])
 
-        agent = Actor(
+        agent = Agent(
             max_machines=self.env_config["vm_count"],
             max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
         )

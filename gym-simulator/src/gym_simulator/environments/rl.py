@@ -5,6 +5,8 @@ from typing import Any
 from gymnasium import spaces
 import numpy as np
 
+from icecream import ic
+
 from dataset_generator.core.models import Dataset
 from gym_simulator.algorithms.heft_one import HeftOneScheduler
 from gym_simulator.algorithms.round_robin import RoundRobinScheduler
@@ -182,6 +184,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         if self.render_mode == "human":
             self.render()
 
+        baseline_makespan = self._calculate_baseline_makespan()
+        makespan = self.state.task_completion_time[-1]
+        reward = (10 - makespan / baseline_makespan) / self.state.task_state_scheduled.shape[0]
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
@@ -196,14 +201,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             _, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
 
-            baseline_makespan = self._calculate_baseline_makespan()
-            makespan = self.state.task_completion_time[-1]
-            reward = -makespan / baseline_makespan
-
             return self.state.to_observation(), reward, terminated, truncated, info
 
-        immediate_reward = (old_makespan - new_makespan) * 1e-6
-        return self.state.to_observation(), immediate_reward, False, False, {}
+        return self.state.to_observation(), reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 

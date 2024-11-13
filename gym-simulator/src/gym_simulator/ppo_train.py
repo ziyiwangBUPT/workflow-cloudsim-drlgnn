@@ -15,7 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from icecream import ic
 
-from gym_simulator.algorithms.graph.actor import Actor
+from gym_simulator.algorithms.rl_agents.agent import Agent
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -23,11 +23,11 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     simulator: str = ""
     """the path to the simulator jar file"""
-    vm_count: int = 10
+    vm_count: int = 4
     """the number of virtual machines"""
-    workflow_count: int = 5
+    workflow_count: int = 3
     """the number of workflows"""
-    task_limit: int = 5
+    task_limit: int = 20
     """the maximum number of tasks per workflow"""
 
     exp_name: str = os.path.basename(__file__)[: -len(".py")]
@@ -130,7 +130,7 @@ def main(args: Args):
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
-    run_name = f"{int(time.time())}__rl_vm_ppo_{args.exp_name}__{args.seed}"
+    run_name = f"{int(time.time())}_rl_vm_ppo_{args.exp_name}_{args.seed}"
     if args.track:
         import wandb
 
@@ -168,7 +168,8 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = Actor(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
+    agent = Agent(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
+    writer.add_text("agent", f"```{agent}```")
     ic(agent)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
