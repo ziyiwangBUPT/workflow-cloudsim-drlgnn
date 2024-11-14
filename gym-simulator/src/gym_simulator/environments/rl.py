@@ -186,7 +186,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
 
         baseline_makespan = self._calculate_baseline_makespan()
         makespan = self.state.task_completion_time[-1]
-        reward = (10 - makespan / baseline_makespan) / self.state.task_state_scheduled.shape[0]
+        reward = -makespan / baseline_makespan
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
@@ -201,9 +201,15 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             _, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
 
+            baseline_makespan = self._calculate_baseline_makespan()
+            makespan = self.state.task_completion_time[-1]
+            reward = -makespan / baseline_makespan
+
+            if makespan < baseline_makespan:
+                reward += 1
             return self.state.to_observation(), reward, terminated, truncated, info
 
-        return self.state.to_observation(), reward, False, False, {}
+        return self.state.to_observation(), reward * 0.001, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 

@@ -23,9 +23,9 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     simulator: str = ""
     """the path to the simulator jar file"""
-    vm_count: int = 4
+    vm_count: int = 5
     """the number of virtual machines"""
-    workflow_count: int = 3
+    workflow_count: int = 10
     """the number of workflows"""
     task_limit: int = 20
     """the maximum number of tasks per workflow"""
@@ -56,7 +56,7 @@ class Args:
     """the learning rate of the optimizer"""
     num_envs: int = 4
     """the number of parallel game environments"""
-    num_steps: int = 128
+    num_steps: int = 256
     """the number of steps to run in each environment per policy rollout"""
     anneal_lr: bool = True
     """Toggle learning rate annealing for policy and value networks"""
@@ -70,7 +70,7 @@ class Args:
     """the K epochs to update the policy"""
     norm_adv: bool = True
     """Toggles advantages normalization"""
-    clip_coef: float = 0.2
+    clip_coef: float = 0.1
     """the surrogate clipping coefficient"""
     clip_vloss: bool = True
     """Toggles whether or not to use a clipped loss for the value function, as per the paper."""
