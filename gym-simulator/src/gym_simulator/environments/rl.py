@@ -184,8 +184,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         if self.render_mode == "human":
             self.render()
 
-        reward_maintain_mk = old_makespan / new_makespan
-        reward_end_mk = -1.0
+        immediate_reward = 0.0001 * old_makespan / new_makespan
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
@@ -201,12 +200,11 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             info["vm_assignments"] = [a[1] for a in combined_action]
 
             baseline_makespan = self._calculate_baseline_makespan()
-            reward_end_mk = -new_makespan / baseline_makespan
-            reward = reward_maintain_mk + reward_end_mk
+            terminal_reward = -new_makespan / baseline_makespan
+            reward = immediate_reward + terminal_reward
             return self.state.to_observation(), reward, terminated, truncated, info
 
-        reward = reward_maintain_mk + reward_end_mk
-        return self.state.to_observation(), reward, False, False, {}
+        return self.state.to_observation(), immediate_reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 
