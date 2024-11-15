@@ -132,7 +132,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         vm_id = action["vm_id"]
 
         # Validate action
-        penalty = 10000 + 1000 * sum(self.state.task_state_scheduled == 0)
+        penalty = 1000 * sum(self.state.task_state_scheduled == 0)
         if len(self.state.task_state_scheduled) <= task_id:
             return {}, -penalty, True, False, {"error": f"Task {task_id} is is a banned task"}
         if self.state.task_state_scheduled[task_id] == 1:
@@ -184,9 +184,8 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         if self.render_mode == "human":
             self.render()
 
-        baseline_makespan = self._calculate_baseline_makespan()
-        makespan = self.state.task_completion_time[-1]
-        reward = -makespan / baseline_makespan
+        reward_maintain_mk = old_makespan / new_makespan
+        reward_end_mk = -1.0
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
@@ -202,14 +201,12 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             info["vm_assignments"] = [a[1] for a in combined_action]
 
             baseline_makespan = self._calculate_baseline_makespan()
-            makespan = self.state.task_completion_time[-1]
-            reward = -makespan / baseline_makespan
-
-            if makespan < baseline_makespan:
-                reward += 1
+            reward_end_mk = -new_makespan / baseline_makespan
+            reward = reward_maintain_mk + reward_end_mk
             return self.state.to_observation(), reward, terminated, truncated, info
 
-        return self.state.to_observation(), reward * 0.001, False, False, {}
+        reward = reward_maintain_mk + reward_end_mk
+        return self.state.to_observation(), reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 

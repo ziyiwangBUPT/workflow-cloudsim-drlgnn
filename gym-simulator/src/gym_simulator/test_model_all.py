@@ -23,11 +23,11 @@ class Args:
     """random seed"""
     host_count: int = 10
     """number of hosts"""
-    vm_count: int = 10
+    vm_count: int = 4
     """number of VMs"""
-    workflow_count: int = 5
+    workflow_count: int = 10
     """number of workflows"""
-    task_limit: int = 5
+    task_limit: int = 20
     """maximum number of tasks"""
     gantt_chart_prefix: str = "tmp/gantt_chart"
     """prefix for the Gantt chart files"""
@@ -45,12 +45,16 @@ def main(args: Args):
         "simulator_mode": "embedded",
         "seed": args.seed,
         "simulator_kwargs": {
+            "dataset_args": {
+                "gnp_min_n": args.task_limit,
+            },
             "simulator_jar_path": args.simulator,
             "verbose": False,
             "remote_debug": False,
         },
     }
     algorithms = [
+        "rl_1731651250_rl_vm_ppo_train_ppo_1",
         "round_robin",
         "max_min",
         "min_min",

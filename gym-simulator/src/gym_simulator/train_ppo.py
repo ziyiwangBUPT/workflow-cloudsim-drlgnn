@@ -23,7 +23,7 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     simulator: str = ""
     """the path to the simulator jar file"""
-    vm_count: int = 5
+    vm_count: int = 4
     """the number of virtual machines"""
     workflow_count: int = 10
     """the number of workflows"""
@@ -56,7 +56,7 @@ class Args:
     """the learning rate of the optimizer"""
     num_envs: int = 4
     """the number of parallel game environments"""
-    num_steps: int = 256
+    num_steps: int = 128
     """the number of steps to run in each environment per policy rollout"""
     anneal_lr: bool = True
     """Toggle learning rate annealing for policy and value networks"""
@@ -70,7 +70,7 @@ class Args:
     """the K epochs to update the policy"""
     norm_adv: bool = True
     """Toggles advantages normalization"""
-    clip_coef: float = 0.1
+    clip_coef: float = 0.2
     """the surrogate clipping coefficient"""
     clip_vloss: bool = True
     """Toggles whether or not to use a clipped loss for the value function, as per the paper."""
@@ -99,12 +99,10 @@ def make_env(idx: int, args: Args, video_dir: str):
             "vm_count": args.vm_count,
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
-            "gnp_min_n": 3,
             "simulator_mode": "internal",
             "simulator_kwargs": {
                 "dataset_args": {
-                    # Force the number of tasks to exactly be the same number
-                    # "gnp_min_n": args.task_limit
+                    "gnp_min_n": args.task_limit,
                 },
                 "simulator_jar_path": args.simulator,
                 "verbose": False,
