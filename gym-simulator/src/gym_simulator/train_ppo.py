@@ -22,8 +22,11 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 @dataclass
 class Args:
-    simulator: str = ""
-    """the path to the simulator jar file"""
+    exp_name: str
+    """the name of this experiment"""
+    exp_comment: str = ""
+    """a comment to identify the experiment"""
+
     host_count: int = 10
     """the number of hosts"""
     vm_count: int = 4
@@ -33,8 +36,6 @@ class Args:
     task_limit: int = 20
     """the maximum number of tasks per workflow"""
 
-    exp_name: str = os.path.basename(__file__)[: -len(".py")]
-    """the name of this experiment"""
     seed: int = 1
     """seed of the experiment"""
     output_dir: str = "logs"
@@ -109,7 +110,6 @@ def make_env(idx: int, args: Args, video_dir: str):
                 "dataset_args": {
                     "gnp_min_n": args.task_limit,
                 },
-                "simulator_jar_path": args.simulator,
                 "verbose": False,
                 "remote_debug": False,
             },
@@ -149,6 +149,7 @@ def main(args: Args):
             save_code=True,
         )
     writer = SummaryWriter(f"{args.output_dir}/{run_name}")
+    writer.add_text("comment", args.exp_comment)
     writer.add_text(
         "hyperparameters",
         "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
