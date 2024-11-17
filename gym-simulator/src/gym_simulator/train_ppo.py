@@ -1,5 +1,6 @@
 # docs and experiment results can be found at https://docs.cleanrl.dev/rl-algorithms/ppo/#ppopy
 import os
+from pathlib import Path
 import random
 import time
 from dataclasses import dataclass
@@ -48,6 +49,8 @@ class Args:
     """the entity (team) of wandb's project"""
     capture_video: bool = False
     """whether to capture videos of the agent performances (check out `videos` folder)"""
+    load_model_dir: str | None = None
+    """Directory to load the model from"""
 
     # Algorithm specific arguments
     total_timesteps: int = 500_000
@@ -128,7 +131,7 @@ def main(args: Args):
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
-    run_name = f"{int(time.time())}_ppo_{args.exp_name}_{args.seed}"
+    run_name = f"{int(time.time())}_ppo_{args.exp_name}"
     if args.track:
         import wandb
 
@@ -168,6 +171,12 @@ def main(args: Args):
 
     agent = Agent(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
     writer.add_text("agent", f"```{agent}```")
+
+    if args.load_model_dir:
+        model_path = Path(__file__).parent.parent.parent / "logs" / args.load_model_dir / "model.pt"
+        agent.load_state_dict(torch.load(str(model_path), weights_only=True))
+        print(f"Loaded model from {model_path}")
+
     ic(agent)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
