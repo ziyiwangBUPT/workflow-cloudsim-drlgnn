@@ -16,8 +16,8 @@ class RlTestScheduler(BaseScheduler):
     This scheduler runs the RL environment instance internally to schedule the tasks.
     """
 
-    def __init__(self, env_config: dict[str, Any], model_dir: str):
-        self.model_dir = model_dir
+    def __init__(self, env_config: dict[str, Any], model_path: Path):
+        self.model_path = model_path
         self.env_config = env_config
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
@@ -29,8 +29,7 @@ class RlTestScheduler(BaseScheduler):
             max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
             device=torch.device("cpu"),
         )
-        model_path = Path(__file__).parent.parent.parent.parent / "logs" / self.model_dir / "model.pt"
-        agent.load_state_dict(torch.load(str(model_path), weights_only=True))
+        agent.load_state_dict(torch.load(str(self.model_path), weights_only=True))
         while True:
             # Reshape to have 1 bactch size
             next_obs = next_obs.reshape(1, -1)

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.best_fit import BestFitScheduler
@@ -33,17 +34,19 @@ def get_scheduler(algorithm: str, env_config: dict[str, Any] | None = None) -> B
     elif algorithm == "rl_static":
         assert env_config is not None, "env_config is required for RL algorithm"
         return RlStaticScheduler(env_config)
-    elif algorithm.startswith("rl_"):
+    elif algorithm.startswith("rl:"):
         assert env_config is not None, "env_config is required for RL algorithm"
-        split_args = algorithm.split("_")
-        assert len(split_args) > 1, "Invalid RL algorithm format (expected: rl_<model_dir>)"
-        _, *model_dir_parts = split_args
-        model_dir = "_".join(model_dir_parts)
-        return RlTestScheduler(env_config, model_dir)
-    elif algorithm.startswith("fjssp_"):
-        split_args = algorithm.split("_")
-        assert len(split_args) == 3, "Invalid FJSSP algorithm format (expected: fjssp_<task_algo>_<vm_algo>)"
-        _, task_select_algo, vm_select_algo = split_args
+        split_args = algorithm.split(":")
+        assert len(split_args) == 3, "Invalid RL algorithm format (expected: rl:<model_dir>:<model_file>)"
+        _, model_dir, model_file = split_args
+        model_path = Path(__file__).parent.parent.parent.parent / "logs" / model_dir / model_file
+        return RlTestScheduler(env_config, model_path)
+    elif algorithm.startswith("fjssp:"):
+        split_args = algorithm.split(":")
+        assert len(split_args) == 2, "Invalid FJSSP algorithm format (expected: fjssp:<task_algo>_<vm_algo>)"
+        split_args = split_args[1].split("_")
+        assert len(split_args) == 2, "Invalid FJSSP algorithm format (expected: fjssp:<task_algo>_<vm_algo>)"
+        task_select_algo, vm_select_algo = split_args
         return FjsspScheduler(task_select_algo=task_select_algo, vm_select_algo=vm_select_algo)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")
