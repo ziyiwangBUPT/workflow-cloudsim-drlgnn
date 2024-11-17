@@ -172,7 +172,11 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = GinAgent(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
+    agent = GinAgent(
+        max_machines=args.vm_count,
+        max_jobs=(args.task_limit + 2) * args.workflow_count,
+        device=device,
+    ).to(device)
     writer.add_text("agent", f"```{agent}```")
 
     if args.load_model_dir:

@@ -217,11 +217,12 @@ class GinCritic(nn.Module):
 
 
 class GinAgent(nn.Module):
-    def __init__(self, max_jobs: int, max_machines: int):
+    def __init__(self, max_jobs: int, max_machines: int, device: torch.device):
         super().__init__()
 
         self.max_jobs = max_jobs
         self.max_machines = max_machines
+        self.device = device
 
         self.actor = GinActor(max_jobs, max_machines)
         self.critic = GinCritic(max_jobs, max_machines)
@@ -246,14 +247,14 @@ class GinAgent(nn.Module):
                 task_graph_edges,
             ) = decode_observation(x[batch_index])
             value = self.critic(
-                task_state_scheduled=task_state_scheduled,
-                task_state_ready=task_state_ready,
-                task_completion_time=task_completion_time,
-                vm_completion_time=vm_completion_time,
-                task_vm_compatibility=task_vm_compatibility,
-                task_vm_time_cost=task_vm_time_cost,
-                task_vm_power_cost=task_vm_power_cost,
-                adj=task_graph_edges,
+                task_state_scheduled=task_state_scheduled.to(self.device),
+                task_state_ready=task_state_ready.to(self.device),
+                task_completion_time=task_completion_time.to(self.device),
+                vm_completion_time=vm_completion_time.to(self.device),
+                task_vm_compatibility=task_vm_compatibility.to(self.device),
+                task_vm_time_cost=task_vm_time_cost.to(self.device),
+                task_vm_power_cost=task_vm_power_cost.to(self.device),
+                adj=task_graph_edges.to(self.device),
             )
             values.append(value)
 
@@ -286,14 +287,14 @@ class GinAgent(nn.Module):
             ) = decode_observation(x[batch_index])
 
             action_scores: torch.Tensor = self.actor(
-                task_state_scheduled=task_state_scheduled,
-                task_state_ready=task_state_ready,
-                task_completion_time=task_completion_time,
-                vm_completion_time=vm_completion_time,
-                task_vm_compatibility=task_vm_compatibility,
-                task_vm_time_cost=task_vm_time_cost,
-                task_vm_power_cost=task_vm_power_cost,
-                adj=task_graph_edges,
+                task_state_scheduled=task_state_scheduled.to(self.device),
+                task_state_ready=task_state_ready.to(self.device),
+                task_completion_time=task_completion_time.to(self.device),
+                vm_completion_time=vm_completion_time.to(self.device),
+                task_vm_compatibility=task_vm_compatibility.to(self.device),
+                task_vm_time_cost=task_vm_time_cost.to(self.device),
+                task_vm_power_cost=task_vm_power_cost.to(self.device),
+                adj=task_graph_edges.to(self.device),
             )
             action_scores = action_scores.flatten()
             action_probabilities = F.softmax(action_scores, dim=0)
