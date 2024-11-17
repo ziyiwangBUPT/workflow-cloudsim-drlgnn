@@ -75,7 +75,7 @@ class BaseGinNetwork(nn.Module):
 
         # Machine nodes and features
         machine_nodes = torch.arange(self.n_machines).unsqueeze(0).expand(self.n_jobs, self.n_machines)
-        machine_nodes += self.n_jobs  # Machine node indices are offset in n_jobs
+        machine_nodes = machine_nodes + self.n_jobs  # Machine node indices are offset in n_jobs
         machine_features = vm_completion_time.unsqueeze(1)
 
         # Edges (Job-Job and Job-Machine)
