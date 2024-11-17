@@ -10,7 +10,7 @@ from icecream import ic
 
 
 class GinNetwork(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int = 64, embedding_dim: int = 8) -> None:
+    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int, embedding_dim: int) -> None:
         super().__init__()
         self.n_jobs = n_jobs
         self.n_machines = n_machines
@@ -97,7 +97,7 @@ class GinNetwork(nn.Module):
 
 
 class GinActorNetwork(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int = 64, embedding_dim: int = 8) -> None:
+    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int = 32, embedding_dim: int = 4) -> None:
         super().__init__()
         self.n_jobs = n_jobs
         self.n_machines = n_machines
@@ -143,7 +143,7 @@ class GinActorNetwork(nn.Module):
 
 
 class GinCriticNetwork(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int = 64, embedding_dim: int = 8) -> None:
+    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int = 32, embedding_dim: int = 4) -> None:
         super().__init__()
         self.n_jobs = n_jobs
         self.n_machines = n_machines
