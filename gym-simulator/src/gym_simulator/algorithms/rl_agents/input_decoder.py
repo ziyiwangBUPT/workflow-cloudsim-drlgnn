@@ -1,4 +1,17 @@
+from dataclasses import dataclass
 import torch
+
+
+@dataclass
+class DecodedObservation:
+    task_state_scheduled: torch.Tensor
+    task_state_ready: torch.Tensor
+    task_completion_time: torch.Tensor
+    vm_completion_time: torch.Tensor
+    task_vm_compatibility: torch.Tensor
+    task_vm_time_cost: torch.Tensor
+    task_vm_power_cost: torch.Tensor
+    task_graph_edges: torch.Tensor
 
 
 def decode_observation(x: torch.Tensor):
@@ -30,13 +43,13 @@ def decode_observation(x: torch.Tensor):
     task_graph_edges = x[: n_jobs * n_jobs].reshape(n_jobs, n_jobs).long()
     x = x[n_jobs * n_jobs :]
 
-    return (
-        task_state_scheduled,
-        task_state_ready,
-        task_completion_time,
-        vm_completion_time,
-        task_vm_compatibility,
-        task_vm_time_cost,
-        task_vm_power_cost,
-        task_graph_edges,
+    return DecodedObservation(
+        task_state_scheduled=task_state_scheduled,
+        task_state_ready=task_state_ready,
+        task_completion_time=task_completion_time,
+        vm_completion_time=vm_completion_time,
+        task_vm_compatibility=task_vm_compatibility,
+        task_vm_time_cost=task_vm_time_cost,
+        task_vm_power_cost=task_vm_power_cost,
+        task_graph_edges=task_graph_edges,
     )
