@@ -24,6 +24,8 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     simulator: str = ""
     """the path to the simulator jar file"""
+    host_count: int = 10
+    """the number of hosts"""
     vm_count: int = 4
     """the number of virtual machines"""
     workflow_count: int = 10
@@ -98,7 +100,7 @@ class Args:
 def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         env_config = {
-            "host_count": 10,
+            "host_count": args.host_count,
             "vm_count": args.vm_count,
             "workflow_count": args.workflow_count,
             "task_limit": args.task_limit,
