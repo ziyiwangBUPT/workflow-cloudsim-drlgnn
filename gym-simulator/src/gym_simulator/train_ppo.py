@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from icecream import ic
 
-from gym_simulator.algorithms.rl_agents.agent import Agent
+from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -169,7 +169,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = Agent(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
+    agent = GinAgent(max_machines=args.vm_count, max_jobs=(args.task_limit + 2) * args.workflow_count).to(device)
     writer.add_text("agent", f"```{agent}```")
 
     if args.load_model_dir:

@@ -47,7 +47,7 @@ class JobActor(nn.Module):
         task_completion_time: torch.Tensor,
         vm_completion_time: torch.Tensor,
         adj: torch.Tensor,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch = torch.zeros(self.n_jobs, dtype=torch.long)
         edge_index, _ = dense_to_sparse(adj)
         node_values = torch.cat(
