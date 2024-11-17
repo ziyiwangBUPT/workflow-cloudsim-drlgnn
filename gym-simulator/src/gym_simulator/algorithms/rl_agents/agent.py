@@ -7,6 +7,7 @@ from torch.distributions.categorical import Categorical
 from icecream import ic
 
 from gym_simulator.algorithms.rl_agents.gin_network import GinActorNetwork, GinCriticNetwork
+from gym_simulator.algorithms.rl_agents.input_decoder import decode_observation
 
 
 class Agent(nn.Module):
@@ -28,7 +29,7 @@ class Agent(nn.Module):
         values = []
 
         for batch_index in range(batch_size):
-            features = self.decode_observation(x[batch_index])
+            features = decode_observation(x[batch_index])
             values.append(self.critic(*features))
 
         return torch.stack(values)
@@ -48,7 +49,7 @@ class Agent(nn.Module):
         all_chosen_actions, all_log_probs, all_entropies, all_values = [], [], [], []
 
         for batch_index in range(batch_size):
-            features = self.decode_observation(x[batch_index])
+            features = decode_observation(x[batch_index])
 
             action_scores: torch.Tensor = self.actor(*features)
             action_scores = action_scores.squeeze(-1)
@@ -79,43 +80,3 @@ class Agent(nn.Module):
         values = torch.stack(all_values)
 
         return chosen_actions, log_probs, entropies, values
-
-    def decode_observation(self, x: torch.Tensor):
-        n_jobs = int(x[0].long().item())
-        n_machines = int(x[1].long().item())
-        x = x[2:]
-
-        task_state_scheduled = x[:n_jobs].long()
-        x = x[n_jobs:]
-
-        task_state_ready = x[:n_jobs].long()
-        x = x[n_jobs:]
-
-        task_completion_time = x[:n_jobs]
-        x = x[n_jobs:]
-
-        vm_completion_time = x[:n_machines]
-        x = x[n_machines:]
-
-        task_vm_compatibility = x[: n_jobs * n_machines].reshape(n_jobs, n_machines).long()
-        x = x[n_jobs * n_machines :]
-
-        task_vm_time_cost = x[: n_jobs * n_machines].reshape(n_jobs, n_machines)
-        x = x[n_jobs * n_machines :]
-
-        task_vm_power_cost = x[: n_jobs * n_machines].reshape(n_jobs, n_machines)
-        x = x[n_jobs * n_machines :]
-
-        task_graph_edges = x[: n_jobs * n_jobs].reshape(n_jobs, n_jobs).long()
-        x = x[n_jobs * n_jobs :]
-
-        return (
-            task_state_scheduled,
-            task_state_ready,
-            task_completion_time,
-            vm_completion_time,
-            task_vm_compatibility,
-            task_vm_time_cost,
-            task_vm_power_cost,
-            task_graph_edges,
-        )
