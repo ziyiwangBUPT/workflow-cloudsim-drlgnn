@@ -26,18 +26,22 @@ class BaseGinNetwork(nn.Module):
 
         self.job_encoder = nn.Sequential(
             nn.Linear(3, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
         )
         self.machine_encoder = nn.Sequential(
             nn.Linear(1, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
         )
         self.job_machine_edge_encoder = nn.Sequential(
             nn.Linear(1, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
         )
@@ -130,8 +134,10 @@ class GinActor(nn.Module):
         )
         self.edge_scorer = nn.Sequential(
             nn.Linear(2 * embedding_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
