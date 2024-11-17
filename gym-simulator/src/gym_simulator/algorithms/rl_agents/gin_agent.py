@@ -186,7 +186,7 @@ class GinCritic(nn.Module):
         self.n_machines = n_machines
         self.device = device
 
-        BaseGinNetwork(
+        self.network = BaseGinNetwork(
             n_jobs,
             n_machines,
             hidden_dim=hidden_dim,
