@@ -121,7 +121,13 @@ class GinActor(nn.Module):
         self.n_machines = n_machines
         self.device = device
 
-        self.network = BaseGinNetwork(n_jobs, n_machines, hidden_dim=hidden_dim, embedding_dim=embedding_dim)
+        self.network = BaseGinNetwork(
+            n_jobs,
+            n_machines,
+            hidden_dim=hidden_dim,
+            embedding_dim=embedding_dim,
+            device=device,
+        )
         self.edge_scorer = nn.Sequential(
             nn.Linear(2 * embedding_dim, hidden_dim),
             nn.ReLU(),
@@ -180,7 +186,13 @@ class GinCritic(nn.Module):
         self.n_machines = n_machines
         self.device = device
 
-        self.network = BaseGinNetwork(n_jobs, n_machines, hidden_dim=hidden_dim, embedding_dim=embedding_dim)
+        BaseGinNetwork(
+            n_jobs,
+            n_machines,
+            hidden_dim=hidden_dim,
+            embedding_dim=embedding_dim,
+            device=device,
+        )
         self.graph_scorer = nn.Sequential(
             nn.Linear(embedding_dim, hidden_dim),
             nn.ReLU(),
@@ -228,7 +240,7 @@ class GinAgent(nn.Module):
         self.device = device
 
         self.actor = GinActor(max_jobs, max_machines, hidden_dim=32, embedding_dim=4, device=device)
-        self.critic = GinCritic(max_jobs, max_machines, embedding_dim=4, device=device)
+        self.critic = GinCritic(max_jobs, max_machines, hidden_dim=32, embedding_dim=4, device=device)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         """

@@ -27,6 +27,7 @@ class RlTestScheduler(BaseScheduler):
         agent = GinAgent(
             max_machines=self.env_config["vm_count"],
             max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
+            device=torch.device("cpu"),
         )
         model_path = Path(__file__).parent.parent.parent.parent / "logs" / self.model_dir / "model.pt"
         agent.load_state_dict(torch.load(str(model_path), weights_only=True))
