@@ -52,6 +52,9 @@ class BaseGinNetwork(nn.Module):
             out_channels=embedding_dim,
         )
 
+    def __call__(self, *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        return super().__call__(*args, **kwargs)
+
     def forward(
         self,
         task_state_scheduled: torch.Tensor,
@@ -123,6 +126,7 @@ class GinActor(nn.Module):
         super().__init__()
         self.n_jobs = n_jobs
         self.n_machines = n_machines
+        self.embedding_dim = embedding_dim
         self.device = device
 
         self.network = BaseGinNetwork(
@@ -133,14 +137,17 @@ class GinActor(nn.Module):
             device=device,
         )
         self.edge_scorer = nn.Sequential(
-            nn.Linear(2 * embedding_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
+            nn.Linear(3 * embedding_dim, 2 * hidden_dim),
+            nn.BatchNorm1d(2 * hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(2 * hidden_dim, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
+
+    def __call__(self, *args, **kwargs) -> torch.Tensor:
+        return super().__call__(*args, **kwargs)
 
     def forward(
         self,
@@ -153,7 +160,7 @@ class GinActor(nn.Module):
         task_vm_power_cost: torch.Tensor,
         adj: torch.Tensor,
     ) -> torch.Tensor:
-        _, edge_embeddings, _ = self.network(
+        _, edge_embeddings, graph_embedding = self.network(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
             task_completion_time=task_completion_time,
@@ -165,6 +172,8 @@ class GinActor(nn.Module):
         )
 
         # Get edge embedding scores
+        rep_graph_embedding = graph_embedding.expand(edge_embeddings.shape[0], self.embedding_dim)
+        edge_embeddings = torch.cat([edge_embeddings, rep_graph_embedding], dim=1)
         edge_embedding_scores: torch.Tensor = self.edge_scorer(edge_embeddings)
 
         # Extract the job-machine edges only
@@ -207,6 +216,9 @@ class GinCritic(nn.Module):
             nn.Linear(hidden_dim, 1),
         )
 
+    def __call__(self, *args, **kwargs) -> torch.Tensor:
+        return super().__call__(*args, **kwargs)
+
     def forward(
         self,
         task_state_scheduled: torch.Tensor,
@@ -245,8 +257,8 @@ class GinAgent(nn.Module):
         self.max_machines = max_machines
         self.device = device
 
-        self.actor = GinActor(max_jobs, max_machines, hidden_dim=32, embedding_dim=4, device=device)
-        self.critic = GinCritic(max_jobs, max_machines, hidden_dim=32, embedding_dim=4, device=device)
+        self.actor = GinActor(max_jobs, max_machines, hidden_dim=32, embedding_dim=32, device=device)
+        self.critic = GinCritic(max_jobs, max_machines, hidden_dim=32, embedding_dim=32, device=device)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -288,7 +300,7 @@ class GinAgent(nn.Module):
 
         for batch_index in range(batch_size):
             decoded_obs = decode_observation(x[batch_index].to(self.device))
-            action_scores: torch.Tensor = self.actor(
+            action_scores = self.actor(
                 task_state_scheduled=decoded_obs.task_state_scheduled,
                 task_state_ready=decoded_obs.task_state_ready,
                 task_completion_time=decoded_obs.task_completion_time,
