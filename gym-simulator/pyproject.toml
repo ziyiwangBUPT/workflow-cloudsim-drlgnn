@@ -10,7 +10,7 @@ dependencies = [
     "matplotlib>=3.9.2",
     "pygame>=2.6.0",
     "torch>=2.4.1",
-    "tyro>=0.8.10",
+    "tyro==0.8.10",
     "tensorboard>=2.17.1",
     "moviepy>=1.0.3",
     "wandb>=0.18.1",
