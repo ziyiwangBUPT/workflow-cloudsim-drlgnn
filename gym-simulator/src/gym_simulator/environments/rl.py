@@ -7,15 +7,10 @@ import numpy as np
 
 from icecream import ic
 
-from dataset_generator.core.models import Dataset
-from gym_simulator.algorithms.heft_one import HeftOneScheduler
-from gym_simulator.algorithms.round_robin import RoundRobinScheduler
-from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.basic import BasicCloudSimEnvironment
 from gym_simulator.environments.states.rl import RlEnvState
 from gym_simulator.renderers.rl import RlEnvironmentRenderer
-from gym_simulator.utils import makespan_calculator
 from gym_simulator.utils.task_mapper import TaskMapper
 
 
@@ -184,7 +179,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         if self.render_mode == "human":
             self.render()
 
-        immediate_reward = 0.0001 * old_makespan / new_makespan
+        reward = -(new_makespan - old_makespan) / new_makespan
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
@@ -199,12 +194,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             _, _, terminated, truncated, info = super().step(dict_action)
             info["vm_assignments"] = [a[1] for a in combined_action]
 
-            baseline_makespan = self._calculate_baseline_makespan()
-            terminal_reward = -new_makespan / baseline_makespan
-            reward = immediate_reward + terminal_reward
             return self.state.to_observation(), reward, terminated, truncated, info
 
-        return self.state.to_observation(), immediate_reward, False, False, {}
+        return self.state.to_observation(), reward, False, False, {}
 
     # ----------------------- Rendering -------------------------------------------------------------------------------
 
@@ -376,24 +368,3 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     def _is_vm_suitable(self, vm: VmDto, task: TaskDto) -> bool:
         """Check if the VM is suitable for the task."""
         return vm.memory_mb >= task.req_memory_mb
-
-    def _calculate_baseline_makespan(self):
-        current_dataset = getattr(self.simulator, "current_dataset", None)
-        assert isinstance(current_dataset, Dataset)
-
-        tasks = [
-            TaskDto(**dataclasses.asdict(task)) for workflow in current_dataset.workflows for task in workflow.tasks
-        ]
-        vms = [
-            VmDto(
-                id=vm.id,
-                memory_mb=vm.memory_mb,
-                cpu_speed_mips=vm.cpu_speed_mips,
-                host_cpu_speed_mips=-1,
-                host_power_peak_watt=-1,
-                host_power_idle_watt=-1,
-            )
-            for vm in current_dataset.vms
-        ]
-        assignments = HeftOneScheduler().schedule(tasks, vms)
-        return makespan_calculator.makespan_calculator(tasks, vms, assignments)
