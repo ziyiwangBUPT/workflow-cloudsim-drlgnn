@@ -17,6 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from icecream import ic
 
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
+from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 

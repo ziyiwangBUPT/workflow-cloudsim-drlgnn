@@ -158,8 +158,8 @@ class MachineActor(nn.Module):
 # -----------------------------------------------------------------------------
 
 
-class MdpAgent(nn.Module):
-    def __init__(self, max_jobs: int, max_machines: int, hidden_dim: int = 64):
+class MpgnAgent(nn.Module):
+    def __init__(self, max_jobs: int, max_machines: int, hidden_dim: int = 32):
         super().__init__()
 
         self.max_jobs = max_jobs
