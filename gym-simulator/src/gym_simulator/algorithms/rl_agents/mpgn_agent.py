@@ -21,7 +21,7 @@ class JobActor(nn.Module):
         self.n_jobs = n_jobs
         self.n_machines = n_machines
 
-        self.graph_network = GIN(
+        self.job_encoder = GIN(
             in_channels=3,
             hidden_channels=hidden_dim,
             num_layers=3,
@@ -34,8 +34,10 @@ class JobActor(nn.Module):
         )
         self.mlp_decoder = nn.Sequential(
             nn.Linear(3 * hidden_dim, 2 * hidden_dim),
+            nn.BatchNorm1d(2 * hidden_dim),
             nn.ReLU(),
             nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
@@ -59,10 +61,12 @@ class JobActor(nn.Module):
             dim=-1,
         )
 
-        node_embeddings = self.graph_network(node_values, edge_index=edge_index)  # h_v^L
+        # Embeddings
+        node_embeddings: torch.Tensor = self.job_encoder(node_values, edge_index=edge_index)  # h_v^L
         graph_embedding = global_mean_pool(node_embeddings, batch=batch)  # h_G
         machine_embedding = self.machine_embedder(vm_completion_time.unsqueeze(0))  # u
 
+        # h_v^L || h_G || u
         combined_embeddings = torch.cat(
             [
                 node_embeddings,
@@ -71,12 +75,14 @@ class JobActor(nn.Module):
             ],
             dim=-1,
         )
-        action_scores = self.mlp_decoder(combined_embeddings)
+        # c_k^o
+        action_scores: torch.Tensor = self.mlp_decoder(combined_embeddings)
+
+        # Mask scores
         action_scores = action_scores.reshape(self.n_jobs)
         action_scores[task_state_ready == 0] = -float("inf")
 
-        action_probabilities = F.softmax(action_scores, dim=0)
-        return action_probabilities, graph_embedding, machine_embedding
+        return action_scores, graph_embedding, machine_embedding
 
 
 # Machine Actor
@@ -91,15 +97,19 @@ class MachineActor(nn.Module):
 
         self.machine_encoder = nn.Sequential(
             nn.Linear(3, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
         self.mlp_decoder = nn.Sequential(
             nn.Linear(3 * hidden_dim, 2 * hidden_dim),
+            nn.BatchNorm1d(2 * hidden_dim),
             nn.ReLU(),
             nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
@@ -121,8 +131,10 @@ class MachineActor(nn.Module):
             dim=-1,
         )
 
-        node_embeddings = self.machine_encoder(node_values)
+        # Get embeddings
+        node_embeddings = self.machine_encoder(node_values)  # h_k
 
+        # h_k || h_G || u
         combined_embeddings = torch.cat(
             [
                 node_embeddings,
@@ -131,12 +143,15 @@ class MachineActor(nn.Module):
             ],
             dim=-1,
         )
-        action_scores = self.mlp_decoder(combined_embeddings)
+
+        # c_k^m
+        action_scores: torch.Tensor = self.mlp_decoder(combined_embeddings)
+
+        # Mask scores
         action_scores = action_scores.reshape(self.n_machines)
         action_scores[vm_compatibility == 0] = -float("inf")
 
-        action_probabilities = F.softmax(action_scores, dim=0)
-        return action_probabilities
+        return action_scores
 
 
 # Agent
@@ -165,22 +180,13 @@ class MdpAgent(nn.Module):
         values = []
 
         for batch_index in range(batch_size):
-            (
-                task_state_scheduled,
-                task_state_ready,
-                task_completion_time,
-                vm_completion_time,
-                task_vm_compatibility,
-                task_vm_time_cost,
-                task_vm_power_cost,
-                task_graph_edges,
-            ) = decode_observation(x[batch_index])
-            job_action_probabilities, graph_embedding, machine_embedding = self.job_actor(
-                task_state_scheduled=task_state_scheduled,
-                task_state_ready=task_state_ready,
-                task_completion_time=task_completion_time,
-                vm_completion_time=vm_completion_time,
-                adj=task_graph_edges,
+            decoded_obs = decode_observation(x[batch_index])
+            _, graph_embedding, _ = self.job_actor(
+                task_state_scheduled=decoded_obs.task_state_scheduled,
+                task_state_ready=decoded_obs.task_state_ready,
+                task_completion_time=decoded_obs.task_completion_time,
+                vm_completion_time=decoded_obs.vm_completion_time,
+                adj=decoded_obs.task_graph_edges,
             )
             values.append(self.critic_network(graph_embedding))
 
@@ -193,36 +199,29 @@ class MdpAgent(nn.Module):
         all_chosen_actions, all_log_probs, all_entropies, all_values = [], [], [], []
 
         for batch_index in range(batch_size):
-            (
-                task_state_scheduled,
-                task_state_ready,
-                task_completion_time,
-                vm_completion_time,
-                task_vm_compatibility,
-                task_vm_time_cost,
-                task_vm_power_cost,
-                task_graph_edges,
-            ) = decode_observation(x[batch_index])
+            decoded_obs = decode_observation(x[batch_index])
 
-            job_action_probabilities, graph_embedding, machine_embedding = self.job_actor(
-                task_state_scheduled=task_state_scheduled,
-                task_state_ready=task_state_ready,
-                task_completion_time=task_completion_time,
-                vm_completion_time=vm_completion_time,
-                adj=task_graph_edges,
+            job_action_scores, graph_embedding, machine_embedding = self.job_actor(
+                task_state_scheduled=decoded_obs.task_state_scheduled,
+                task_state_ready=decoded_obs.task_state_ready,
+                task_completion_time=decoded_obs.task_completion_time,
+                vm_completion_time=decoded_obs.vm_completion_time,
+                adj=decoded_obs.task_graph_edges,
             )
+            job_action_probabilities = F.softmax(job_action_scores, dim=0)
             job_probs = Categorical(job_action_probabilities)
             chosen_job_action = action[batch_index] // self.max_machines if action is not None else job_probs.sample()
             job_log_prob = job_probs.log_prob(chosen_job_action)
             job_entropy = job_probs.entropy()
 
-            machine_action_probabilities = self.machine_actor(
-                vm_compatibility=task_vm_compatibility[chosen_job_action],
-                vm_time_cost=task_vm_time_cost[chosen_job_action],
-                vm_power_cost=task_vm_power_cost[chosen_job_action],
+            machine_action_scores = self.machine_actor(
+                vm_compatibility=decoded_obs.task_vm_compatibility[chosen_job_action],
+                vm_time_cost=decoded_obs.task_vm_time_cost[chosen_job_action],
+                vm_power_cost=decoded_obs.task_vm_power_cost[chosen_job_action],
                 graph_embedding=graph_embedding,
                 machine_embedding=machine_embedding,
             )
+            machine_action_probabilities = F.softmax(machine_action_scores, dim=0)
             mach_probs = Categorical(machine_action_probabilities)
             chosen_mch_action = action[batch_index] % self.max_machines if action is not None else mach_probs.sample()
             machine_log_prob = mach_probs.log_prob(chosen_mch_action)
