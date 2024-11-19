@@ -12,6 +12,7 @@ class RlEnvState:
     task_state_scheduled: np.ndarray
     task_state_ready: np.ndarray
     task_completion_time: np.ndarray
+    task_power_consumptions: np.ndarray
     vm_completion_time: np.ndarray
     task_vm_compatibility: np.ndarray
     task_vm_time_cost: np.ndarray

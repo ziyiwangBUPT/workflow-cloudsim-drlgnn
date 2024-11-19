@@ -98,11 +98,13 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         vm_completion_time = self._init_vm_completion_time(vms)
         task_graph_edges = self._init_task_graph_edges(mapped_tasks)
         assignments = self._init_assignments(mapped_tasks)
+        task_power_consumptions = np.min(task_vm_time_cost, axis=1)
         self.state = RlEnvState(
             task_mapper=task_mapper,
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
             task_completion_time=task_completion_time,
+            task_power_consumptions=task_power_consumptions,
             vm_completion_time=vm_completion_time,
             task_vm_compatibility=task_vm_compatibility,
             task_vm_time_cost=task_vm_time_cost,
@@ -159,13 +161,19 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             new_task_state_ready[-1] = 0
             new_assignments[-1] = 0
 
+        new_task_vm_power_cost = self.state.task_vm_power_cost.copy()
+        new_task_vm_power_cost[task_id] = self.state.task_vm_power_cost[task_id, vm_id]
+
         old_makespan = self.state.task_completion_time[-1]
         new_makespan = new_task_completion_time[-1]
+        old_power_consumption = self.state.task_power_consumptions.sum()
+        new_power_consumption = new_task_vm_power_cost.sum()
         self.state = RlEnvState(
             task_mapper=self.state.task_mapper,
             task_state_scheduled=new_task_state_scheduled,
             task_state_ready=new_task_state_ready,
             task_completion_time=new_task_completion_time,
+            task_power_consumptions=new_task_vm_power_cost,
             vm_completion_time=new_vm_completion_time,
             task_vm_compatibility=self.state.task_vm_compatibility,
             task_vm_time_cost=self.state.task_vm_time_cost,
@@ -179,7 +187,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         if self.render_mode == "human":
             self.render()
 
-        reward = -(new_makespan - old_makespan) / new_makespan
+        makespan_reward = -(new_makespan - old_makespan) / new_makespan
+        power_reward = -(new_power_consumption - old_power_consumption) / new_power_consumption
+        reward = makespan_reward + power_reward
         if self.state.task_state_scheduled[-1] == 1:
             # Last task scheduled, lets submit the result
             combined_action: list[tuple[float, VmAssignmentDto]] = []
