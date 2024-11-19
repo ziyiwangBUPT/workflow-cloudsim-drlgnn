@@ -37,10 +37,10 @@ def get_scheduler(algorithm: str, env_config: dict[str, Any] | None = None) -> B
     elif algorithm.startswith("rl:"):
         assert env_config is not None, "env_config is required for RL algorithm"
         split_args = algorithm.split(":")
-        assert len(split_args) == 3, "Invalid RL algorithm format (expected: rl:<model_dir>:<model_file>)"
-        _, model_dir, model_file = split_args
+        assert len(split_args) == 4, "Invalid RL algorithm format (expected: rl:<model_dir>:<model_file>)"
+        _, model_type, model_dir, model_file = split_args
         model_path = Path(__file__).parent.parent.parent.parent / "logs" / model_dir / model_file
-        return RlTestScheduler(env_config, model_path)
+        return RlTestScheduler(env_config, model_type, model_path)
     elif algorithm.startswith("fjssp:"):
         split_args = algorithm.split(":")
         assert len(split_args) == 2, "Invalid FJSSP algorithm format (expected: fjssp:<task_algo>_<vm_algo>)"

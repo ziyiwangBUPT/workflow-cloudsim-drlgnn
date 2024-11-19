@@ -54,7 +54,9 @@ def main(args: Args):
         },
     }
     algorithms = [
-        # "rl:1731867774_ppo_batch_norm:model_133120.pt",
+        # "rl:gin:1731989524_ppo_gin_makespan_est_5_10:model_512000.pt",
+        # "rl:gin:1731957719_ppo_gin_makespan_est:model_501760.pt",
+        # "rl:mpgn:1731981719_ppo_mpgn_makespan_est:model_532480.pt",
         "round_robin",
         "max_min",
         "min_min",
