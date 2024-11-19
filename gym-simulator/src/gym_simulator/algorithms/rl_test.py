@@ -5,7 +5,6 @@ from typing import Any
 import torch
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
-from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
