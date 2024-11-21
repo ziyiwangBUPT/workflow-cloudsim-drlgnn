@@ -1,6 +1,7 @@
 package org.example.simulation;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.example.api.executor.WorkflowExecutor;
@@ -8,12 +9,10 @@ import org.example.api.scheduler.WorkflowScheduler;
 import org.example.core.factories.*;
 import org.example.dataset.Dataset;
 import org.example.dataset.DatasetSolution;
-import org.example.sensors.TaskStateSensor;
 import org.example.simulation.listeners.WorkflowCoordinator;
 import org.example.simulation.listeners.UtilizationUpdater;
 import org.example.core.entities.DynamicDatacenterBroker;
 import org.example.core.registries.CloudletRegistry;
-import org.example.core.registries.HostRegistry;
 import org.example.simulation.listeners.WorkflowSubmitter;
 
 import java.util.Calendar;
@@ -25,6 +24,8 @@ public class SimulatedWorld {
 
     private final Dataset dataset;
     private final WorkflowSubmitter submitter;
+
+    @Getter
     private final DynamicDatacenterBroker broker;
 
     @Builder
@@ -72,23 +73,6 @@ public class SimulatedWorld {
         CloudSim.stopSimulation();
 
         var cloudletRegistry = CloudletRegistry.getInstance();
-        var hostRegistry = HostRegistry.getInstance();
-        var taskStateSensor = TaskStateSensor.getInstance();
-
-        // Prints the results when the simulation is over
-        cloudletRegistry.printSummaryTable();
-        System.err.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getMakespan());
-        System.err.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
-        System.err.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), broker.getGuestList().size());
-        System.err.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
-        System.err.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
-        System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
-
-        System.err.printf("Buffered Tasks               : %d%n", taskStateSensor.getBufferedTasks());
-        System.err.printf("Scheduled Tasks              : %d%n", taskStateSensor.getScheduledTasks());
-        System.err.printf("Executed Tasks               : %d%n", taskStateSensor.getExecutedTasks());
-        System.err.printf("Finished Tasks               : %d%n", taskStateSensor.getCompletedTasks());
-
         var solutionDataset = new Dataset(submitter.getSubmittedWorkflows(), dataset.getVms(), dataset.getHosts());
         return new DatasetSolution(solutionDataset, cloudletRegistry.getVmAssignments());
     }

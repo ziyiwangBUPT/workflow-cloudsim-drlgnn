@@ -8,9 +8,11 @@ import org.example.api.scheduler.gym.types.AgentResult;
 import org.example.api.scheduler.gym.types.StaticAction;
 import org.example.api.scheduler.gym.types.StaticObservation;
 import org.example.api.executor.LocalWorkflowExecutor;
+import org.example.core.registries.CloudletRegistry;
 import org.example.core.registries.HostRegistry;
 import org.example.dataset.Dataset;
 import org.example.sensors.RewardSensor;
+import org.example.sensors.TaskStateSensor;
 import org.example.simulation.SimulatedWorld;
 import org.example.simulation.SimulatedWorldConfig;
 import org.example.simulation.external.Py4JConnector;
@@ -70,7 +72,6 @@ public class Application implements Callable<Integer> {
                 .scheduler(scheduler).executor(executor)
                 .config(config).build();
         var solution = world.runSimulation();
-        System.out.println(solution.toJson());
 
         var rewardSensor = RewardSensor.getInstance();
         var hostRegistry = HostRegistry.getInstance();
@@ -80,6 +81,21 @@ public class Application implements Callable<Integer> {
         finalAgentResult.addInfo("solution", solution.toJson());
         finalAgentResult.addInfo("total_power_consumption_watt", Double.toString(hostRegistry.getTotalPowerConsumptionW()));
         gymSharedQueue.setObservation(finalAgentResult);
+
+        var cloudletRegistry = CloudletRegistry.getInstance();
+        var taskStateSensor = TaskStateSensor.getInstance();
+        cloudletRegistry.printSummaryTable();
+        System.err.printf("Total makespan (s)           : %.5f%n", cloudletRegistry.getMakespan());
+        System.err.printf("Total power consumption (W)  : %.2f%n", hostRegistry.getTotalPowerConsumptionW());
+        System.err.printf("Total allocated VMs          : %d / %d%n", hostRegistry.getTotalAllocatedVms(), world.getBroker().getGuestList().size());
+        System.err.printf("Unfinished Cloudlets         : %d / %d%n", cloudletRegistry.getRunningCloudletCount(), cloudletRegistry.getSize());
+        System.err.printf("Total Cloudlet length (MI)   : %d%n", cloudletRegistry.getTotalCloudletLength());
+        System.err.printf("Last task finish time (s)    : %.2f%n", cloudletRegistry.getLastCloudletFinishedAt());
+        System.err.printf("Buffered Tasks               : %d%n", taskStateSensor.getBufferedTasks());
+        System.err.printf("Scheduled Tasks              : %d%n", taskStateSensor.getScheduledTasks());
+        System.err.printf("Executed Tasks               : %d%n", taskStateSensor.getExecutedTasks());
+        System.err.printf("Finished Tasks               : %d%n", taskStateSensor.getCompletedTasks());
+        System.out.println(solution.toJson());
 
         // Stop Py4J connector
         gymThread.join(5000);
