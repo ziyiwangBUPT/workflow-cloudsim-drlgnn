@@ -54,30 +54,18 @@ def main(args: Args):
         },
     }
     algorithms = [
-        # "rl:gin:1731989524_ppo_gin_makespan_est_5_10:model_512000.pt",
-        # "rl:gin:1731957719_ppo_gin_makespan_est:model_501760.pt",
-        # "rl:mpgn:1731981719_ppo_mpgn_makespan_est:model_532480.pt",
-        "round_robin",
-        "max_min",
-        "min_min",
-        "best_fit",
-        "fjssp:fifo_spt",
-        "fjssp:fifo_eet",
-        "fjssp:mopnr_spt",
-        "fjssp:mopnr_eet",
-        "fjssp:lwkr_spt",
-        "fjssp:lwkr_eet",
-        "fjssp:mwkr_spt",
-        "fjssp:mwkr_eet",
-        "cp_sat",
-        "heft",
-        "heft_one",
-        "power_saving",
-        "rl_static",
+        ("Round Robin", "round_robin"),
+        ("Max-Min", "max_min"),
+        ("Min-Min", "min_min"),
+        ("Best Fit", "best_fit"),
+        ("HEFT", "heft"),
+        ("Power Heuristic", "power_saving"),
+        ("CP-SAT", "cp_sat"),
+        ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
     ]
 
     stats: list[dict[str, Any]] = []
-    for algorithm in algorithms:
+    for name, algorithm in algorithms:
         env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
         scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(env_config))
 
@@ -101,7 +89,7 @@ def main(args: Args):
 
         makespan = max([assignment.end_time for assignment in solution.vm_assignments])
         entry = {
-            "Algorithm": algorithm,
+            "Algorithm": name,
             "Reward": reward,
             "Makespan": makespan,
             "Time": t2 - t1,
@@ -136,12 +124,11 @@ def main(args: Args):
     ax2.set_ylabel("Power (W)", color="tab:green")
     ax2.tick_params(axis="y", labelcolor="tab:green")
 
-    # Creating a secondary y-axis for Time (log scale)
+    # Creating a secondary y-axis for Time
     ax3 = ax1.twinx()
     ax3.spines["right"].set_position(("axes", 1.2))
     ax3.bar([i + 2 * bar_width for i in index], df["Time"], width=bar_width, label="Time (s)", color="tab:red")
     ax3.set_ylabel("Time (s)", color="tab:red")
-    ax3.set_yscale("log")  # Set log scale for time
     ax3.tick_params(axis="y", labelcolor="tab:red")
 
     fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
