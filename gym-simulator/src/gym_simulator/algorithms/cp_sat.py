@@ -55,7 +55,7 @@ class CpSatScheduler(BaseScheduler):
             )
 
         # We have to sort since we lose start time and the assignments are supposed to be in temporal order
-        self._is_optimal, assignment_objs = solve_cp_sat(workflow_objs, vm_objs, timeout=60)
+        self._is_optimal, assignment_objs = solve_cp_sat(workflow_objs, vm_objs, timeout=5)
         assignment_objs = list(sorted(assignment_objs, key=lambda t: t.start_time))
 
         assignments: list[VmAssignmentDto] = []
