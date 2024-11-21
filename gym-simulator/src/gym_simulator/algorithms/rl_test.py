@@ -6,6 +6,7 @@ import torch
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
 from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
+from gym_simulator.core.simulators.proxy import InternalProxySimulatorObs
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
@@ -23,9 +24,6 @@ class RlTestScheduler(BaseScheduler):
         self.env_config = env_config
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
-        env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
-        next_obs, _ = env.reset(seed=self.env_config["seed"])
-
         if self.model_type == "gin":
             agent = GinAgent(
                 max_machines=self.env_config["vm_count"],
@@ -40,7 +38,13 @@ class RlTestScheduler(BaseScheduler):
         else:
             raise NotImplementedError(self.model_type)
 
+        # Load agent and obs state
         agent.load_state_dict(torch.load(str(self.model_path), weights_only=True))
+        self.env_config["simulator_kwargs"]["proxy_obs"].tasks = tasks
+        self.env_config["simulator_kwargs"]["proxy_obs"].vms = vms
+
+        env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
+        next_obs, _ = env.reset(seed=self.env_config["seed"])
         while True:
             # Reshape to have 1 bactch size
             next_obs = next_obs.reshape(1, -1)

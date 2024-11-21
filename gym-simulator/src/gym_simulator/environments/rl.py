@@ -21,7 +21,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     # ----------------------- Initialization --------------------------------------------------------------------------
 
     def __init__(self, env_config: dict[str, Any]):
-        assert env_config["simulator_mode"] in ["embedded", "internal"]
+        assert env_config["simulator_mode"] in ["embedded", "internal", "proxy"]
 
         # Override args
         simulator_kwargs = env_config.get("simulator_kwargs", {})

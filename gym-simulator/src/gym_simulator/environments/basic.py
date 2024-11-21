@@ -1,4 +1,3 @@
-import socket
 import json
 
 from gymnasium import spaces
@@ -9,6 +8,7 @@ from dataset_generator.core.models import Solution
 from gym_simulator.core.environments.cloudsim import BaseCloudSimEnvironment
 from gym_simulator.core.simulators.embedded import EmbeddedSimulator
 from gym_simulator.core.simulators.internal import InternalSimulator
+from gym_simulator.core.simulators.proxy import InternalProxySimulator
 from gym_simulator.core.simulators.remote import RemoteSimulator
 
 
@@ -82,6 +82,8 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                 self.simulator = EmbeddedSimulator(**simulator_kwargs)
             elif simulator_mode == "internal":
                 self.simulator = InternalSimulator(simulator_kwargs["dataset_args"])
+        elif simulator_mode == "proxy":
+            self.simulator = InternalProxySimulator(simulator_kwargs["proxy_obs"])
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator(**simulator_kwargs)
         else:
