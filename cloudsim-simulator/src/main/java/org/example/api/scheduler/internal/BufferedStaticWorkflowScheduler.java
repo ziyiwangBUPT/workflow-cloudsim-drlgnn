@@ -18,14 +18,16 @@ public class BufferedStaticWorkflowScheduler implements WorkflowScheduler {
     private final StaticSchedulingAlgorithm algorithm;
 
     private final int bufferSize;
+    private final int bufferTimeout;
     private final List<VmDto> vms = new ArrayList<>();
     private final List<WorkflowDto> bufferedWorkflows = new ArrayList<>();
     private final List<VmAssignmentDto> lastSchedulingResult = new ArrayList<>();
     private double lastReleaseTime = 0;
 
-    public BufferedStaticWorkflowScheduler(int bufferSize, @NonNull StaticSchedulingAlgorithm algorithm) {
+    public BufferedStaticWorkflowScheduler(int bufferSize, int bufferTimeout, @NonNull StaticSchedulingAlgorithm algorithm) {
         this.algorithm = algorithm;
         this.bufferSize = bufferSize;
+        this.bufferTimeout = bufferTimeout;
     }
 
     @Override
@@ -49,7 +51,7 @@ public class BufferedStaticWorkflowScheduler implements WorkflowScheduler {
 
         var bufferedTaskCount = bufferedWorkflows.stream().mapToInt(w -> w.getTasks().size()).sum();
         if (bufferedTaskCount < bufferSize) {
-            if (CloudSim.clock() - lastReleaseTime > 100) {
+            if (CloudSim.clock() - lastReleaseTime > bufferTimeout) {
                 // Release all inside buffer if timed out
                 var tasks = new ArrayList<TaskDto>();
                 bufferedWorkflows.forEach(w -> tasks.addAll(w.getTasks()));

@@ -45,11 +45,13 @@ class EmbeddedSimulator(BaseSimulator):
     def __init__(
         self,
         simulator_jar_path: str,
+        scheduler_preset: str,
         dataset_args: dict[str, Any],
         verbose: bool = False,
         remote_debug: bool = False,
     ):
         self.simulator_jar_path = simulator_jar_path
+        self.scheduler_preset = scheduler_preset
         self.dataset_args = dataset_args
         self.simulator_process = None
 
@@ -73,7 +75,7 @@ class EmbeddedSimulator(BaseSimulator):
         java_args = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"] if self.remote_debug else []
 
         self.simulator_process = subprocess.Popen(
-            ["java", *java_args, "-jar", self.simulator_jar_path, "-p", str(port), "-a", "static:gym"],
+            ["java", *java_args, "-jar", self.simulator_jar_path, "-p", str(port), "-a", self.scheduler_preset],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,

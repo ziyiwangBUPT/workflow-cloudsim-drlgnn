@@ -24,7 +24,9 @@ public class WorkflowSchedulerFactory {
             return new StaticWorkflowScheduler(new RoundRobinSchedulingAlgorithm());
         } else if (algorithm.startsWith("buffer:gym:")) {
             var bufferSize = Integer.parseInt(algorithm.split(":")[2]);
-            return new BufferedStaticWorkflowScheduler(bufferSize, new StaticGymSchedulingAlgorithm(staticSharedQueue));
+            var bufferTimeout = Integer.parseInt(algorithm.split(":")[3]);
+            return new BufferedStaticWorkflowScheduler(bufferSize, bufferTimeout,
+                    new StaticGymSchedulingAlgorithm(staticSharedQueue));
         }
         throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
     }

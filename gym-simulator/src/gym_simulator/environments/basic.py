@@ -78,6 +78,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             # Set Simulator args
             if simulator_mode == "embedded":
                 assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
+                assert "scheduler_preset" in simulator_kwargs, "scheduler_preset is required for embedded mode"
                 self.simulator = EmbeddedSimulator(**simulator_kwargs)
             elif simulator_mode == "internal":
                 self.simulator = InternalSimulator(simulator_kwargs["dataset_args"])
