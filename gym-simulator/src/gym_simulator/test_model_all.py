@@ -47,6 +47,7 @@ def main(args: Args):
         "simulator_kwargs": {
             "dataset_args": {
                 "gnp_min_n": args.task_limit,
+                "task_arrival": "dynamic",
             },
             "simulator_jar_path": args.simulator,
             "verbose": False,
