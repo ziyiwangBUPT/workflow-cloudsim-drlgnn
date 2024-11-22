@@ -17,6 +17,7 @@ from gym_simulator.utils.task_mapper import TaskMapper
 class RlCloudSimEnvironment(BasicCloudSimEnvironment):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 1}
     state: RlEnvState | None = None
+    initial_vm_completion_time: np.ndarray | None = None
 
     # ----------------------- Initialization --------------------------------------------------------------------------
 
@@ -277,6 +278,9 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
 
     def _init_vm_completion_time(self, vms: list[VmDto]) -> np.ndarray:
         # Completion time for VMs is 0 initially (only dummy start task is scheduled - has 0 length)
+        # However if completion times are provided, use a copy of that instead
+        if self.initial_vm_completion_time is not None:
+            return self.initial_vm_completion_time.copy()
         return np.zeros(len(vms), dtype=np.float64)
 
     def _init_task_graph_edges(self, mapped_tasks: list[TaskDto]) -> np.ndarray:
