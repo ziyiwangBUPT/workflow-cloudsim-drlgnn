@@ -1,12 +1,20 @@
+import dataclasses
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import tyro
 
 
-def main(path: str):
+@dataclasses.dataclass
+class Args:
+    path: str
+    """File to input the export CSV"""
+
+
+def main(args: Args):
     fig, axes = plt.subplots(1, 2, figsize=(18, 9), sharey=False)
 
-    df = pd.read_csv(path)
+    df = pd.read_csv(args.path)
     sns.boxplot(data=df, x="Algorithm", y="Makespan", ax=axes[0], palette="Set2")
     axes[0].set_title(f"Distribution of Makespan")
     axes[0].set_ylabel("Makespan (s)")
@@ -24,4 +32,5 @@ def main(path: str):
 
 
 if __name__ == "__main__":
-    main("logs/data/test.csv")
+    args = tyro.cli(Args)
+    main(args)

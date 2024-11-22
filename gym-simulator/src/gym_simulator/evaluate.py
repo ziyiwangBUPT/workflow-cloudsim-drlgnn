@@ -12,6 +12,7 @@ from pandas import DataFrame
 import numpy as np
 
 from gym_simulator.algorithms import algorithm_strategy
+from gym_simulator.args import EVALUATING_DS1_ARGS
 from gym_simulator.core.simulators.proxy import InternalProxySimulatorObs
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
@@ -22,18 +23,12 @@ class Args:
     """path to the simulator JAR file"""
     seed: int
     """random seed"""
-    host_count: int
-    """number of hosts"""
-    vm_count: int
-    """number of VMs"""
-    workflow_count: int
-    """number of workflows"""
-    task_limit: int
-    """maximum number of tasks"""
     buffer_size: int
     """size of the workflow scheduler buffer"""
     buffer_timeout: int
     """Timeout of the workflow scheduler buffer"""
+    out: str
+    """File to output the export CSV"""
     num_iterations: int = 100
     """Number of iterations to evaluate"""
 
@@ -106,15 +101,9 @@ def run_test(test_id: int, env_config: dict[str, Any], agent_env_config: dict[st
 
 def main(args: Args):
     env_config = {
-        "host_count": args.host_count,
-        "vm_count": args.vm_count,
-        "workflow_count": args.workflow_count,
-        "task_limit": args.task_limit,
         "simulator_mode": "embedded",
         "simulator_kwargs": {
-            "dataset_args": {
-                "task_arrival": "dynamic",
-            },
+            "dataset_args": dataclasses.asdict(EVALUATING_DS1_ARGS),
             "simulator_jar_path": args.simulator,
             "scheduler_preset": f"buffer:gym:{args.buffer_size}:{args.buffer_timeout}",
             "verbose": False,
@@ -122,10 +111,6 @@ def main(args: Args):
         },
     }
     agent_env_config = {
-        "host_count": args.host_count,
-        "vm_count": args.vm_count,
-        "workflow_count": args.workflow_count,
-        "task_limit": args.task_limit,
         "simulator_mode": "proxy",
         "simulator_kwargs": {"proxy_obs": InternalProxySimulatorObs()},
     }

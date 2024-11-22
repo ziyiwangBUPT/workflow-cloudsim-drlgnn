@@ -69,7 +69,7 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
             elif simulator_mode == "internal":
                 self.simulator = InternalSimulator(dataset_args=simulator_kwargs["dataset_args"])
         elif simulator_mode == "proxy":
-            self.simulator = InternalProxySimulator(proxy_obs=simulator_kwargs["proxy_obs"])
+            self.simulator = InternalProxySimulator(obs=simulator_kwargs["proxy_obs"])
         elif simulator_mode == "remote":
             self.simulator = RemoteSimulator()
         else:
