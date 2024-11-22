@@ -2,6 +2,7 @@ import copy
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 from gym_simulator.algorithms.base import BaseScheduler
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
@@ -17,6 +18,8 @@ class RlTestScheduler(BaseScheduler):
 
     This scheduler runs the RL environment instance internally to schedule the tasks.
     """
+
+    vm_completion_time: np.ndarray | None = None
 
     def __init__(self, env_config: dict[str, Any], model_type: str, model_path: Path):
         self.model_type = model_type
@@ -43,7 +46,12 @@ class RlTestScheduler(BaseScheduler):
         self.env_config["simulator_kwargs"]["proxy_obs"].tasks = tasks
         self.env_config["simulator_kwargs"]["proxy_obs"].vms = vms
 
+        if self.vm_completion_time is None:
+            self.vm_completion_time = np.zeros(self.env_config["vm_count"])
+
         env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
+        env.initial_vm_completion_time = self.vm_completion_time
+
         next_obs, _ = env.reset(seed=self.env_config["seed"])
         while True:
             # Reshape to have 1 bactch size
@@ -56,5 +64,6 @@ class RlTestScheduler(BaseScheduler):
             if terminated or truncated:
                 break
 
+        self.vm_completion_time = env.state.vm_completion_time.copy()
         assert len(tasks) == len(info["vm_assignments"])
         return info["vm_assignments"]
