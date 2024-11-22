@@ -27,7 +27,7 @@ class Args:
     """size of the workflow scheduler buffer"""
     buffer_timeout: int
     """Timeout of the workflow scheduler buffer"""
-    out: str
+    file: str
     """File to output the export CSV"""
     num_iterations: int = 100
     """Number of iterations to evaluate"""
@@ -43,7 +43,8 @@ ALGORITHMS = [
     ("Power Heuristic", "power_saving"),
     # TODO: Makespan heuristic
     # TODO: ACO
-    ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
+    ("Model A", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
+    ("Model B", "rl:gin:1732268581_ppo_exp_1:model_163840.pt"),
 ]
 
 
@@ -122,7 +123,7 @@ def main(args: Args):
 
     df = DataFrame(results)
     icecream.ic(df)
-    df.to_csv("logs/data/test.csv")
+    df.to_csv(args.file)
 
 
 if __name__ == "__main__":

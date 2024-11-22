@@ -7,14 +7,14 @@ import tyro
 
 @dataclasses.dataclass
 class Args:
-    path: str
+    file: str
     """File to input the export CSV"""
 
 
 def main(args: Args):
     fig, axes = plt.subplots(1, 2, figsize=(18, 9), sharey=False)
 
-    df = pd.read_csv(args.path)
+    df = pd.read_csv(args.file)
     sns.boxplot(data=df, x="Algorithm", y="Makespan", ax=axes[0], palette="Set2")
     axes[0].set_title(f"Distribution of Makespan")
     axes[0].set_ylabel("Makespan (s)")
