@@ -1,3 +1,4 @@
+import itertools
 import time
 from typing import Any
 import icecream
@@ -48,54 +49,6 @@ ALGORITHMS = [
 ]
 
 
-# Run Test
-# -----------------------------------------------------------------------------
-
-
-def run_test(test_id: int, env_config: dict[str, Any], agent_env_config: dict[str, Any]):
-    random.seed(test_id)
-    np.random.seed(test_id)
-    torch.manual_seed(test_id)
-    torch.backends.cudnn.deterministic = True
-
-    env_config["seed"] = test_id
-    agent_env_config["seed"] = test_id
-
-    results: list[dict[str, Any]] = []
-    for name, algorithm in ALGORITHMS:
-        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
-        total_scheduling_time = 0
-
-        # Run environment
-        env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
-        (tasks, vms), _ = env.reset(seed=test_id)
-        while True:
-            scheduling_start_time = time.time()
-            action = scheduler.schedule(tasks, vms)
-            scheduling_end_time = time.time()
-            total_scheduling_time = scheduling_end_time - scheduling_start_time
-            (tasks, vms), _, terminated, truncated, info = env.step(action)
-            if terminated or truncated:
-                break
-        env.close()
-
-        # Append result
-        solution = info.get("solution")
-        power_watt = info.get("total_power_consumption_watt")
-        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
-        results.append(
-            {
-                "Algorithm": name,
-                "Seed": test_id,
-                "Makespan": makespan,
-                "PowerW": power_watt,
-                "EnergyJ": power_watt * makespan,
-                "Time": total_scheduling_time,
-            }
-        )
-    return results
-
-
 # Main
 # -----------------------------------------------------------------------------
 
@@ -116,10 +69,47 @@ def main(args: Args):
         "simulator_kwargs": {"proxy_obs": InternalProxySimulatorObs()},
     }
 
-    results = []
-    for seed_offset in tqdm(range(args.num_iterations)):
+    all_eval_configs = itertools.product(range(args.num_iterations), ALGORITHMS)
+    results: list[dict[str, Any]] = []
+    for seed_offset, (algorithm_name, algorithm) in tqdm(list(all_eval_configs)):
         current_seed = args.seed + seed_offset
-        results.extend(run_test(current_seed, env_config, agent_env_config))
+        random.seed(current_seed)
+        np.random.seed(current_seed)
+        torch.manual_seed(current_seed)
+        torch.backends.cudnn.deterministic = True
+        env_config["seed"] = current_seed
+        agent_env_config["seed"] = current_seed
+
+        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
+        total_scheduling_time = 0
+
+        # Run environment
+        env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
+        (tasks, vms), _ = env.reset(seed=current_seed)
+        while True:
+            scheduling_start_time = time.time()
+            action = scheduler.schedule(tasks, vms)
+            scheduling_end_time = time.time()
+            total_scheduling_time = scheduling_end_time - scheduling_start_time
+            (tasks, vms), _, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                break
+        env.close()
+
+        # Append result
+        solution = info.get("solution")
+        power_watt = info.get("total_power_consumption_watt")
+        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
+        results.append(
+            {
+                "Algorithm": algorithm_name,
+                "Seed": current_seed,
+                "Makespan": makespan,
+                "PowerW": power_watt,
+                "EnergyJ": power_watt * makespan,
+                "Time": total_scheduling_time,
+            }
+        )
 
     df = DataFrame(results)
     icecream.ic(df)

@@ -70,4 +70,5 @@ class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
             ]
         )
 
+        assert len(arr) <= self.max_obs_size, "Observation size does not fit the buffer, please adjust the max_obs_size"
         return np.pad(arr, (0, self.max_obs_size - len(arr)), "constant")
