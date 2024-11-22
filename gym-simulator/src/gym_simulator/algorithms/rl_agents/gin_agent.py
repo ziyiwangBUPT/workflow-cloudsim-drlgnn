@@ -38,7 +38,7 @@ class BaseGinNetwork(nn.Module):
             nn.Linear(hidden_dim, embedding_dim),
         )
         self.job_machine_edge_encoder = nn.Sequential(
-            nn.Linear(2, hidden_dim),
+            nn.Linear(3, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
@@ -96,9 +96,12 @@ class BaseGinNetwork(nn.Module):
         edge_index = torch.cat([job_machine_edge_index, job_job_edge_index], dim=1)
 
         # Job-Machine Edge features
+        job_machine_flag = torch.ones(n_jobs * n_machines, 1)
         flat_task_vm_time_cost = task_vm_time_cost.reshape(-1, 1)
         flat_task_vm_power_cost = task_vm_power_cost.reshape(-1, 1)
-        job_machine_edge_features = torch.cat([flat_task_vm_time_cost, flat_task_vm_power_cost], dim=1)
+        job_machine_edge_features = torch.cat(
+            [job_machine_flag, flat_task_vm_time_cost, flat_task_vm_power_cost], dim=1
+        )
         job_machine_edge_features = job_machine_edge_features[job_machine_connectivity == 1]
         job_job_edge_count = edge_index.shape[1] - job_machine_edge_features.shape[0]
 
