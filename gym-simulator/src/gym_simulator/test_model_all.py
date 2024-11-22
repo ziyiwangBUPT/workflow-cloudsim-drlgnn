@@ -1,17 +1,18 @@
+import time
 from typing import Any
+import icecream
 import torch
 import tyro
 import copy
 import dataclasses
 import random
-import time
 
+from tqdm import tqdm
 from pandas import DataFrame
+import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from dataset_generator.core.models import Solution
-from dataset_generator.visualizers.plotters import plot_gantt_chart
 from gym_simulator.algorithms import algorithm_strategy
 from gym_simulator.core.simulators.proxy import InternalProxySimulatorObs
 from gym_simulator.environments.static import StaticCloudSimEnvironment
@@ -35,25 +36,83 @@ class Args:
     """size of the workflow scheduler buffer"""
     buffer_timeout: int
     """Timeout of the workflow scheduler buffer"""
-    gantt_chart_prefix: str = "tmp/gantt_chart"
-    """prefix for the Gantt chart files"""
+    num_iterations: int = 100
+    """Number of iterations to evaluate"""
+
+
+ALGORITHMS = [
+    ("CP-SAT", "cp_sat"),
+    ("Round Robin", "round_robin"),
+    ("Min-Min", "min_min"),
+    ("Best Fit", "best_fit"),
+    ("Max-Min", "max_min"),
+    ("HEFT", "heft"),
+    ("Power Heuristic", "power_saving"),
+    # TODO: Makespan heuristic
+    # TODO: ACO
+    ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
+]
+
+
+# Run Test
+# -----------------------------------------------------------------------------
+
+
+def run_test(test_id: int, env_config: dict[str, Any], agent_env_config: dict[str, Any]):
+    random.seed(test_id)
+    np.random.seed(test_id)
+    torch.manual_seed(test_id)
+    torch.backends.cudnn.deterministic = True
+
+    env_config["seed"] = test_id
+    agent_env_config["seed"] = test_id
+
+    results: list[dict[str, Any]] = []
+    for name, algorithm in ALGORITHMS:
+        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
+        total_scheduling_time = 0
+
+        # Run environment
+        env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
+        (tasks, vms), _ = env.reset(seed=test_id)
+        while True:
+            scheduling_start_time = time.time()
+            action = scheduler.schedule(tasks, vms)
+            scheduling_end_time = time.time()
+            total_scheduling_time = scheduling_end_time - scheduling_start_time
+            (tasks, vms), _, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                break
+        env.close()
+
+        # Append result
+        solution = info.get("solution")
+        power_watt = info.get("total_power_consumption_watt")
+        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
+        results.append(
+            {
+                "Algorithm": name,
+                "Seed": test_id,
+                "Makespan": makespan,
+                "PowerW": power_watt,
+                "EnergyJ": power_watt * makespan,
+                "Time": total_scheduling_time,
+            }
+        )
+    return results
+
+
+# Main
+# -----------------------------------------------------------------------------
 
 
 def main(args: Args):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-
     env_config = {
         "host_count": args.host_count,
         "vm_count": args.vm_count,
         "workflow_count": args.workflow_count,
         "task_limit": args.task_limit,
         "simulator_mode": "embedded",
-        "seed": args.seed,
         "simulator_kwargs": {
             "dataset_args": {
                 "task_arrival": "dynamic",
@@ -70,97 +129,32 @@ def main(args: Args):
         "workflow_count": args.workflow_count,
         "task_limit": args.task_limit,
         "simulator_mode": "proxy",
-        "seed": args.seed,
         "simulator_kwargs": {"proxy_obs": InternalProxySimulatorObs()},
     }
 
-    algorithms = [
-        ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
-        ("Round Robin", "round_robin"),
-        ("Max-Min", "max_min"),
-        ("Min-Min", "min_min"),
-        ("Best Fit", "best_fit"),
-        ("HEFT", "heft"),
-        ("Power Heuristic", "power_saving"),
-        ("CP-SAT", "cp_sat"),
-    ]
+    results = []
+    for seed_offset in tqdm(range(args.num_iterations)):
+        current_seed = args.seed + seed_offset
+        results.extend(run_test(current_seed, env_config, agent_env_config))
 
-    stats: list[dict[str, Any]] = []
-    for name, algorithm in algorithms:
-        env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
-        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
+    df = DataFrame(results)
+    icecream.ic(df)
+    df.to_csv("logs/data/test.csv")
 
-        total_time = 0
-        (tasks, vms), _ = env.reset(seed=args.seed)
-        while True:
-            start_time = time.time()
-            action = scheduler.schedule(tasks, vms)
-            end_time = time.time()
-            total_time += end_time - start_time
-            (tasks, vms), _, terminated, truncated, info = env.step(action)
-            if terminated or truncated:
-                break
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6), sharey=False)
 
-        solution = info.get("solution")
-        power_watt = info.get("total_power_consumption_watt")
-        assert solution is not None and isinstance(solution, Solution), "Solution is not available"
-        fig, ax = plt.subplots()
-        plot_gantt_chart(ax, solution.dataset.workflows, solution.dataset.vms, solution.vm_assignments, label=True)
-        fig.set_figwidth(12)
-        fig.set_figheight(7)
-        fig.tight_layout()
-        plt.savefig(f"{args.gantt_chart_prefix}_{algorithm}.png")
-        plt.close(fig)
+    sns.boxplot(data=df, x="Algorithm", y="Makespan", ax=axes[0], palette="Set2")
+    axes[0].set_title(f"Distribution of Makespan")
+    axes[0].set_ylabel("Makespan (s)")
+    axes[0].set_xlabel("Algorithm")
+    axes[0].tick_params(axis="x", rotation=45)
 
-        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
-        entry = {
-            "Algorithm": name,
-            "Makespan": makespan,
-            "Time": total_time * 1000,
-            "IsOptimal": scheduler.is_optimal(),
-            "PowerW": power_watt,
-            "EnergyJ": power_watt * makespan,
-        }
-        print(entry)
-        stats.append(entry)
+    sns.boxplot(data=df, x="Algorithm", y="EnergyJ", ax=axes[1], palette="Set2")
+    axes[1].set_title(f"Distribution of Energy Consumption")
+    axes[1].set_ylabel("Energy Consumption (J)")
+    axes[1].set_xlabel("Algorithm")
+    axes[1].tick_params(axis="x", rotation=45)
 
-    env.close()
-
-    for stat in stats:
-        print(f"& {stat["Algorithm"]}& {stat["Makespan"]:.1f} & {stat["EnergyJ"]:.1f} & {stat["Time"]:.1f} \\\\ %")
-
-    # Plotting the comparison
-    df = DataFrame(stats).sort_values(by="Makespan", ascending=True).reset_index(drop=True)
-
-    fig, ax1 = plt.subplots(figsize=(14, 7))
-    bar_width = 0.25
-    index = range(len(df["Algorithm"]))
-
-    # Plotting Makespan
-    ax1.bar(index, df["Makespan"], width=bar_width, label="Makespan", color="tab:blue")
-    ax1.set_xlabel("Algorithm")
-    ax1.set_ylabel("Makespan", color="tab:blue")
-    ax1.tick_params(axis="y", labelcolor="tab:blue")
-    ax1.set_xticks([i + bar_width / 2 for i in index])
-    # Algorithm name should be df["Algorithm"] for non-optimal solutions, and df["Algorithm*"] for optimal solutions
-    algorithm_names = [f"{df['Algorithm'][i]}*" if df["IsOptimal"][i] else df["Algorithm"][i] for i in index]
-    ax1.set_xticklabels(algorithm_names, rotation=45, ha="right")
-
-    # Adding Energy consumption to the plot
-    ax2 = ax1.twinx()
-    ax2.bar([i + bar_width for i in index], df["EnergyJ"], width=bar_width, label="Energy (J)", color="tab:green")
-    ax2.set_ylabel("Energy (J)", color="tab:green")
-    ax2.tick_params(axis="y", labelcolor="tab:green")
-
-    # Creating a secondary y-axis for Time
-    ax3 = ax1.twinx()
-    ax3.spines["right"].set_position(("axes", 1.2))
-    ax3.bar([i + 2 * bar_width for i in index], df["Time"], width=bar_width, label="Time (s)", color="tab:red")
-    ax3.set_ylabel("Time (s)", color="tab:red")
-    ax3.tick_params(axis="y", labelcolor="tab:red")
-
-    fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
-    plt.title("Comparison of Algorithms by Makespan, Power and Time")
     plt.tight_layout()
     plt.show()
 
