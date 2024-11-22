@@ -1,4 +1,5 @@
 # docs and experiment results can be found at https://docs.cleanrl.dev/rl-algorithms/ppo/#ppopy
+import dataclasses
 import os
 from pathlib import Path
 import random
@@ -18,6 +19,7 @@ from icecream import ic
 
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
 from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
+from gym_simulator.args import TRAINING_DS_ARGS
 from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 
 
@@ -25,17 +27,6 @@ from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
 class Args:
     exp_name: str
     """the name of this experiment"""
-    exp_comment: str = ""
-    """a comment to identify the experiment"""
-
-    host_count: int = 10
-    """the number of hosts"""
-    vm_count: int = 4
-    """the number of virtual machines"""
-    workflow_count: int = 10
-    """the number of workflows"""
-    task_limit: int = 20
-    """the maximum number of tasks per workflow"""
 
     seed: int = 1
     """seed of the experiment"""
@@ -104,10 +95,7 @@ def make_env(idx: int, args: Args, video_dir: str):
         env_config = {
             "simulator_mode": "internal",
             "simulator_kwargs": {
-                "dataset_args": {
-                    "gnp_min_n": args.task_limit,
-                    "gnp_max_n": args.task_limit,
-                },
+                "dataset_args": dataclasses.asdict(TRAINING_DS_ARGS),
                 "verbose": False,
                 "remote_debug": False,
             },
@@ -147,7 +135,6 @@ def main(args: Args):
             save_code=True,
         )
     writer = SummaryWriter(f"{args.output_dir}/{run_name}")
-    writer.add_text("comment", args.exp_comment)
     writer.add_text(
         "hyperparameters",
         "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),

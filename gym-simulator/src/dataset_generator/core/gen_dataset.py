@@ -27,16 +27,13 @@ def generate_dataset(
     Generate a dataset.
     """
 
-    # We want the hosts and vms to be same
-    random.seed(0)
-    np.random.seed(0)
+    random.seed(seed)
+    np.random.seed(seed)
+
     hosts = generate_hosts(host_count)
     vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips)
     allocate_vms(vms, hosts)
 
-    # Workflows should be randomized
-    random.seed(seed)
-    np.random.seed(seed)
     workflows = generate_workflows(
         workflow_count=workflow_count,
         dag_method=dag_method,
