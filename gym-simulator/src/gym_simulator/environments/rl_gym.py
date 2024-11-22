@@ -9,7 +9,7 @@ from icecream import ic
 from gym_simulator.environments.rl import RlCloudSimEnvironment
 
 
-class RlVmCloudSimEnvironment(RlCloudSimEnvironment):
+class RlGymCloudSimEnvironment(RlCloudSimEnvironment):
     """
     A RL environment for the CloudSim simulator with VM selection as the action space.
     The task action is the task with the minimum completion time among the ready tasks.

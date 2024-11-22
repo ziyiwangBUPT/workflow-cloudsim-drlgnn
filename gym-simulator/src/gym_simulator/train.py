@@ -20,7 +20,7 @@ from icecream import ic
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
 from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
 from gym_simulator.args import TRAINING_DS_ARGS
-from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
+from gym_simulator.environments.rl_gym import RlGymCloudSimEnvironment
 
 
 @dataclass
@@ -102,11 +102,11 @@ def make_env(idx: int, args: Args, video_dir: str):
         }
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
-            base_env = RlVmCloudSimEnvironment(env_config=env_config)
+            base_env = RlGymCloudSimEnvironment(env_config=env_config)
             env = gym.wrappers.RecordVideo(base_env, video_dir, episode_trigger=lambda x: x % 1000 == 0)
             return gym.wrappers.RecordEpisodeStatistics(env)
 
-        base_env = RlVmCloudSimEnvironment(env_config=env_config)
+        base_env = RlGymCloudSimEnvironment(env_config=env_config)
         return gym.wrappers.RecordEpisodeStatistics(base_env)
 
     return thunk

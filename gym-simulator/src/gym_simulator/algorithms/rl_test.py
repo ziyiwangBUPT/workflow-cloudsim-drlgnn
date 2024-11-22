@@ -9,7 +9,7 @@ from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
 from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
 from gym_simulator.core.simulators.proxy import InternalProxySimulatorObs
 from gym_simulator.core.types import TaskDto, VmAssignmentDto, VmDto
-from gym_simulator.environments.rl_vm import RlVmCloudSimEnvironment
+from gym_simulator.environments.rl_gym import RlGymCloudSimEnvironment
 
 
 class RlTestScheduler(BaseScheduler):
@@ -40,7 +40,7 @@ class RlTestScheduler(BaseScheduler):
         if self.vm_completion_time is None:
             self.vm_completion_time = np.zeros(len(vms))
 
-        env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
+        env = RlGymCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
         env.initial_vm_completion_time = self.vm_completion_time
 
         next_obs, _ = env.reset(seed=self.env_config["seed"])
