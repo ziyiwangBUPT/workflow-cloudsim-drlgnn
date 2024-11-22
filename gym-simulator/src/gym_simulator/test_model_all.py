@@ -12,6 +12,7 @@ import numpy as np
 from dataset_generator.core.models import Solution
 from dataset_generator.visualizers.plotters import plot_gantt_chart
 from gym_simulator.algorithms import algorithm_strategy
+from gym_simulator.core.simulators.proxy import InternalProxySimulatorObs
 from gym_simulator.environments.static import StaticCloudSimEnvironment
 
 
@@ -29,6 +30,10 @@ class Args:
     """number of workflows"""
     task_limit: int = 20
     """maximum number of tasks"""
+    buffer_size: int = 1000
+    """size of the workflow scheduler buffer"""
+    buffer_timeout: int = 100
+    """Timeout of the workflow scheduler buffer"""
     gantt_chart_prefix: str = "tmp/gantt_chart"
     """prefix for the Gantt chart files"""
 
@@ -46,15 +51,26 @@ def main(args: Args):
         "seed": args.seed,
         "simulator_kwargs": {
             "dataset_args": {
-                "gnp_min_n": args.task_limit,
                 "task_arrival": "dynamic",
             },
             "simulator_jar_path": args.simulator,
+            "scheduler_preset": f"buffer:gym:{args.buffer_size}:{args.buffer_timeout}",
             "verbose": False,
             "remote_debug": False,
         },
     }
+    agent_env_config = {
+        "host_count": args.host_count,
+        "vm_count": args.vm_count,
+        "workflow_count": args.workflow_count,
+        "task_limit": args.task_limit,
+        "simulator_mode": "proxy",
+        "seed": args.seed,
+        "simulator_kwargs": {"proxy_obs": InternalProxySimulatorObs()},
+    }
+
     algorithms = [
+        ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
         ("Round Robin", "round_robin"),
         ("Max-Min", "max_min"),
         ("Min-Min", "min_min"),
@@ -62,20 +78,21 @@ def main(args: Args):
         ("HEFT", "heft"),
         ("Power Heuristic", "power_saving"),
         ("CP-SAT", "cp_sat"),
-        ("Proposed Model", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
     ]
 
     stats: list[dict[str, Any]] = []
     for name, algorithm in algorithms:
         env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
-        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(env_config))
+        scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
 
+        start_time = time.time()
         (tasks, vms), _ = env.reset(seed=args.seed)
-        t1 = time.time()
-        action = scheduler.schedule(tasks, vms)
-        t2 = time.time()
-        _, reward, terminated, truncated, info = env.step(action)
-        assert terminated or truncated, "Static environment should terminate after one step"
+        while True:
+            action = scheduler.schedule(tasks, vms)
+            (tasks, vms), _, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                break
+        end_time = time.time()
 
         solution = info.get("solution")
         power_watt = info.get("total_power_consumption_watt")
@@ -91,16 +108,19 @@ def main(args: Args):
         makespan = max([assignment.end_time for assignment in solution.vm_assignments])
         entry = {
             "Algorithm": name,
-            "Reward": reward,
             "Makespan": makespan,
-            "Time": t2 - t1,
+            "Time": end_time - start_time,
             "IsOptimal": scheduler.is_optimal(),
             "PowerW": power_watt,
+            "EnergyJ": power_watt * makespan,
         }
         print(entry)
         stats.append(entry)
 
     env.close()
+
+    for stat in stats:
+        print(f"& {stat["Algorithm"]}& {stat["Makespan"]:.1f} & {stat["EnergyJ"]:.1f} & {stat["Time"]:.1f} \\\\ %")
 
     # Plotting the comparison
     df = DataFrame(stats).sort_values(by="Makespan", ascending=True).reset_index(drop=True)
@@ -121,8 +141,8 @@ def main(args: Args):
 
     # Adding Energy consumption to the plot
     ax2 = ax1.twinx()
-    ax2.bar([i + bar_width for i in index], df["PowerW"], width=bar_width, label="Power (W)", color="tab:green")
-    ax2.set_ylabel("Power (W)", color="tab:green")
+    ax2.bar([i + bar_width for i in index], df["EnergyJ"], width=bar_width, label="Energy (J)", color="tab:green")
+    ax2.set_ylabel("Energy (J)", color="tab:green")
     ax2.tick_params(axis="y", labelcolor="tab:green")
 
     # Creating a secondary y-axis for Time
