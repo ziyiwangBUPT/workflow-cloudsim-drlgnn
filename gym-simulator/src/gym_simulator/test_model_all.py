@@ -1,4 +1,5 @@
 from typing import Any
+import torch
 import tyro
 import copy
 import dataclasses
@@ -41,6 +42,10 @@ class Args:
 def main(args: Args):
     random.seed(args.seed)
     np.random.seed(args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.backends.cudnn.deterministic = True
 
     env_config = {
         "host_count": args.host_count,
@@ -85,14 +90,16 @@ def main(args: Args):
         env = StaticCloudSimEnvironment(env_config=copy.deepcopy(env_config))
         scheduler = algorithm_strategy.get_scheduler(algorithm, env_config=copy.deepcopy(agent_env_config))
 
-        start_time = time.time()
+        total_time = 0
         (tasks, vms), _ = env.reset(seed=args.seed)
         while True:
+            start_time = time.time()
             action = scheduler.schedule(tasks, vms)
+            end_time = time.time()
+            total_time += end_time - start_time
             (tasks, vms), _, terminated, truncated, info = env.step(action)
             if terminated or truncated:
                 break
-        end_time = time.time()
 
         solution = info.get("solution")
         power_watt = info.get("total_power_consumption_watt")
@@ -109,7 +116,7 @@ def main(args: Args):
         entry = {
             "Algorithm": name,
             "Makespan": makespan,
-            "Time": end_time - start_time,
+            "Time": total_time,
             "IsOptimal": scheduler.is_optimal(),
             "PowerW": power_watt,
             "EnergyJ": power_watt * makespan,
