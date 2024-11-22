@@ -42,7 +42,8 @@ ALGORITHMS = [
     ("Max-Min", "max_min"),
     ("HEFT", "heft"),
     ("Power Heuristic", "power_saving"),
-    # TODO: Makespan heuristic
+    ("Makespan Heuristic", "rlh:makespan"),
+    ("Energy Heuristic", "rlh:energy"),
     # TODO: ACO
     ("Model A", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
     ("Model B", "rl:gin:1732268581_ppo_exp_1:model_163840.pt"),
