@@ -21,19 +21,19 @@ from gym_simulator.environments.static import StaticCloudSimEnvironment
 class Args:
     simulator: str
     """path to the simulator JAR file"""
-    seed: int = 0
+    seed: int
     """random seed"""
-    host_count: int = 10
+    host_count: int
     """number of hosts"""
-    vm_count: int = 4
+    vm_count: int
     """number of VMs"""
-    workflow_count: int = 10
+    workflow_count: int
     """number of workflows"""
-    task_limit: int = 20
+    task_limit: int
     """maximum number of tasks"""
-    buffer_size: int = 1000
+    buffer_size: int
     """size of the workflow scheduler buffer"""
-    buffer_timeout: int = 100
+    buffer_timeout: int
     """Timeout of the workflow scheduler buffer"""
     gantt_chart_prefix: str = "tmp/gantt_chart"
     """prefix for the Gantt chart files"""
@@ -116,7 +116,7 @@ def main(args: Args):
         entry = {
             "Algorithm": name,
             "Makespan": makespan,
-            "Time": total_time,
+            "Time": total_time * 1000,
             "IsOptimal": scheduler.is_optimal(),
             "PowerW": power_watt,
             "EnergyJ": power_watt * makespan,
