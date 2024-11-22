@@ -28,16 +28,7 @@ class RlTestScheduler(BaseScheduler):
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
         if self.model_type == "gin":
-            agent = GinAgent(
-                max_machines=self.env_config["vm_count"],
-                max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
-                device=torch.device("cpu"),
-            )
-        elif self.model_type == "mpgn":
-            agent = MpgnAgent(
-                max_machines=self.env_config["vm_count"],
-                max_jobs=(self.env_config["task_limit"] + 2) * self.env_config["workflow_count"],
-            )
+            agent = GinAgent(device=torch.device("cpu"))
         else:
             raise NotImplementedError(self.model_type)
 
@@ -47,7 +38,7 @@ class RlTestScheduler(BaseScheduler):
         self.env_config["simulator_kwargs"]["proxy_obs"].vms = vms
 
         if self.vm_completion_time is None:
-            self.vm_completion_time = np.zeros(self.env_config["vm_count"])
+            self.vm_completion_time = np.zeros(len(vms))
 
         env = RlVmCloudSimEnvironment(env_config=copy.deepcopy(self.env_config))
         env.initial_vm_completion_time = self.vm_completion_time

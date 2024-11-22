@@ -16,17 +16,12 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
     metadata = {"render_modes": []}
 
     def __init__(self, env_config: dict[str, Any]):
-        self.host_count: int = env_config["host_count"]
-        self.vm_count: int = env_config["vm_count"]
-        self.workflow_count: int = env_config["workflow_count"]
-        self.task_limit: int = env_config["task_limit"]
-
         self.action_space = spaces.Sequence(
             spaces.Dict(
                 {
-                    "vm_id": spaces.Discrete(self.vm_count),
-                    "workflow_id": spaces.Discrete(self.workflow_count),
-                    "task_id": spaces.Discrete(self.task_limit),
+                    "vm_id": spaces.Discrete(42),
+                    "workflow_id": spaces.Discrete(42),
+                    "task_id": spaces.Discrete(42),
                 }
             )
         )
@@ -35,18 +30,18 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
                 "tasks": spaces.Sequence(
                     spaces.Dict(
                         {
-                            "id": spaces.Discrete(self.task_limit),
-                            "workflow_id": spaces.Discrete(self.workflow_count),
+                            "id": spaces.Discrete(42),
+                            "workflow_id": spaces.Discrete(42),
                             "length": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "req_memory_mb": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
-                            "child_ids": spaces.Sequence(spaces.Discrete(self.task_limit)),
+                            "child_ids": spaces.Sequence(spaces.Discrete(42)),
                         }
                     )
                 ),
                 "vms": spaces.Sequence(
                     spaces.Dict(
                         {
-                            "id": spaces.Discrete(self.vm_count),
+                            "id": spaces.Discrete(42),
                             "memory_mb": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.int64),
                             "cpu_speed_mips": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
                             "host_power_idle_watt": spaces.Box(low=0, high=np.inf, shape=(), dtype=np.float32),
@@ -62,30 +57,21 @@ class BasicCloudSimEnvironment(BaseCloudSimEnvironment):
         simulator_mode = env_config["simulator_mode"]
         simulator_kwargs = env_config.get("simulator_kwargs", {})
         if simulator_mode == "embedded" or simulator_mode == "internal":
-            # Set dataset args
-            simulator_kwargs["dataset_args"] = simulator_kwargs.get("dataset_args", {})
-            assert "host_count" not in simulator_kwargs["dataset_args"], "host_count is set by the environment"
-            assert "vm_count" not in simulator_kwargs["dataset_args"], "vm_count is set by the environment"
-            assert "workflow_count" not in simulator_kwargs["dataset_args"], "workflow_count is set by the environment"
-            assert "dag_method" not in simulator_kwargs["dataset_args"], "dag_method is set by the environment"
-            assert "gnp_max_n" not in simulator_kwargs["dataset_args"], "gnp_max_n is set by the environment"
-            simulator_kwargs["dataset_args"]["host_count"] = self.host_count
-            simulator_kwargs["dataset_args"]["vm_count"] = self.vm_count
-            simulator_kwargs["dataset_args"]["workflow_count"] = self.workflow_count
-            simulator_kwargs["dataset_args"]["dag_method"] = "gnp"
-            simulator_kwargs["dataset_args"]["gnp_max_n"] = self.task_limit
-
             # Set Simulator args
             if simulator_mode == "embedded":
-                assert "simulator_jar_path" in simulator_kwargs, "simulator_jar_path is required for embedded mode"
-                assert "scheduler_preset" in simulator_kwargs, "scheduler_preset is required for embedded mode"
-                self.simulator = EmbeddedSimulator(**simulator_kwargs)
+                self.simulator = EmbeddedSimulator(
+                    simulator_jar_path=simulator_kwargs["simulator_jar_path"],
+                    scheduler_preset=simulator_kwargs["scheduler_preset"],
+                    dataset_args=simulator_kwargs.get("dataset_args", {}),
+                    remote_debug=simulator_kwargs.get("remote_debug", False),
+                    verbose=simulator_kwargs.get("verbose", False),
+                )
             elif simulator_mode == "internal":
-                self.simulator = InternalSimulator(simulator_kwargs["dataset_args"])
+                self.simulator = InternalSimulator(dataset_args=simulator_kwargs["dataset_args"])
         elif simulator_mode == "proxy":
-            self.simulator = InternalProxySimulator(simulator_kwargs["proxy_obs"])
+            self.simulator = InternalProxySimulator(proxy_obs=simulator_kwargs["proxy_obs"])
         elif simulator_mode == "remote":
-            self.simulator = RemoteSimulator(**simulator_kwargs)
+            self.simulator = RemoteSimulator()
         else:
             raise ValueError(f"Unknown simulator mode: {simulator_mode}")
 

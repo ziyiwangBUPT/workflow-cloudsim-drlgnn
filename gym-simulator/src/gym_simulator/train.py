@@ -102,14 +102,11 @@ class Args:
 def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         env_config = {
-            "host_count": args.host_count,
-            "vm_count": args.vm_count,
-            "workflow_count": args.workflow_count,
-            "task_limit": args.task_limit,
             "simulator_mode": "internal",
             "simulator_kwargs": {
                 "dataset_args": {
                     "gnp_min_n": args.task_limit,
+                    "gnp_max_n": args.task_limit,
                 },
                 "verbose": False,
                 "remote_debug": False,
@@ -173,11 +170,7 @@ def main(args: Args):
     assert obs_space.shape is not None
     assert act_space.shape is not None
 
-    agent = GinAgent(
-        max_machines=args.vm_count,
-        max_jobs=(args.task_limit + 2) * args.workflow_count,
-        device=device,
-    ).to(device)
+    agent = GinAgent(device=device).to(device)
     writer.add_text("agent", f"```{agent}```")
 
     if args.load_model_dir:

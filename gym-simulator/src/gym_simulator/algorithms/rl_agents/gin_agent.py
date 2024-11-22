@@ -17,10 +17,8 @@ from gym_simulator.algorithms.rl_agents.input_decoder import decode_observation
 
 
 class BaseGinNetwork(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int, embedding_dim: int, device: torch.device) -> None:
+    def __init__(self, hidden_dim: int, embedding_dim: int, device: torch.device) -> None:
         super().__init__()
-        self.n_jobs = n_jobs
-        self.n_machines = n_machines
         self.embedding_dim = embedding_dim
         self.device = device
 
@@ -70,8 +68,11 @@ class BaseGinNetwork(nn.Module):
         :return: n_jobs * n_machines vector
         """
 
+        n_jobs = task_vm_compatibility.shape[0]
+        n_machines = task_vm_compatibility.shape[1]
+
         # Job nodes and features
-        job_nodes = torch.arange(self.n_jobs).to(self.device).unsqueeze(1).expand(self.n_jobs, self.n_machines)
+        job_nodes = torch.arange(n_jobs).to(self.device).unsqueeze(1).expand(n_jobs, n_machines)
         job_features = torch.cat(
             [
                 task_state_scheduled.unsqueeze(1),
@@ -82,8 +83,8 @@ class BaseGinNetwork(nn.Module):
         )
 
         # Machine nodes and features
-        machine_nodes = torch.arange(self.n_machines).to(self.device).unsqueeze(0).expand(self.n_jobs, self.n_machines)
-        machine_nodes = machine_nodes + self.n_jobs  # Machine node indices are offset in n_jobs
+        machine_nodes = torch.arange(n_machines).to(self.device).unsqueeze(0).expand(n_jobs, n_machines)
+        machine_nodes = machine_nodes + n_jobs  # Machine node indices are offset in n_jobs
         machine_features = vm_completion_time.unsqueeze(1)
 
         # Edges (Job-Job and Job-Machine)
@@ -111,7 +112,7 @@ class BaseGinNetwork(nn.Module):
         edge_attr = torch.cat([x_job_machine_edges, x_job_job_edges], dim=0)
 
         # Get embeddings
-        batch = torch.zeros(self.n_jobs + self.n_machines, dtype=torch.long, device=self.device)
+        batch = torch.zeros(n_jobs + n_machines, dtype=torch.long, device=self.device)
         node_embeddings = self.graph_network(x, edge_index=edge_index, edge_attr=edge_attr)
         edge_embeddings = torch.cat([node_embeddings[edge_index[0]], node_embeddings[edge_index[1]]], dim=1)
         graph_embedding = global_mean_pool(node_embeddings, batch=batch)
@@ -124,16 +125,12 @@ class BaseGinNetwork(nn.Module):
 
 
 class GinActor(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int, embedding_dim: int, device: torch.device):
+    def __init__(self, hidden_dim: int, embedding_dim: int, device: torch.device):
         super().__init__()
-        self.n_jobs = n_jobs
-        self.n_machines = n_machines
         self.embedding_dim = embedding_dim
         self.device = device
 
         self.network = BaseGinNetwork(
-            n_jobs,
-            n_machines,
             hidden_dim=hidden_dim,
             embedding_dim=embedding_dim,
             device=device,
@@ -162,6 +159,9 @@ class GinActor(nn.Module):
         task_vm_power_cost: torch.Tensor,
         adj: torch.Tensor,
     ) -> torch.Tensor:
+        n_jobs = task_vm_compatibility.shape[0]
+        n_machines = task_vm_compatibility.shape[1]
+
         _, edge_embeddings, graph_embedding = self.network(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
@@ -186,7 +186,7 @@ class GinActor(nn.Module):
         # Actions scores should be the value in edge embedding, but -inf on invalid actions
         action_scores = torch.ones_like(job_machine_connectivity, dtype=torch.float32, device=self.device) * -1e8
         action_scores[job_machine_connectivity == 1] = job_machine_edge_embeddings.flatten()
-        action_scores = action_scores.reshape(self.n_jobs, self.n_machines)
+        action_scores = action_scores.reshape(n_jobs, n_machines)
         action_scores[task_state_ready == 0, :] = -1e8  # Remove scores of actions with not ready tasks
 
         return action_scores
@@ -197,15 +197,11 @@ class GinActor(nn.Module):
 
 
 class GinCritic(nn.Module):
-    def __init__(self, n_jobs: int, n_machines: int, hidden_dim: int, embedding_dim: int, device: torch.device) -> None:
+    def __init__(self, hidden_dim: int, embedding_dim: int, device: torch.device) -> None:
         super().__init__()
-        self.n_jobs = n_jobs
-        self.n_machines = n_machines
         self.device = device
 
         self.network = BaseGinNetwork(
-            n_jobs,
-            n_machines,
             hidden_dim=hidden_dim,
             embedding_dim=embedding_dim,
             device=device,
@@ -252,15 +248,12 @@ class GinCritic(nn.Module):
 
 
 class GinAgent(nn.Module):
-    def __init__(self, max_jobs: int, max_machines: int, device: torch.device):
+    def __init__(self, device: torch.device):
         super().__init__()
 
-        self.max_jobs = max_jobs
-        self.max_machines = max_machines
         self.device = device
-
-        self.actor = GinActor(max_jobs, max_machines, hidden_dim=32, embedding_dim=32, device=device)
-        self.critic = GinCritic(max_jobs, max_machines, hidden_dim=32, embedding_dim=32, device=device)
+        self.actor = GinActor(hidden_dim=32, embedding_dim=32, device=device)
+        self.critic = GinCritic(hidden_dim=32, embedding_dim=32, device=device)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         """

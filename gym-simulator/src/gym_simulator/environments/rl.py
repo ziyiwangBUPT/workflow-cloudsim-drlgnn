@@ -35,36 +35,33 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         self.parent_action_space = copy.deepcopy(self.action_space)
         self.renderer = RlEnvironmentRenderer(render_fps=self.metadata["render_fps"], width=1200, height=800)
 
-        max_vm_count = self.vm_count
         # Reserve 0 for dummy start, N+1 for dummy end, Nmax=W*T
-        max_task_count = self.workflow_count * self.task_limit + 2
-
         self.observation_space = spaces.Dict(
             {
                 # Scheduling state: 0 - not scheduled, 1 - scheduled, shape: (num_tasks,)
-                "task_state_scheduled": spaces.MultiBinary(max_task_count),
+                "task_state_scheduled": spaces.MultiBinary(42),
                 # Ready state: 0 - not ready, 1 - ready, shape: (num_tasks,)
-                "task_state_ready": spaces.MultiBinary(max_task_count),
+                "task_state_ready": spaces.MultiBinary(42),
                 # Est min completion time for unscheduled tasks or completion time for scheduled tasks, shape: (num_tasks,)
-                "task_completion_time": spaces.Box(low=0, high=np.inf, shape=(max_task_count,)),
+                "task_completion_time": spaces.Box(low=0, high=np.inf, shape=(42,)),
                 # Machine completion time for each VM, shape: (num_vms,)
-                "vm_completion_time": spaces.Box(low=0, high=np.inf, shape=(max_vm_count,)),
+                "vm_completion_time": spaces.Box(low=0, high=np.inf, shape=(42,)),
                 # Task-VM compatibility: 0 - not compatible, 1 - compatible, shape: (num_tasks, num_vms)
-                "task_vm_compatibility": spaces.MultiBinary((max_task_count, max_vm_count)),
+                "task_vm_compatibility": spaces.MultiBinary((42, 42)),
                 # Task-VM time cost: (average of compatible tasks if not compatible), shape: (num_tasks, num_vms)
-                "task_vm_time_cost": spaces.Box(low=0, high=np.inf, shape=(max_task_count, max_vm_count)),
+                "task_vm_time_cost": spaces.Box(low=0, high=np.inf, shape=(42, 42)),
                 # Task-VM power cost: (average of compatible tasks if not compatible), shape: (num_tasks, num_vms)
-                "task_vm_power_cost": spaces.Box(low=0, high=np.inf, shape=(max_task_count, max_vm_count)),
+                "task_vm_power_cost": spaces.Box(low=0, high=np.inf, shape=(42, 42)),
                 # Task row->col fixed dependencies: 0 - no dependency, 1 - dependency, shape: (num_tasks, num_tasks)
-                "task_graph_edges": spaces.MultiBinary((max_task_count, max_task_count)),
+                "task_graph_edges": spaces.MultiBinary((42, 42)),
             }
         )
         self.action_space = spaces.Dict(
             {
                 # Task ID to schedule, shape: ()
-                "task_id": spaces.Discrete(max_task_count),
+                "task_id": spaces.Discrete(42),
                 # VM ID to schedule the task on, shape: ()
-                "vm_id": spaces.Discrete(max_vm_count),
+                "vm_id": spaces.Discrete(42),
             }
         )
 
