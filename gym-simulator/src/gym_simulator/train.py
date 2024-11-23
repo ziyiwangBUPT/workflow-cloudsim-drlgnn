@@ -129,9 +129,6 @@ def test_agent(agent: GinAgent, test_env: RlGymCloudSimEnvironment, test_count=1
 
 
 def main(args: Args):
-    ic(training_ds_args)
-    ic(testing_ds_args)
-
     pbar = tqdm(total=args.total_timesteps)
     last_model_save = 0
 
@@ -153,6 +150,10 @@ def main(args: Args):
             monitor_gym=True,
             save_code=True,
         )
+
+    ic(training_ds_args)
+    ic(testing_ds_args)
+
     writer = SummaryWriter(f"{args.output_dir}/{run_name}")
     writer.add_text(
         "hyperparameters",
