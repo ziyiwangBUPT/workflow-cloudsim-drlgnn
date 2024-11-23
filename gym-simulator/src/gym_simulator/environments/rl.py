@@ -90,7 +90,8 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         vm_completion_time = self._init_vm_completion_time(vms)
         task_graph_edges = self._init_task_graph_edges(mapped_tasks)
         assignments = self._init_assignments(mapped_tasks)
-        task_power_consumptions = np.min(task_vm_time_cost, axis=1)
+        # Since empty values are filled with avg we can take the min and expect actual min
+        task_power_consumptions = np.min(task_vm_power_cost, axis=1)
         self.state = RlEnvState(
             task_mapper=task_mapper,
             task_state_scheduled=task_state_scheduled,

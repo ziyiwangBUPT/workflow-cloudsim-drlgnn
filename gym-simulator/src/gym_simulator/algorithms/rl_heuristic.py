@@ -52,6 +52,7 @@ class RlHeuristicScheduler(BaseScheduler):
 
             assert obs.task_vm_compatibility[min_task_index][min_vm_index] == 1
             return min_task_index, min_vm_index
+
         elif self.heuristic == "energy":
             # Find the ready task index with minimum energy cost
             ready_task_indices = np.where(obs.task_state_ready)[0]
@@ -63,10 +64,7 @@ class RlHeuristicScheduler(BaseScheduler):
                 compatible_vm_indices = np.where(obs.task_vm_compatibility[task_index])[0]
 
                 # Calculate energy cost for compatible VMs
-                vm_energy_costs = (
-                    obs.task_vm_power_cost[task_index, compatible_vm_indices]
-                    * obs.task_vm_time_cost[task_index, compatible_vm_indices]
-                )
+                vm_energy_costs = obs.task_vm_power_cost[task_index, compatible_vm_indices]
 
                 # Find the minimum energy cost for this task
                 task_min_vm_index = compatible_vm_indices[np.argmin(vm_energy_costs)]
