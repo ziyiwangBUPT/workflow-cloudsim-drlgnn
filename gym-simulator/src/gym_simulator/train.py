@@ -18,8 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from icecream import ic
 
 from gym_simulator.algorithms.rl_agents.gin_agent import GinAgent
-from gym_simulator.algorithms.rl_agents.mpgn_agent import MpgnAgent
-from gym_simulator.args import TRAINING_DS_ARGS
+from gym_simulator.args import TESTING_DS_ARGS, TRAINING_DS_ARGS
 from gym_simulator.environments.rl_gym import RlGymCloudSimEnvironment
 
 
@@ -94,11 +93,7 @@ def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
         env_config = {
             "simulator_mode": "internal",
-            "simulator_kwargs": {
-                "dataset_args": dataclasses.asdict(TRAINING_DS_ARGS),
-                "verbose": False,
-                "remote_debug": False,
-            },
+            "simulator_kwargs": {"dataset_args": dataclasses.asdict(TRAINING_DS_ARGS)},
         }
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
@@ -112,9 +107,35 @@ def make_env(idx: int, args: Args, video_dir: str):
     return thunk
 
 
+def test_agent(agent: GinAgent, test_env: RlGymCloudSimEnvironment, test_count=10):
+    total_makespan = 0
+    total_power_consumption = 0
+
+    # Run a simple environment loop to test the model
+    for i in range(test_count):
+        next_obs, _ = test_env.reset(seed=i)
+        while True:
+            obs_tensor = torch.Tensor(next_obs.reshape(1, -1)).to("cpu")
+            action, _, _, _ = agent.get_action_and_value(obs_tensor)
+            vm_action = action.cpu().numpy()[0]
+            next_obs, _, terminated, truncated, _ = test_env.step(vm_action)
+            if terminated or truncated:
+                break
+        total_makespan += test_env.state.task_completion_time[-1]
+        total_power_consumption += test_env.state.task_power_consumptions.sum()
+
+    return total_makespan / test_count, total_power_consumption / test_count
+
+
 def main(args: Args):
     pbar = tqdm(total=args.total_timesteps)
     last_model_save = 0
+    test_env = RlGymCloudSimEnvironment(
+        {
+            "simulator_mode": "internal",
+            "simulator_kwargs": {"dataset_args": dataclasses.asdict(TESTING_DS_ARGS)},
+        }
+    )
 
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -308,6 +329,10 @@ def main(args: Args):
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
+        test_results = test_agent(agent, test_env)
+        writer.add_scalar("tests/makespan", test_results[0], global_step)
+        writer.add_scalar("tests/energy_consumption", test_results[1], global_step)
+
         if (global_step - last_model_save) >= 10_000:
             torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model_{global_step}.pt")
             last_model_save = global_step
@@ -317,6 +342,7 @@ def main(args: Args):
     envs.close()
     writer.close()
 
+    test_env.close()
     pbar.close()
 
 

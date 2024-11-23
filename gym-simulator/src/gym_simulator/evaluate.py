@@ -91,7 +91,7 @@ def main(args: Args):
             scheduling_start_time = time.time()
             action = scheduler.schedule(tasks, vms)
             scheduling_end_time = time.time()
-            total_scheduling_time = scheduling_end_time - scheduling_start_time
+            total_scheduling_time += scheduling_end_time - scheduling_start_time
             (tasks, vms), _, terminated, truncated, info = env.step(action)
             if terminated or truncated:
                 break
