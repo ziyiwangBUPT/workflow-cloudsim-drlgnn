@@ -37,7 +37,7 @@ class BaseGinNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
         )
-        self.job_machine_edge_encoder = nn.Sequential(
+        self.edge_encoder = nn.Sequential(
             nn.Linear(3, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
@@ -104,19 +104,18 @@ class BaseGinNetwork(nn.Module):
         )
         job_machine_edge_features = job_machine_edge_features[job_machine_connectivity == 1]
         job_job_edge_count = edge_index.shape[1] - job_machine_edge_features.shape[0]
+        job_job_edge_features = torch.zeros(job_job_edge_count, 3, device=self.device)
+        edge_features = torch.cat([job_machine_edge_features, job_job_edge_features])
 
         # Encode nodes and edges
         x_job_node: torch.Tensor = self.job_encoder(job_features)
         x_machine_node: torch.Tensor = self.machine_encoder(machine_features)
-        x_job_machine_edges: torch.Tensor = self.job_machine_edge_encoder(job_machine_edge_features)
-        x_job_job_edges = torch.zeros(job_job_edge_count, self.embedding_dim, device=self.device)
-
         x = torch.cat([x_job_node, x_machine_node])
-        edge_attr = torch.cat([x_job_machine_edges, x_job_job_edges], dim=0)
+        x_edge_attr: torch.Tensor = self.edge_encoder(edge_features)
 
         # Get embeddings
         batch = torch.zeros(n_jobs + n_machines, dtype=torch.long, device=self.device)
-        node_embeddings = self.graph_network(x, edge_index=edge_index, edge_attr=edge_attr)
+        node_embeddings = self.graph_network(x, edge_index=edge_index, edge_attr=x_edge_attr)
         edge_embeddings = torch.cat([node_embeddings[edge_index[0]], node_embeddings[edge_index[1]]], dim=1)
         graph_embedding = global_mean_pool(node_embeddings, batch=batch)
 
