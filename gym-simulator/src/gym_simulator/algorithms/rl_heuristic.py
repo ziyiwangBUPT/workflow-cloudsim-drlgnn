@@ -50,15 +50,32 @@ class RlHeuristicScheduler(BaseScheduler):
             vm_completion_times = obs.task_vm_time_cost[min_task_index][compatible_vm_indices]
             min_vm_index = compatible_vm_indices[np.argmin(vm_completion_times)]
 
+            assert obs.task_vm_compatibility[min_task_index][min_vm_index] == 1
             return min_task_index, min_vm_index
         elif self.heuristic == "energy":
             # Find the ready task index with minimum energy cost
             ready_task_indices = np.where(obs.task_state_ready)[0]
-            energy_costs = obs.task_vm_power_cost * obs.task_vm_time_cost
+            min_energy_cost = float("inf")
+            min_task_index = -1
+            min_vm_index = -1
 
-            min_cost_task_vm = np.unravel_index(np.argmin(energy_costs[ready_task_indices]), energy_costs.shape)
-            min_task_index = ready_task_indices[min_cost_task_vm[0]]
-            vm_index = min_cost_task_vm[1]
+            for task_index in ready_task_indices:
+                compatible_vm_indices = np.where(obs.task_vm_compatibility[task_index])[0]
 
-            return min_task_index, vm_index
+                # Calculate energy cost for compatible VMs
+                vm_energy_costs = (
+                    obs.task_vm_power_cost[task_index, compatible_vm_indices]
+                    * obs.task_vm_time_cost[task_index, compatible_vm_indices]
+                )
+
+                # Find the minimum energy cost for this task
+                task_min_vm_index = compatible_vm_indices[np.argmin(vm_energy_costs)]
+                task_min_energy_cost = vm_energy_costs[np.argmin(vm_energy_costs)]
+                if task_min_energy_cost < min_energy_cost:
+                    min_energy_cost = task_min_energy_cost
+                    min_task_index = task_index
+                    min_vm_index = task_min_vm_index
+
+            assert obs.task_vm_compatibility[min_task_index][min_vm_index] == 1
+            return min_task_index, min_vm_index
         raise NotImplementedError()
