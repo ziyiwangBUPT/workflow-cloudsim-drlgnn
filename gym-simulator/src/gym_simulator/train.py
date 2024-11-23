@@ -22,6 +22,10 @@ from gym_simulator.args import TESTING_DS_ARGS, TRAINING_DS_ARGS
 from gym_simulator.environments.rl_gym import RlGymCloudSimEnvironment
 
 
+training_ds_args = dataclasses.asdict(TRAINING_DS_ARGS)
+testing_ds_args = dataclasses.asdict(TESTING_DS_ARGS)
+
+
 @dataclass
 class Args:
     exp_name: str
@@ -91,10 +95,7 @@ class Args:
 
 def make_env(idx: int, args: Args, video_dir: str):
     def thunk():
-        env_config = {
-            "simulator_mode": "internal",
-            "simulator_kwargs": {"dataset_args": dataclasses.asdict(TRAINING_DS_ARGS)},
-        }
+        env_config = {"simulator_mode": "internal", "simulator_kwargs": {"dataset_args": training_ds_args}}
         if args.capture_video and idx == 0:
             env_config["render_mode"] = "rgb_array"
             base_env = RlGymCloudSimEnvironment(env_config=env_config)
@@ -128,16 +129,11 @@ def test_agent(agent: GinAgent, test_env: RlGymCloudSimEnvironment, test_count=1
 
 
 def main(args: Args):
-    ic(args)
+    ic(training_ds_args)
+    ic(testing_ds_args)
 
     pbar = tqdm(total=args.total_timesteps)
     last_model_save = 0
-    test_env = RlGymCloudSimEnvironment(
-        {
-            "simulator_mode": "internal",
-            "simulator_kwargs": {"dataset_args": dataclasses.asdict(TESTING_DS_ARGS)},
-        }
-    )
 
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -179,6 +175,10 @@ def main(args: Args):
     assert isinstance(act_space, gym.spaces.Discrete), "only discrete action space is supported"
     assert obs_space.shape is not None
     assert act_space.shape is not None
+
+    # test env setup
+    testing_env_config = {"simulator_mode": "internal", "simulator_kwargs": {"dataset_args": testing_ds_args}}
+    test_env = RlGymCloudSimEnvironment(testing_env_config)
 
     agent = GinAgent(device=device).to(device)
     writer.add_text("agent", f"```{agent}```")
@@ -341,10 +341,10 @@ def main(args: Args):
 
     torch.save(agent.state_dict(), f"{args.output_dir}/{run_name}/model.pt")
 
+    test_env.close()
     envs.close()
     writer.close()
 
-    test_env.close()
     pbar.close()
 
 
