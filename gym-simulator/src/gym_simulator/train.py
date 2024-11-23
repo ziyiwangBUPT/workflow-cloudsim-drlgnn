@@ -128,6 +128,8 @@ def test_agent(agent: GinAgent, test_env: RlGymCloudSimEnvironment, test_count=1
 
 
 def main(args: Args):
+    ic(args)
+
     pbar = tqdm(total=args.total_timesteps)
     last_model_save = 0
     test_env = RlGymCloudSimEnvironment(
