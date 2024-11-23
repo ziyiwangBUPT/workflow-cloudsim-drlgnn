@@ -14,6 +14,11 @@ class CpSatScheduler(BaseScheduler):
     """
 
     _is_optimal: bool | None = None
+    _makespan: float | None = None
+
+    def __init__(self, timeout: int = 5) -> None:
+        super().__init__()
+        self.timeout = timeout
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
         self._is_optimal = None
@@ -55,8 +60,9 @@ class CpSatScheduler(BaseScheduler):
             )
 
         # We have to sort since we lose start time and the assignments are supposed to be in temporal order
-        self._is_optimal, assignment_objs = solve_cp_sat(workflow_objs, vm_objs, timeout=5)
+        self._is_optimal, assignment_objs = solve_cp_sat(workflow_objs, vm_objs, timeout=self.timeout)
         assignment_objs = list(sorted(assignment_objs, key=lambda t: t.start_time))
+        self._makespan = max([t.end_time for t in assignment_objs])
 
         assignments: list[VmAssignmentDto] = []
         for assignment_obj in assignment_objs:
