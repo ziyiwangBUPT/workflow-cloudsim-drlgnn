@@ -91,7 +91,7 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
         task_graph_edges = self._init_task_graph_edges(mapped_tasks)
         assignments = self._init_assignments(mapped_tasks)
         # Since empty values are filled with avg we can take the min and expect actual min
-        task_power_consumptions = np.min(task_vm_power_cost, axis=1)
+        task_power_consumptions = np.zeros(len(mapped_tasks))
         self.state = RlEnvState(
             task_mapper=task_mapper,
             task_state_scheduled=task_state_scheduled,
@@ -154,19 +154,21 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
             new_task_state_ready[-1] = 0
             new_assignments[-1] = 0
 
-        new_task_vm_power_cost = self.state.task_vm_power_cost.copy()
-        new_task_vm_power_cost[task_id] = self.state.task_vm_power_cost[task_id, vm_id]
+        new_task_power_consumptions = self.state.task_power_consumptions.copy()
+        new_task_power_consumptions[task_id] = (
+            self.state.task_vm_power_cost[task_id, vm_id] * self.state.task_vm_time_cost[task_id, vm_id]
+        )
 
         old_makespan = self.state.task_completion_time[-1]
         new_makespan = new_task_completion_time[-1]
         old_power_consumption = self.state.task_power_consumptions.sum()
-        new_power_consumption = new_task_vm_power_cost.sum()
+        new_power_consumption = new_task_power_consumptions.sum()
         self.state = RlEnvState(
             task_mapper=self.state.task_mapper,
             task_state_scheduled=new_task_state_scheduled,
             task_state_ready=new_task_state_ready,
             task_completion_time=new_task_completion_time,
-            task_power_consumptions=new_task_vm_power_cost,
+            task_power_consumptions=new_task_power_consumptions,
             vm_completion_time=new_vm_completion_time,
             task_vm_compatibility=self.state.task_vm_compatibility,
             task_vm_time_cost=self.state.task_vm_time_cost,
@@ -242,9 +244,10 @@ class RlCloudSimEnvironment(BasicCloudSimEnvironment):
                 if self._is_vm_suitable(vm, task):
                     task_vm_compatibility[task_id, vm_id] = 1
                     task_vm_time_cost[task_id, vm_id] = task.length / vm.cpu_speed_mips
+                    # This is the power fraction that increases because of this task
                     host_capacity_frac = vm.cpu_speed_mips / vm.host_cpu_speed_mips
                     power_per_sec = host_capacity_frac * (vm.host_power_peak_watt - vm.host_power_idle_watt)
-                    task_vm_power_cost[task_id, vm_id] = task_vm_time_cost[task_id, vm_id] * power_per_sec
+                    task_vm_power_cost[task_id, vm_id] = power_per_sec
         # Fill all 0 value cells with average time and power cost of 1 value cells in each row
         for task_id in range(len(mapped_tasks)):
             avg_time_cost = np.mean(task_vm_time_cost[task_id, task_vm_compatibility[task_id] == 1])

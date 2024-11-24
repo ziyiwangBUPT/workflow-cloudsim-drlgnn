@@ -114,7 +114,7 @@ def test_agent(agent: GinAgent, test_env: RlGymCloudSimEnvironment, test_count=1
 
     # Run a simple environment loop to test the model
     for i in range(test_count):
-        next_obs, _ = test_env.reset(seed=i)
+        next_obs, _ = test_env.reset(seed=i + 11**7)
         while True:
             obs_tensor = torch.Tensor(next_obs.reshape(1, -1)).to("cpu")
             action, _, _, _ = agent.get_action_and_value(obs_tensor)
