@@ -9,15 +9,15 @@ import org.cloudbus.cloudsim.power.models.PowerModel;
 import org.cloudbus.cloudsim.provisioners.BwProvisioner;
 import org.cloudbus.cloudsim.provisioners.RamProvisioner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /// Represents a host that can be monitored for power consumption.
 public class MonitoredHost extends Host {
     @Getter
     private final PowerModel powerModel;
-    private double currentAllocatedMips = 0.0;
-    private double allocatedMipsRecordSum = 0.0;
-    private long allocatedMipsRecordCount = 0;
+    private final ArrayList<Double> hostUtilizationHistory = new ArrayList<>();
+    private final ArrayList<Double> energyConsumptionHistory = new ArrayList<>();
 
     @Builder
     public MonitoredHost(int id, RamProvisioner ramProvisioner, BwProvisioner bwProvisioner, long storage,
@@ -34,34 +34,25 @@ public class MonitoredHost extends Host {
             totalAllocationMips += vm.getTotalUtilizationOfCpuMips(time);
         }
 
-        this.currentAllocatedMips = totalAllocationMips;
-        this.allocatedMipsRecordSum += totalAllocationMips;
-        this.allocatedMipsRecordCount++;
-    }
-
-    /// Get the total MIPS of the host.
-    public double getCurrentCpuUtilization() {
-        return currentAllocatedMips / getTotalMips();
-    }
-
-    /// Get the current power consumption of the host.
-    public double getCurrentPowerConsumption() {
-        return powerModel.getPower(getCurrentCpuUtilization());
+        // Assuming delta t = 1
+        var utilization = totalAllocationMips / getTotalMips();
+        this.hostUtilizationHistory.add(utilization);
+        this.energyConsumptionHistory.add(powerModel.getPower(utilization));
     }
 
     /// Get the average CPU utilization of the host.
     public double getAverageCpuUtilization() {
-        if (allocatedMipsRecordCount == 0) return 0.0;
-        return allocatedMipsRecordSum / (allocatedMipsRecordCount * getTotalMips());
+        return this.hostUtilizationHistory.stream().mapToDouble(x -> x).average()
+                .orElse(0);
     }
 
     /// Get the average power consumption of the host.
     public double getAveragePowerConsumption() {
-        if (getAverageCpuUtilization() == 0) return 0.0;
-        return powerModel.getPower(getAverageCpuUtilization());
+        return this.energyConsumptionHistory.stream().mapToDouble(x -> x).average()
+                .orElse(0);
     }
 
-    public double getTotalEnergyConsumption(double time) {
-        return getAveragePowerConsumption() * time;
+    public double getTotalEnergyConsumption() {
+        return this.energyConsumptionHistory.stream().mapToDouble(x -> x).sum();
     }
 }

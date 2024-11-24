@@ -45,8 +45,7 @@ ALGORITHMS = [
     ("Makespan Heuristic", "rlh:makespan"),
     ("Energy Heuristic", "rlh:energy"),
     # TODO: ACO
-    ("Model A", "rl:gin:1732021759_ppo_gin_makespan_power_est_10_20:model_1064960.pt"),
-    ("Model B", "rl:gin:1732268581_ppo_exp_1:model_163840.pt"),
+    # ("Model X", "rl:dir:file.pt"),
 ]
 
 
@@ -99,15 +98,16 @@ def main(args: Args):
 
         # Append result
         solution = info.get("solution")
-        power_watt = info.get("total_power_consumption_watt")
-        makespan = max([assignment.end_time for assignment in solution.vm_assignments])
+        energy_consumption = info.get("total_energy_consumption_j")
+        makespan = max([assignment.end_time for assignment in solution.vm_assignments]) - min(
+            [assignment.start_time for assignment in solution.vm_assignments]
+        )
         results.append(
             {
                 "Algorithm": algorithm_name,
                 "Seed": current_seed,
                 "Makespan": makespan,
-                "PowerW": power_watt,
-                "EnergyJ": power_watt * makespan,
+                "EnergyJ": energy_consumption,
                 "Time": total_scheduling_time,
             }
         )

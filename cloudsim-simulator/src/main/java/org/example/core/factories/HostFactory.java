@@ -29,7 +29,7 @@ public class HostFactory {
         // Example: Following a similar implementation to PowerModelSpecPowerHpProLiantMl110G3PentiumD930
         // using https://www.spec.org/power_ssj2008/results/res2019q2/power_ssj2008-20190409-00952.html for R740.
         var maxPower = datasetHost.getPowerPeakWatt();
-        var staticPowerPercent = datasetHost.getPowerIdleWatt() / maxPower;
+        var staticPowerPercent = (float) datasetHost.getPowerIdleWatt() / maxPower;
         var powerModel = new PowerModelLinear(maxPower, staticPowerPercent);
 
         return MonitoredHost.builder()

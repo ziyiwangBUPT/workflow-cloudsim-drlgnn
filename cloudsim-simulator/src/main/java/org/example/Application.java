@@ -51,7 +51,7 @@ public class Application implements Callable<Integer> {
         // Configure simulation
         var config = SimulatedWorldConfig.builder()
                 .simulationDuration(duration)
-                .monitoringUpdateInterval(5)
+                .monitoringUpdateInterval(1)
                 .build();
 
         // Create shared queue
@@ -79,7 +79,7 @@ public class Application implements Callable<Integer> {
 
         AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
         finalAgentResult.addInfo("solution", solution.toJson());
-        finalAgentResult.addInfo("total_power_consumption_watt", Double.toString(hostRegistry.getTotalPowerConsumptionW()));
+        finalAgentResult.addInfo("total_energy_consumption_j", Double.toString(hostRegistry.getTotalEnergyConsumptionJ()));
         gymSharedQueue.setObservation(finalAgentResult);
 
         var cloudletRegistry = CloudletRegistry.getInstance();
