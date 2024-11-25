@@ -26,13 +26,13 @@ class HeftScheduler(BaseScheduler):
             grouped_tasks[task.workflow_id].append(task)
 
         # Schedule each workflow
-        sched: ScheduleType | None = None
+        schedule: ScheduleType | None = None
         assignments: list[tuple[float, VmAssignmentDto]] = []
         assigning_task_start_id = 0
         for workflow_id, task_list in grouped_tasks.items():
-            sched = self.schedule_workflow(task_list, vms, sched)
+            schedule = self.schedule_workflow(task_list, vms, schedule)
             # Convert the schedule to a list of assignments
-            for vm_id, events in sched.items():
+            for vm_id, events in schedule.items():
                 for event in events:
                     actual_task_id = event.task - assigning_task_start_id
                     # We only care about tasks from the current workflow (events has old workflows + dummy tasks)

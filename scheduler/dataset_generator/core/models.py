@@ -29,9 +29,9 @@ class Vm:
     host_id: int
     cpu_speed_mips: int
     memory_mb: int
-    disk_mb: int
-    bandwidth_mbps: int
-    vmm: str
+    disk_mb: int = -1
+    bandwidth_mbps: int = -1
+    vmm: str = "Xen"
 
 
 @dataclass
@@ -39,11 +39,11 @@ class Host:
     id: int
     cores: int
     cpu_speed_mips: int
-    memory_mb: int
-    disk_mb: int
-    bandwidth_mbps: int
     power_idle_watt: int
     power_peak_watt: int
+    memory_mb: int = -1
+    disk_mb: int = -1
+    bandwidth_mbps: int = -1
 
 
 @dataclass
