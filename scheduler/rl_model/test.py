@@ -3,16 +3,16 @@ from icecream import ic
 
 from scheduler.config.settings import MAX_OBS_SIZE
 from scheduler.dataset_generator.gen_dataset import DatasetArgs
-from scheduler.rl_model.agents.gin_e_agent.agent import GinEAgent
-from scheduler.rl_model.agents.gin_e_agent.mapper import GinEAgentMapper
-from scheduler.rl_model.agents.gin_e_agent.wrapper import GinEAgentWrapper
+from scheduler.rl_model.agents.gin_agent.agent import GinAgent
+from scheduler.rl_model.agents.gin_agent.mapper import GinAgentMapper
+from scheduler.rl_model.agents.gin_agent.wrapper import GinAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
 
 
 def main():
-    mapper = GinEAgentMapper(MAX_OBS_SIZE)
-    agent = GinEAgent(torch.device("cpu"))
-    env = GinEAgentWrapper(
+    mapper = GinAgentMapper(MAX_OBS_SIZE)
+    agent = GinAgent(torch.device("cpu"))
+    env = GinAgentWrapper(
         CloudSchedulingGymEnvironment(
             dataset_args=DatasetArgs(
                 host_count=1,

@@ -18,8 +18,8 @@ from icecream import ic
 
 from scheduler.dataset_generator.gen_dataset import DatasetArgs
 from scheduler.rl_model.agents.agent import Agent
-from scheduler.rl_model.agents.gin_e_agent.agent import GinEAgent
-from scheduler.rl_model.agents.gin_e_agent.wrapper import GinEAgentWrapper
+from scheduler.rl_model.agents.gin_agent.agent import GinAgent
+from scheduler.rl_model.agents.gin_agent.wrapper import GinAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
 from scheduler.rl_model.core.env.state import EnvState
 
@@ -140,12 +140,12 @@ def make_env(idx: int, args: Args, dataset_args: DatasetArgs) -> gym.Env:
     if args.capture_video and idx == 0:
         video_dir = f"{args.output_dir}/{args.run_name}/videos"
         env = RecordVideo(env, video_dir, episode_trigger=lambda x: x % 1000 == 0)
-    env = GinEAgentWrapper(env)
+    env = GinAgentWrapper(env)
     return RecordEpisodeStatistics(env)
 
 
 def make_agent(device: torch.device) -> Agent:
-    return GinEAgent(device)
+    return GinAgent(device)
 
 
 # Training Agent

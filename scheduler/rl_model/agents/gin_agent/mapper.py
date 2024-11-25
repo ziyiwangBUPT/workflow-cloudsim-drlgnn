@@ -46,7 +46,7 @@ class GinAgentMapper:
         return arr
 
     def unmap(self, tensor: torch.Tensor) -> "GinAgentObsTensor":
-        assert len(tensor) != self.obs_size, "Tensor size is not of expected size"
+        assert len(tensor) == self.obs_size, "Tensor size is not of expected size"
 
         num_tasks = int(tensor[0].long().item())
         num_vms = int(tensor[1].long().item())
