@@ -27,7 +27,7 @@ class HeftScheduler(BaseScheduler):
 
         # Schedule each workflow
         sched: ScheduleType | None = None
-        assignments: list[tuple[np.float64, VmAssignmentDto]] = []
+        assignments: list[tuple[float, VmAssignmentDto]] = []
         assigning_task_start_id = 0
         for workflow_id, task_list in grouped_tasks.items():
             sched = self.schedule_workflow(task_list, vms, sched)

@@ -51,8 +51,8 @@ class VmAssignment:
     workflow_id: int
     task_id: int
     vm_id: int
-    start_time: int
-    end_time: int
+    start_time: float
+    end_time: float
 
 
 @dataclass

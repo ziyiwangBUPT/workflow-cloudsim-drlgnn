@@ -49,7 +49,7 @@ def plot_execution_graph(g: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
 
     # Assignments
     vm_nodes: dict[int, list[str]] = {vm.id: [] for vm in vms}
-    start_times: dict[str, int] = {}
+    start_times: dict[str, float] = {}
     for assignment in result:
         node_id = get_node_id(assignment.workflow_id, assignment.task_id)
         vm_nodes[assignment.vm_id].append(node_id)

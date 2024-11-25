@@ -53,7 +53,7 @@ class Args:
 def run_algorithm(scheduler: BaseScheduler, seed: int, args: Args) -> tuple[float, float, float]:
     env = CloudSimGymEnvironment(args.simulator, args.dataset_args)
 
-    total_scheduling_time = 0
+    total_scheduling_time: float = 0
     obs, info = env.reset(seed=seed)
     while True:
         scheduling_start_time = time.time()
@@ -63,7 +63,7 @@ def run_algorithm(scheduler: BaseScheduler, seed: int, args: Args) -> tuple[floa
         obs, reward, terminated, truncated, info = env.step(SimEnvAction(assignments))
         if terminated or truncated:
             solution: Solution = info["solution"]
-            energy_consumption = info.get("total_energy_consumption_j")
+            energy_consumption: float = info.get("total_energy_consumption_j", 0)
             start_time = min([assignment.start_time for assignment in solution.vm_assignments])
             end_time = max([assignment.end_time for assignment in solution.vm_assignments])
             makespan = end_time - start_time

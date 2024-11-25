@@ -109,7 +109,7 @@ class CloudSimGymEnvironment(gym.Env):
 
     @staticmethod
     def parse_info(info: Any | None) -> dict[str, Any]:
-        raw_info = {str(o.getKey()): str(o.getValue()) for o in info.entrySet()}
+        raw_info = {} if info is None else {str(o.getKey()): str(o.getValue()) for o in info.entrySet()}
         parsed_info: dict[str, Any] = {}
 
         if raw_info.get("solution") is not None:
