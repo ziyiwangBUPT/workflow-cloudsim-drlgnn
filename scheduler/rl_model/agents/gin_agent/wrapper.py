@@ -24,7 +24,6 @@ class GinAgentWrapper(gym.Wrapper):
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         obs, info = super().reset(seed=seed, options=options)
-
         assert isinstance(obs, EnvObservation)
         mapped_obs = self.map_observation(obs)
 
@@ -33,12 +32,13 @@ class GinAgentWrapper(gym.Wrapper):
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
-        obs, reward, terminated, truncated, info = super().step(mapped_action)
-
+        obs, _, terminated, truncated, info = super().step(mapped_action)
         assert isinstance(obs, EnvObservation)
         mapped_obs = self.map_observation(obs)
 
-        reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
+        reward = makespan_reward + energy_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info

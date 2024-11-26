@@ -12,7 +12,9 @@ class EnvObservation:
     vm_observations: list["VmObservation"]
     task_dependencies: list[tuple[int, int]]
     compatibilities: list[tuple[int, int]]
+
     _makespan: float = -1
+    _energy_consumption: float = -1
 
     def __init__(self, state: EnvState):
         self.task_observations = [
@@ -61,11 +63,35 @@ class EnvObservation:
                 vm_comp_time = self.vm_observations[vm_id].completion_time
                 vm_speed = self.vm_observations[vm_id].cpu_speed_mips
                 task_exec_time = self.task_observations[task_id].length / vm_speed
-                updated_comp_time = max(parent_comp_time, vm_comp_time) + task_exec_time
-                task_completion_time[task_id] = min(updated_comp_time, task_completion_time[task_id].item())
+                new_comp_time = max(parent_comp_time, vm_comp_time) + task_exec_time
+                task_completion_time[task_id] = min(new_comp_time, task_completion_time[task_id].item())
 
         self._makespan = task_completion_time[-1].item()
         return self._makespan
+
+    def energy_consumption(self):
+        if self._energy_consumption != -1:
+            return self._energy_consumption
+
+        from scheduler.rl_model.core.utils.helpers import energy_consumption_per_mi
+
+        # Calculates the energy consumption of an observation or and estimate of it if the env is still running
+        # Uses minimum possible energy for each unscheduled task
+        task_energy_consumption = np.zeros(len(self.task_observations)) * 1e8
+        for task_id in range(len(self.task_observations)):
+            # Check if already scheduled task
+            if self.task_observations[task_id].assigned_vm_id is not None:
+                task_energy_consumption[task_id] = self.task_observations[task_id].energy_consumption
+                continue
+
+            compatible_vm_ids = [vid for tid, vid in self.compatibilities if tid == task_id]
+            for vm_id in compatible_vm_ids:
+                energy_consumption_rate = energy_consumption_per_mi(self.vm_observations[vm_id])
+                new_energy_consumption = self.task_observations[task_id].length * energy_consumption_rate
+                task_energy_consumption[task_id] = min(new_energy_consumption, task_energy_consumption[task_id].item())
+
+        self._energy_consumption = task_energy_consumption.sum()
+        return self._energy_consumption
 
 
 @dataclass
