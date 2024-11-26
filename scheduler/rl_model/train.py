@@ -16,10 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 
 from icecream import ic
 
+from scheduler.config.settings import MIN_TESTING_DS_SEED
 from scheduler.dataset_generator.gen_dataset import DatasetArgs
 from scheduler.rl_model.agents.agent import Agent
-from scheduler.rl_model.agents.gin_e_agent.agent import GinEAgent
-from scheduler.rl_model.agents.gin_e_agent.wrapper import GinEAgentWrapper
+from scheduler.rl_model.agents.gin_agent.agent import GinAgent
+from scheduler.rl_model.agents.gin_agent.wrapper import GinAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
 from scheduler.rl_model.core.env.state import EnvState
 
@@ -47,6 +48,8 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
     load_model_dir: str | None = None
     """Directory to load the model from"""
+    test_iterations: int = 4
+    """number of test iterations"""
 
     # Algorithm specific arguments
     total_timesteps: int = 2_000_000
@@ -82,7 +85,7 @@ class Args:
     target_kl: float | None = None
     """the target KL divergence threshold"""
 
-    training_ds: DatasetArgs = field(
+    dataset: DatasetArgs = field(
         default_factory=lambda: DatasetArgs(
             host_count=10,
             vm_count=4,
@@ -98,25 +101,7 @@ class Args:
             dag_method="gnp",
         )
     )
-    """the training dataset"""
-
-    testing_ds: DatasetArgs = field(
-        default_factory=lambda: DatasetArgs(
-            host_count=10,
-            vm_count=4,
-            workflow_count=10,
-            gnp_min_n=1,
-            gnp_max_n=20,
-            max_memory_gb=10,
-            min_cpu_speed=500,
-            max_cpu_speed=5000,
-            min_task_length=500,
-            max_task_length=100_000,
-            task_arrival="static",
-            dag_method="gnp",
-        )
-    )
-    """the testing dataset"""
+    """the dataset generation parameters"""
 
     # to be filled in runtime
     batch_size: int = 0
@@ -133,19 +118,24 @@ class Args:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def make_env(idx: int, args: Args, dataset_args: DatasetArgs) -> gym.Env:
+def make_env(idx: int, args: Args) -> gym.Env:
     assert not args.capture_video, "Video capturing is not yet supported"
 
-    env: gym.Env = CloudSchedulingGymEnvironment(dataset_args=dataset_args)
+    env: gym.Env = CloudSchedulingGymEnvironment(dataset_args=args.dataset)
     if args.capture_video and idx == 0:
         video_dir = f"{args.output_dir}/{args.run_name}/videos"
         env = RecordVideo(env, video_dir, episode_trigger=lambda x: x % 1000 == 0)
-    env = GinEAgentWrapper(env)
+    env = GinAgentWrapper(env)
     return RecordEpisodeStatistics(env)
 
 
+def make_test_env(args: Args) -> gym.Env:
+    env: gym.Env = CloudSchedulingGymEnvironment(dataset_args=args.dataset)
+    return GinAgentWrapper(env)
+
+
 def make_agent(device: torch.device) -> Agent:
-    return GinEAgent(device)
+    return GinAgent(device)
 
 
 # Training Agent
@@ -187,15 +177,12 @@ def train(args: Args):
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv([lambda: make_env(i, args, args.training_ds) for i in range(args.num_envs)])
+    envs = gym.vector.SyncVectorEnv([lambda: make_env(i, args) for i in range(args.num_envs)])
     obs_space = envs.single_observation_space
     act_space = envs.single_action_space
     assert isinstance(act_space, gym.spaces.Discrete), "only discrete action space is supported"
     assert obs_space.shape is not None
     assert act_space.shape is not None
-
-    # test env setup
-    test_env = make_env(-1, args, args.testing_ds)
 
     agent = make_agent(device)
     writer.add_text("agent", f"```{agent}```")
@@ -350,9 +337,10 @@ def train(args: Args):
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
-        test_results = test_agent(agent, test_env)
-        writer.add_scalar("tests/makespan", test_results[0], global_step)
-        writer.add_scalar("tests/energy_consumption", test_results[1], global_step)
+        with torch.no_grad():
+            test_results = test_agent(agent, args)
+            writer.add_scalar("tests/makespan", test_results[0], global_step)
+            writer.add_scalar("tests/energy_consumption", test_results[1], global_step)
 
         if (global_step - last_model_save) >= 10_000:
             torch.save(agent.state_dict(), f"{args.output_dir}/{args.run_name}/model_{global_step}.pt")
@@ -360,7 +348,6 @@ def train(args: Args):
 
     torch.save(agent.state_dict(), f"{args.output_dir}/{args.run_name}/model.pt")
 
-    test_env.close()
     envs.close()
     writer.close()
 
@@ -370,31 +357,30 @@ def train(args: Args):
 # Testing Agent
 # ----------------------------------------------------------------------------------------------------------------------
 
-TEST_SEED_OFFSET = 11**7
 
-
-def test_agent(agent: Agent, test_env: gym.Env, test_count: int = 10):
+def test_agent(agent: Agent, args: Args):
     total_makespan = 0.0
     total_power_consumption = 0.0
 
-    with torch.no_grad():
-        for seed_index in range(test_count):
-            next_obs, _ = test_env.reset(seed=TEST_SEED_OFFSET + seed_index)
+    for seed_index in range(args.test_iterations):
+        test_env = make_test_env(args)
 
-            while True:
-                obs_tensor = torch.from_numpy(next_obs.reshape(1, -1))
-                action, _, _, _ = agent.get_action_and_value(obs_tensor)
-                vm_action = int(action.item())
-                next_obs, _, terminated, truncated, _ = test_env.step(vm_action)
-                if terminated or truncated:
-                    break
+        next_obs, _ = test_env.reset(seed=MIN_TESTING_DS_SEED + seed_index)
+        while True:
+            obs_tensor = torch.from_numpy(next_obs.astype(np.float32).reshape(1, -1))
+            action, _, _, _ = agent.get_action_and_value(obs_tensor)
+            vm_action = int(action.item())
+            next_obs, _, terminated, truncated, _ = test_env.step(vm_action)
+            if terminated or truncated:
+                break
 
-            state: EnvState = getattr(test_env, "state")
-            total_makespan += max(vm.completion_time for vm in state.vm_states)
-            total_power_consumption += sum(task.energy_consumption for task in state.task_states)
+        state: EnvState = getattr(test_env, "state")
+        total_makespan += max(vm.completion_time for vm in state.vm_states)
+        total_power_consumption += sum(task.energy_consumption for task in state.task_states)
+        test_env.close()
 
-    avg_makespan = total_makespan / test_count
-    avg_power_consumption = total_power_consumption / test_count
+    avg_makespan = total_makespan / args.test_iterations
+    avg_power_consumption = total_power_consumption / args.test_iterations
     return avg_makespan, avg_power_consumption
 
 

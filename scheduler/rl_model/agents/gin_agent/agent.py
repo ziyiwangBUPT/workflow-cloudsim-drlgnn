@@ -24,7 +24,7 @@ class BaseGinNetwork(nn.Module):
         self.device = device
 
         self.task_encoder = nn.Sequential(
-            nn.Linear(3, hidden_dim),
+            nn.Linear(4, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
@@ -52,15 +52,17 @@ class BaseGinNetwork(nn.Module):
         return super().__call__(*args, **kwargs)
 
     def forward(self, obs: GinAgentObsTensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        num_tasks = obs.task_assignments.shape[0]
-        num_vms = obs.vm_completion_times.shape[0]
+        num_tasks = obs.task_state_scheduled.shape[0]
+        num_vms = obs.vm_completion_time.shape[0]
 
         # Encode tasks
-        task_x = torch.stack([obs.task_state_scheduled, obs.task_state_ready, obs.task_lengths], dim=-1)
+        task_x = torch.stack(
+            [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_completion_time], dim=-1
+        )
         task_h: torch.Tensor = self.task_encoder(task_x)
 
         # Encode VMs
-        vm_x = torch.stack([obs.vm_completion_times, obs.vm_speeds, obs.vm_energy_rates], dim=-1)
+        vm_x = torch.stack([obs.vm_completion_time, obs.vm_speed, obs.vm_energy_rate], dim=-1)
         vm_h: torch.Tensor = self.vm_encoder(vm_x)
 
         # Structuring nodes as [0, 1, ..., T-1] [T, T+1, ..., T+VM-1], edges are between Tasks -> Compatible VMs
@@ -109,8 +111,8 @@ class GinActor(nn.Module):
         return super().__call__(*args, **kwargs)
 
     def forward(self, obs: GinAgentObsTensor) -> torch.Tensor:
-        num_tasks = obs.task_assignments.shape[0]
-        num_vms = obs.vm_completion_times.shape[0]
+        num_tasks = obs.task_completion_time.shape[0]
+        num_vms = obs.vm_completion_time.shape[0]
 
         _, edge_embeddings, graph_embedding = self.network(obs)
 

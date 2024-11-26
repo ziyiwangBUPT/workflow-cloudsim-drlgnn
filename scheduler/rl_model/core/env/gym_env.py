@@ -1,8 +1,10 @@
 import copy
+import random
 from typing import Any, Callable
 
 import gymnasium as gym
 
+from scheduler.config.settings import MAX_TRAINING_DS_SEED
 from scheduler.dataset_generator.core.gen_dataset import generate_dataset
 from scheduler.dataset_generator.core.models import Dataset
 from scheduler.dataset_generator.gen_dataset import DatasetArgs
@@ -30,7 +32,7 @@ class CloudSchedulingGymEnvironment(gym.Env):
         if dataset_args is not None:
             assert dataset is None, "When dataset_arg is passed, dataset must be None"
             self.dataset_generator = lambda seed: generate_dataset(
-                seed=seed if seed is not None else dataset_args.seed,
+                seed=seed if seed is not None else random.randint(1, MAX_TRAINING_DS_SEED),
                 host_count=dataset_args.host_count,
                 vm_count=dataset_args.vm_count,
                 max_memory_gb=dataset_args.max_memory_gb,

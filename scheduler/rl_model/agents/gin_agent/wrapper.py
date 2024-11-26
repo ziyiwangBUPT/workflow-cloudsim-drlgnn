@@ -49,15 +49,14 @@ class GinAgentWrapper(gym.Wrapper):
 
     def map_observation(self, observation: EnvObservation) -> np.ndarray:
         # Task observations
-        task_assignments = np.array([task.assigned_vm_id or 0 for task in observation.task_observations])
         task_state_scheduled = np.array([task.assigned_vm_id is not None for task in observation.task_observations])
         task_state_ready = np.array([task.is_ready for task in observation.task_observations])
-        task_lengths = np.array([task.length for task in observation.task_observations])
+        task_length = np.array([task.length for task in observation.task_observations])
 
         # VM observations
-        vm_speeds = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
-        vm_energy_rates = np.array([energy_consumption_per_mi(vm) for vm in observation.vm_observations])
-        vm_completion_times = np.array([vm.completion_time for vm in observation.vm_observations])
+        vm_speed = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
+        vm_energy_rate = np.array([energy_consumption_per_mi(vm) for vm in observation.vm_observations])
+        vm_completion_time = np.array([vm.completion_time for vm in observation.vm_observations])
 
         # Task-Task observations
         task_dependencies = np.array(observation.task_dependencies).T
@@ -65,14 +64,18 @@ class GinAgentWrapper(gym.Wrapper):
         # Task-VM observations
         compatibilities = np.array(observation.compatibilities).T
 
+        # Task completion times
+        task_completion_time = observation.task_completion_time()
+        assert task_completion_time is not None
+
         return self.mapper.map(
-            task_assignments=task_assignments,
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_lengths=task_lengths,
-            vm_speeds=vm_speeds,
-            vm_energy_rates=vm_energy_rates,
-            vm_completion_times=vm_completion_times,
+            task_length=task_length,
+            task_completion_time=task_completion_time,
+            vm_speed=vm_speed,
+            vm_energy_rate=vm_energy_rate,
+            vm_completion_time=vm_completion_time,
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )

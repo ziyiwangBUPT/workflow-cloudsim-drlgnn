@@ -10,31 +10,31 @@ class GinAgentMapper:
 
     def map(
         self,
-        task_assignments: np.ndarray,
         task_state_scheduled: np.ndarray,
         task_state_ready: np.ndarray,
-        task_lengths: np.ndarray,
-        vm_speeds: np.ndarray,
-        vm_energy_rates: np.ndarray,
-        vm_completion_times: np.ndarray,
+        task_length: np.ndarray,
+        task_completion_time: np.ndarray,
+        vm_speed: np.ndarray,
+        vm_energy_rate: np.ndarray,
+        vm_completion_time: np.ndarray,
         task_dependencies: np.ndarray,
         compatibilities: np.ndarray,
     ) -> np.ndarray:
-        num_tasks = task_state_scheduled.shape[0]
-        num_vms = vm_completion_times.shape[0]
+        num_tasks = task_completion_time.shape[0]
+        num_vms = vm_completion_time.shape[0]
         num_task_deps = task_dependencies.shape[1]
         num_compatibilities = compatibilities.shape[1]
 
         arr = np.concatenate(
             [
                 np.array([num_tasks, num_vms, num_task_deps, num_compatibilities], dtype=np.int32),  # Header
-                np.array(task_assignments, dtype=np.int32),  # num_tasks
                 np.array(task_state_scheduled, dtype=np.int32),  # num_tasks
                 np.array(task_state_ready, dtype=np.int32),  # num_tasks
-                np.array(task_lengths, dtype=np.float64),  # num_tasks
-                np.array(vm_speeds, dtype=np.float64),  # num_vms
-                np.array(vm_energy_rates, dtype=np.float64),  # num_vms
-                np.array(vm_completion_times, dtype=np.float64),  # num_vms
+                np.array(task_length, dtype=np.float64),  # num_tasks
+                np.array(task_completion_time, dtype=np.float64),  # num_tasks
+                np.array(vm_speed, dtype=np.float64),  # num_vms
+                np.array(vm_energy_rate, dtype=np.float64),  # num_vms
+                np.array(vm_completion_time, dtype=np.float64),  # num_vms
                 np.array(task_dependencies.flatten(), dtype=np.int32),  # num_task_deps*2
                 np.array(compatibilities.flatten(), dtype=np.int32),  # num_compatibilities*2
             ]
@@ -54,20 +54,20 @@ class GinAgentMapper:
         num_compatibilities = int(tensor[3].long().item())
         tensor = tensor[4:]
 
-        task_assignments = tensor[:num_tasks].long()
-        tensor = tensor[num_tasks:]
         task_state_scheduled = tensor[:num_tasks].long()
         tensor = tensor[num_tasks:]
         task_state_ready = tensor[:num_tasks].long()
         tensor = tensor[num_tasks:]
-        task_lengths = tensor[:num_tasks]
+        task_length = tensor[:num_tasks]
+        tensor = tensor[num_tasks:]
+        task_completion_time = tensor[:num_tasks]
         tensor = tensor[num_tasks:]
 
-        vm_speeds = tensor[:num_vms]
+        vm_speed = tensor[:num_vms]
         tensor = tensor[num_vms:]
-        vm_energy_rates = tensor[:num_vms]
+        vm_energy_rate = tensor[:num_vms]
         tensor = tensor[num_vms:]
-        vm_completion_times = tensor[:num_vms]
+        vm_completion_time = tensor[:num_vms]
         tensor = tensor[num_vms:]
 
         task_dependencies = tensor[: num_task_deps * 2].reshape(2, num_task_deps).long()
@@ -78,13 +78,13 @@ class GinAgentMapper:
         assert not tensor.any(), "There are non-zero elements in the padding"
 
         return GinAgentObsTensor(
-            task_assignments=task_assignments,
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_lengths=task_lengths,
-            vm_speeds=vm_speeds,
-            vm_energy_rates=vm_energy_rates,
-            vm_completion_times=vm_completion_times,
+            task_length=task_length,
+            task_completion_time=task_completion_time,
+            vm_speed=vm_speed,
+            vm_energy_rate=vm_energy_rate,
+            vm_completion_time=vm_completion_time,
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
@@ -92,12 +92,12 @@ class GinAgentMapper:
 
 @dataclass
 class GinAgentObsTensor:
-    task_assignments: torch.Tensor
     task_state_scheduled: torch.Tensor
     task_state_ready: torch.Tensor
-    task_lengths: torch.Tensor
-    vm_speeds: torch.Tensor
-    vm_energy_rates: torch.Tensor
-    vm_completion_times: torch.Tensor
+    task_length: torch.Tensor
+    task_completion_time: torch.Tensor
+    vm_speed: torch.Tensor
+    vm_energy_rate: torch.Tensor
+    vm_completion_time: torch.Tensor
     task_dependencies: torch.Tensor
     compatibilities: torch.Tensor
