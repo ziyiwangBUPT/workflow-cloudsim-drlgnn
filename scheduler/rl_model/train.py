@@ -370,25 +370,32 @@ def train(args: Args):
 # Testing Agent
 # ----------------------------------------------------------------------------------------------------------------------
 
+TEST_SEED_OFFSET = 11**7
+
 
 def test_agent(agent: Agent, test_env: gym.Env, test_count: int = 10):
-    total_makespan: float = 0
-    total_power_consumption: float = 0
-    for seed_offset in range(test_count):
-        next_obs, _ = test_env.reset(seed=seed_offset + 11**7)
-        while True:
-            obs_tensor = torch.Tensor(next_obs.reshape(1, -1)).to("cpu")
-            action, _, _, _ = agent.get_action_and_value(obs_tensor)
-            vm_action = int(action.long().item())
-            next_obs, _, terminated, truncated, _ = test_env.step(vm_action)
-            if terminated or truncated:
-                break
+    total_makespan = 0.0
+    total_power_consumption = 0.0
 
-        state: EnvState = getattr(test_env, "state")
-        total_makespan += max(vm.completion_time for vm in state.vm_states)
-        total_power_consumption += sum(task.energy_consumption for task in state.task_states)
+    with torch.no_grad():
+        for seed_index in range(test_count):
+            next_obs, _ = test_env.reset(seed=TEST_SEED_OFFSET + seed_index)
 
-    return total_makespan / test_count, total_power_consumption / test_count
+            while True:
+                obs_tensor = torch.from_numpy(next_obs.reshape(1, -1))
+                action, _, _, _ = agent.get_action_and_value(obs_tensor)
+                vm_action = int(action.item())
+                next_obs, _, terminated, truncated, _ = test_env.step(vm_action)
+                if terminated or truncated:
+                    break
+
+            state: EnvState = getattr(test_env, "state")
+            total_makespan += max(vm.completion_time for vm in state.vm_states)
+            total_power_consumption += sum(task.energy_consumption for task in state.task_states)
+
+    avg_makespan = total_makespan / test_count
+    avg_power_consumption = total_power_consumption / test_count
+    return avg_makespan, avg_power_consumption
 
 
 if __name__ == "__main__":
