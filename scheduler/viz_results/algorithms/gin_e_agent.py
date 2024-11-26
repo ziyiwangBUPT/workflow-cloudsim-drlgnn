@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from scheduler.dataset_generator.core.models import Dataset, Workflow, Task, Vm, Host
+from scheduler.dataset_generator.core.models import Dataset, Workflow
 from scheduler.rl_model.agents.gin_e_agent.agent import GinEAgent
 from scheduler.rl_model.agents.gin_e_agent.wrapper import GinEAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
