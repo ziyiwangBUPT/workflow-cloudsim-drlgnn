@@ -14,8 +14,7 @@ class GinEAgentWrapper(gym.Wrapper):
     observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(MAX_OBS_SIZE,), dtype=np.float32)
     action_space = gym.spaces.Discrete(MAX_OBS_SIZE)
 
-    vm_count: int
-    prev_makespan: float
+    prev_obs: EnvObservation
     static_obs: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
 
     def __init__(self, env: gym.Env[EnvObservation, EnvAction]):
@@ -29,12 +28,11 @@ class GinEAgentWrapper(gym.Wrapper):
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         obs, info = super().reset(seed=seed, options=options)
-
         assert isinstance(obs, EnvObservation)
-        self.vm_count = len(obs.vm_observations)
-        self.static_obs = None
-        makespan, mapped_obs = self.map_observation(obs)
-        self.prev_makespan = makespan
+        self.static_obs = None  # Invalidate static obs cache
+        mapped_obs = self.map_observation(obs)
+
+        self.prev_obs = obs
         return mapped_obs, info
 
     # Step
@@ -43,29 +41,29 @@ class GinEAgentWrapper(gym.Wrapper):
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
         obs, _, terminated, truncated, info = super().step(mapped_action)
-
         assert isinstance(obs, EnvObservation)
-        self.vm_count = len(obs.vm_observations)
-        makespan, mapped_obs = self.map_observation(obs)
-        reward = -(makespan - self.prev_makespan) / makespan
-        self.prev_makespan = makespan
+        mapped_obs = self.map_observation(obs)
+
+        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
+        reward = makespan_reward + energy_reward
+
+        self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info
 
     # Mappings
     # ------------------------------------------------------------------------------------------------------------------
 
     def map_action(self, action: int) -> EnvAction:
-        return EnvAction(task_id=int(action // self.vm_count), vm_id=int(action % self.vm_count))
+        vm_count = len(self.prev_obs.vm_observations)
+        return EnvAction(task_id=int(action // vm_count), vm_id=int(action % vm_count))
 
-    def map_observation(self, observation: EnvObservation) -> tuple[float, np.ndarray]:
+    def map_observation(self, observation: EnvObservation) -> np.ndarray:
         num_tasks = len(observation.task_observations)
 
-        # Task observations
+        # Task/VM observations
         task_state_scheduled = [task.assigned_vm_id is not None for task in observation.task_observations]
         task_state_ready = [task.is_ready for task in observation.task_observations]
-        task_completion_time = [task.completion_time for task in observation.task_observations]
-
-        # VM observations
         vm_completion_time = [vm.completion_time for vm in observation.vm_observations]
 
         # Static observations (costs and compatibilities)
@@ -77,22 +75,13 @@ class GinEAgentWrapper(gym.Wrapper):
             adj_arr[task_id, child_id] = 1
 
         # Calculate completion times iteratively (task dependencies)
-        for task_id in range(num_tasks):
-            child_ids = [cid for pid, cid in observation.task_dependencies if pid == task_id]
-            for child_id in child_ids:
-                if observation.task_observations[child_id].assigned_vm_id is not None:
-                    continue  # Already scheduled
-                # Since following are not scheduled yet, only dependencies will be from parent
-                assert task_id < child_id, "DAG property violation"
-                child_execution_cost = task_vm_time_cost_arr[child_id].min()
-                task_completion_time[child_id] = max(
-                    task_completion_time[child_id], task_completion_time[task_id] + child_execution_cost
-                )
+        task_completion_time_arr = observation.task_completion_time()
+        assert task_completion_time_arr is not None
 
         mapped_obs = self.mapper.map(
             task_state_scheduled=np.array(task_state_scheduled),
             task_state_ready=np.array(task_state_ready),
-            task_completion_time=np.array(task_completion_time),
+            task_completion_time=task_completion_time_arr,
             vm_completion_time=np.array(vm_completion_time),
             task_vm_compatibility=task_vm_compatibility_arr,
             task_vm_time_cost=task_vm_time_cost_arr,
@@ -100,7 +89,7 @@ class GinEAgentWrapper(gym.Wrapper):
             adj=adj_arr,
         )
 
-        return task_completion_time[-1], mapped_obs
+        return mapped_obs
 
     # Cached Static Obs
     # ------------------------------------------------------------------------------------------------------------------

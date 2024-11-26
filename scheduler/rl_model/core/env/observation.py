@@ -15,6 +15,7 @@ class EnvObservation:
 
     _makespan: float = -1
     _energy_consumption: float = -1
+    _task_completion_time: np.ndarray | None = None
 
     def __init__(self, state: EnvState):
         self.task_observations = [
@@ -67,7 +68,13 @@ class EnvObservation:
                 task_completion_time[task_id] = min(new_comp_time, task_completion_time[task_id].item())
 
         self._makespan = task_completion_time[-1].item()
+        self._task_completion_time = task_completion_time
         return self._makespan
+
+    def task_completion_time(self):
+        if self._task_completion_time is None:
+            self.makespan()
+        return self._task_completion_time
 
     def energy_consumption(self):
         if self._energy_consumption != -1:
