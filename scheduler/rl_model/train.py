@@ -153,9 +153,6 @@ def make_agent(device: torch.device) -> Agent:
 
 
 def train(args: Args):
-    pbar = tqdm(total=args.total_timesteps)
-    last_model_save = 0
-
     args.batch_size = int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
@@ -203,6 +200,7 @@ def train(args: Args):
     agent = make_agent(device)
     writer.add_text("agent", f"```{agent}```")
 
+    last_model_save = 0
     if args.load_model_dir:
         model_path = Path(__file__).parent.parent.parent / "logs" / args.load_model_dir / "model.pt"
         agent.load_state_dict(torch.load(str(model_path), weights_only=True))
@@ -226,6 +224,7 @@ def train(args: Args):
     next_obs_tensor = torch.Tensor(next_obs).to(device)
     next_done_tensor = torch.zeros(args.num_envs).to(device)
 
+    pbar = tqdm(total=args.total_timesteps)
     for iteration in range(1, args.num_iterations + 1):
         # Annealing the rate if instructed to do so.
         if args.anneal_lr:
@@ -283,7 +282,6 @@ def train(args: Args):
         b_values = values.reshape(-1)
 
         # Optimizing the policy and value network
-        v_loss = pg_loss = entropy_loss = torch.Tensor(0)
         b_inds = np.arange(args.batch_size)
         clipfracs = []
         for epoch in range(args.update_epochs):
