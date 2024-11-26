@@ -164,9 +164,8 @@ class CloudSchedulingGymEnvironment(gym.Env):
 
         # New dependencies (a new edge between the old task in the VM and this task)
         new_task_dependencies = copy.deepcopy(self.state.task_dependencies)
-        vm_prev_task_id = self.state.vm_states[action.vm_id].assigned_task_id
-        if vm_prev_task_id is not None:
-            new_task_dependencies.add((vm_prev_task_id, action.task_id))
+        vm_prev_task_id = self.state.vm_states[action.vm_id].assigned_task_id or 0
+        new_task_dependencies.add((vm_prev_task_id, action.task_id))
 
         # Check if dummy end active, then all tasks have been scheduled
         # If so, assign it to 0 vm (it doesn't matter since length is 0)
