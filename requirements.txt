@@ -15,6 +15,7 @@ tensorboard==2.18.0
 # Solvers
 ortools==9.11.4210
 py4j==0.10.9.7
+pygad==3.3.1
 git+https://github.com/mackncheesiest/heft
 
 # Visualizers

@@ -2,6 +2,7 @@ from scheduler.config.settings import DEFAULT_MODEL_DIR
 from scheduler.viz_results.algorithms.base import BaseScheduler
 from scheduler.viz_results.algorithms.best_fit import BestFitScheduler
 from scheduler.viz_results.algorithms.cp_sat import CpSatScheduler
+from scheduler.viz_results.algorithms.ga import GAScheduler
 from scheduler.viz_results.algorithms.gin_agent import GinAgentScheduler
 from scheduler.viz_results.algorithms.gin_e_agent import GinEAgentScheduler
 from scheduler.viz_results.algorithms.heft import HeftScheduler
@@ -27,6 +28,8 @@ def get_scheduler(algorithm: str) -> BaseScheduler:
         return HeftScheduler()
     elif strategy == "power_saving":
         return PowerSavingScheduler()
+    elif strategy == "ga":
+        return GAScheduler()
     elif strategy == "gin_e":
         return GinEAgentScheduler(model_path=str(DEFAULT_MODEL_DIR / args[0] / args[1]))
     elif strategy == "gin":
