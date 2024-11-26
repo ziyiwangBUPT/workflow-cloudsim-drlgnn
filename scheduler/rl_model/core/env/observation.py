@@ -1,6 +1,8 @@
 import copy
 from dataclasses import dataclass
 
+import numpy as np
+
 from scheduler.rl_model.core.env.state import EnvState
 
 
@@ -10,6 +12,7 @@ class EnvObservation:
     vm_observations: list["VmObservation"]
     task_dependencies: list[tuple[int, int]]
     compatibilities: list[tuple[int, int]]
+    _makespan: float = -1
 
     def __init__(self, state: EnvState):
         self.task_observations = [
@@ -36,6 +39,33 @@ class EnvObservation:
         ]
         self.task_dependencies = copy.deepcopy(list(state.task_dependencies))
         self.compatibilities = copy.deepcopy(list(state.static_state.compatibilities))
+
+    def makespan(self):
+        if self._makespan != -1:
+            return self._makespan
+
+        # Calculates the makespan of an observation or and estimate of it if the env is still running
+        # Uses max task completion time (task will complete either after parent or after VM completion time)
+        task_completion_time = np.ones(len(self.task_observations)) * 1e8
+        for task_id in range(len(self.task_observations)):
+            # Check if already scheduled task
+            if self.task_observations[task_id].assigned_vm_id is not None:
+                task_completion_time[task_id] = self.task_observations[task_id].completion_time
+                continue
+
+            parent_ids = [pid for pid, cid in self.task_dependencies if cid == task_id]
+            compatible_vm_ids = [vid for tid, vid in self.compatibilities if tid == task_id]
+
+            parent_comp_time = max(task_completion_time[parent_ids], default=0)
+            for vm_id in compatible_vm_ids:
+                vm_comp_time = self.vm_observations[vm_id].completion_time
+                vm_speed = self.vm_observations[vm_id].cpu_speed_mips
+                task_exec_time = self.task_observations[task_id].length / vm_speed
+                updated_comp_time = max(parent_comp_time, vm_comp_time) + task_exec_time
+                task_completion_time[task_id] = min(updated_comp_time, task_completion_time[task_id].item())
+
+        self._makespan = task_completion_time[-1].item()
+        return self._makespan
 
 
 @dataclass

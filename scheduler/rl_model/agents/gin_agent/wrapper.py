@@ -14,8 +14,7 @@ class GinAgentWrapper(gym.Wrapper):
     observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(MAX_OBS_SIZE,), dtype=np.float32)
     action_space = gym.spaces.Discrete(MAX_OBS_SIZE)
 
-    vm_count: int
-    prev_makespan: float
+    prev_obs: EnvObservation
 
     def __init__(self, env: gym.Env[np.ndarray, int]):
         super().__init__(env)
@@ -27,9 +26,9 @@ class GinAgentWrapper(gym.Wrapper):
         obs, info = super().reset(seed=seed, options=options)
 
         assert isinstance(obs, EnvObservation)
-        self.vm_count = len(obs.vm_observations)
-        makespan, mapped_obs = self.map_observation(obs)
-        self.prev_makespan = makespan
+        mapped_obs = self.map_observation(obs)
+
+        self.prev_obs = obs
         return mapped_obs, info
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
@@ -37,16 +36,18 @@ class GinAgentWrapper(gym.Wrapper):
         obs, reward, terminated, truncated, info = super().step(mapped_action)
 
         assert isinstance(obs, EnvObservation)
-        self.vm_count = len(obs.vm_observations)
-        makespan, mapped_obs = self.map_observation(obs)
-        reward = -(makespan - self.prev_makespan) / makespan
-        self.prev_makespan = makespan
+        mapped_obs = self.map_observation(obs)
+
+        reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+
+        self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info
 
     def map_action(self, action: int) -> EnvAction:
-        return EnvAction(task_id=int(action // self.vm_count), vm_id=int(action % self.vm_count))
+        vm_count = len(self.prev_obs.vm_observations)
+        return EnvAction(task_id=int(action // vm_count), vm_id=int(action % vm_count))
 
-    def map_observation(self, observation: EnvObservation) -> tuple[float, np.ndarray]:
+    def map_observation(self, observation: EnvObservation) -> np.ndarray:
         # Task observations
         task_assignments = np.array([task.assigned_vm_id or 0 for task in observation.task_observations])
         task_state_scheduled = np.array([task.assigned_vm_id is not None for task in observation.task_observations])
@@ -64,22 +65,7 @@ class GinAgentWrapper(gym.Wrapper):
         # Task-VM observations
         compatibilities = np.array(observation.compatibilities).T
 
-        # Calculate completion times iteratively (task dependencies)
-        task_completion_time = [task.completion_time for task in observation.task_observations]
-        for task_id in range(len(observation.task_observations)):
-            child_ids = [cid for pid, cid in observation.task_dependencies if pid == task_id]
-            for child_id in child_ids:
-                if observation.task_observations[child_id].assigned_vm_id is not None:
-                    continue
-                # Since following are not scheduled yet, only dependencies will be from parent
-                assert task_id < child_id, "DAG property violation"
-                child_available_vm_speeds = vm_speeds[compatibilities[1][compatibilities[0] == child_id]]
-                child_execution_cost = task_lengths[child_id] / child_available_vm_speeds.max()
-                task_completion_time[child_id] = max(
-                    task_completion_time[child_id], task_completion_time[task_id] + child_execution_cost
-                )
-
-        mapped_obs = self.mapper.map(
+        return self.mapper.map(
             task_assignments=task_assignments,
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
@@ -90,5 +76,3 @@ class GinAgentWrapper(gym.Wrapper):
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
-
-        return task_completion_time[-1], mapped_obs
