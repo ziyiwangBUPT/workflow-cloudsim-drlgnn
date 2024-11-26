@@ -84,7 +84,7 @@ class EnvObservation:
 
         # Calculates the energy consumption of an observation or and estimate of it if the env is still running
         # Uses minimum possible energy for each unscheduled task
-        task_energy_consumption = np.zeros(len(self.task_observations)) * 1e8
+        task_energy_consumption = np.ones(len(self.task_observations)) * 1e8
         for task_id in range(len(self.task_observations)):
             # Check if already scheduled task
             if self.task_observations[task_id].assigned_vm_id is not None:
