@@ -63,18 +63,13 @@ class BaseGinNetwork(nn.Module):
         vm_x = torch.stack([obs.vm_completion_times, obs.vm_speeds, obs.vm_energy_rates], dim=-1)
         vm_h: torch.Tensor = self.vm_encoder(vm_x)
 
-        # Structuring nodes as [0, 1, ..., T-1] [T, T+1, ..., T+VM-1]
-        # Unscheduled Task->Compatible VMs
-        unscheduled_task_vm_edges = obs.compatibilities.T[obs.task_state_scheduled[obs.compatibilities[0]] == 0].T
-        unscheduled_task_vm_edges[1] += num_tasks - 1  # Reindex VMs
-        # Scheduled Task->Scheduled VM
-        scheduled_task_vm_edges = torch.stack([torch.arange(num_tasks, device=self.device), obs.task_assignments])
-        scheduled_task_vm_edges = scheduled_task_vm_edges.T[obs.task_state_scheduled == 1].T
-        scheduled_task_vm_edges[1] += num_tasks - 1  # Reindex VMs
+        # Structuring nodes as [0, 1, ..., T-1] [T, T+1, ..., T+VM-1], edges are between Tasks -> Compatible VMs
+        task_vm_edges = obs.compatibilities.clone()
+        task_vm_edges[1] = task_vm_edges[1] + num_tasks  # Reindex VMs
 
         # Get features
         node_x = torch.cat([task_h, vm_h])
-        edge_index = torch.cat([unscheduled_task_vm_edges, scheduled_task_vm_edges, obs.task_dependencies], dim=-1)
+        edge_index = torch.cat([task_vm_edges, obs.task_dependencies], dim=-1)
 
         # Get embeddings
         batch = torch.zeros(num_tasks + num_vms, dtype=torch.long, device=self.device)
@@ -125,13 +120,12 @@ class GinActor(nn.Module):
         edge_embedding_scores: torch.Tensor = self.edge_scorer(edge_embeddings)
 
         # Extract the exact edges
-        unscheduled_task_vm_edges = obs.compatibilities.T[obs.task_state_scheduled[obs.compatibilities[0]] == 0].T
-        unscheduled_task_vm_edge_embeddings = edge_embedding_scores[: unscheduled_task_vm_edges.shape[1]]
-        unscheduled_task_vm_action_scores = unscheduled_task_vm_edge_embeddings.flatten()
+        task_vm_edge_scores = edge_embedding_scores.flatten()
+        task_vm_edge_scores = task_vm_edge_scores[: obs.compatibilities.shape[1]]
 
         # Actions scores should be the value in edge embedding, but -inf on invalid actions
         action_scores = torch.ones((num_tasks, num_vms), dtype=torch.float32) * -1e8
-        action_scores[unscheduled_task_vm_edges[0], unscheduled_task_vm_edges[1]] = unscheduled_task_vm_action_scores
+        action_scores[obs.compatibilities[0], obs.compatibilities[1]] = task_vm_edge_scores
         action_scores[obs.task_state_ready == 0, :] = -1e8  # Remove scores of actions with not ready tasks
 
         return action_scores
