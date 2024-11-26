@@ -21,6 +21,15 @@ class TaskDto:
             child_ids=task.child_ids,
         )
 
+    def to_task(self):
+        return Task(
+            id=self.id,
+            workflow_id=self.workflow_id,
+            length=self.length,
+            req_memory_mb=self.req_memory_mb,
+            child_ids=self.child_ids,
+        )
+
 
 @dataclass
 class VmDto:
@@ -41,6 +50,23 @@ class VmDto:
             host_cpu_speed_mips=host.cpu_speed_mips,
             host_power_idle_watt=host.power_idle_watt,
             host_power_peak_watt=host.power_peak_watt,
+        )
+
+    def to_vm(self):
+        return Vm(
+            id=self.id,
+            host_id=self.id,
+            cpu_speed_mips=int(self.cpu_speed_mips),
+            memory_mb=self.memory_mb,
+        )
+
+    def to_host(self):
+        return Host(
+            id=self.id,
+            cores=1,
+            cpu_speed_mips=int(self.host_cpu_speed_mips),
+            power_idle_watt=int(self.host_power_idle_watt),
+            power_peak_watt=int(self.host_power_peak_watt),
         )
 
 

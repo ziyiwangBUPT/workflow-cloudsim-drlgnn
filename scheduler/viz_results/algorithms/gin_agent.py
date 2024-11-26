@@ -2,21 +2,21 @@ import torch
 import numpy as np
 
 from scheduler.dataset_generator.core.models import Dataset, Workflow, Task, Vm, Host
-from scheduler.rl_model.agents.gin_e_agent.agent import GinEAgent
-from scheduler.rl_model.agents.gin_e_agent.wrapper import GinEAgentWrapper
+from scheduler.rl_model.agents.gin_agent.agent import GinAgent
+from scheduler.rl_model.agents.gin_agent.wrapper import GinAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
 from scheduler.rl_model.core.types import TaskDto, VmDto, VmAssignmentDto
 from scheduler.viz_results.algorithms.base import BaseScheduler
 
 
-class GinEAgentScheduler(BaseScheduler):
+class GinAgentScheduler(BaseScheduler):
     vm_completion_time: np.ndarray | None = None
 
     def __init__(self, model_path: str):
         self.model_path = model_path
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
-        agent = GinEAgent(device=torch.device("cpu"))
+        agent = GinAgent(device=torch.device("cpu"))
         agent.load_state_dict(torch.load(str(self.model_path), weights_only=True))
 
         if self.vm_completion_time is None:
@@ -31,7 +31,7 @@ class GinEAgentScheduler(BaseScheduler):
         vm_ds = [vm.to_vm() for vm in vms]
         host_ds = [vm.to_host() for vm in vms]
 
-        env = GinEAgentWrapper(
+        env = GinAgentWrapper(
             CloudSchedulingGymEnvironment(
                 dataset=Dataset(
                     workflows=list(workflow_ds.values()),
