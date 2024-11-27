@@ -16,11 +16,13 @@ WORKFLOW_FILES = [
 # ----------------------------------------------------------------------------------------------------------------------
 
 MAX_OBS_SIZE = 100_000
-
+MAX_TRAINING_DS_SEED = 1_000_000_000
+MIN_TESTING_DS_SEED = MAX_TRAINING_DS_SEED + 1
 
 # Evaluation related
 # ----------------------------------------------------------------------------------------------------------------------
 
+DEFAULT_MODEL_DIR = ROOT_PATH / "logs"
 ALGORITHMS = [
     ("CP-SAT", "cp_sat"),
     ("Round Robin", "round_robin"),
