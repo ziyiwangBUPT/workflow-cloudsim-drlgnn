@@ -55,14 +55,15 @@ class BaseGinNetwork(nn.Module):
         num_tasks = obs.task_state_scheduled.shape[0]
         num_vms = obs.vm_completion_time.shape[0]
 
+        task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_completion_time]
+        vm_features = [obs.vm_completion_time, 1 / (obs.vm_speed + 1e-8), obs.vm_energy_rate]
+
         # Encode tasks
-        task_x = torch.stack(
-            [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_completion_time], dim=-1
-        )
+        task_x = torch.stack(task_features, dim=-1)
         task_h: torch.Tensor = self.task_encoder(task_x)
 
         # Encode VMs
-        vm_x = torch.stack([obs.vm_completion_time, obs.vm_speed, obs.vm_energy_rate], dim=-1)
+        vm_x = torch.stack(vm_features, dim=-1)
         vm_h: torch.Tensor = self.vm_encoder(vm_x)
 
         # Structuring nodes as [0, 1, ..., T-1] [T, T+1, ..., T+VM-1], edges are between Tasks -> Compatible VMs
