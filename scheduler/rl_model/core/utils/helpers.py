@@ -7,6 +7,6 @@ def is_suitable(vm: VmDto, task: TaskDto):
     return vm.memory_mb >= task.req_memory_mb
 
 
-def energy_consumption_per_mi(vm: VmDto | VmObservation):
+def active_energy_consumption_per_mi(vm: VmDto | VmObservation):
     """How much additional energy is consumed by a task running in this VM (per length)"""
     return (vm.host_power_peak_watt - vm.host_power_idle_watt) / vm.host_cpu_speed_mips

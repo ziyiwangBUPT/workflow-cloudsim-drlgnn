@@ -13,8 +13,8 @@ class EnvObservation:
     task_dependencies: list[tuple[int, int]]
     compatibilities: list[tuple[int, int]]
 
-    _makespan: float = -1
-    _energy_consumption: float = -1
+    _makespan: float | None = None
+    _power_consumption: float | None = None
     _task_completion_time: np.ndarray | None = None
 
     def __init__(self, state: EnvState):
@@ -44,7 +44,7 @@ class EnvObservation:
         self.compatibilities = copy.deepcopy(list(state.static_state.compatibilities))
 
     def makespan(self):
-        if self._makespan != -1:
+        if self._makespan is not None:
             return self._makespan
 
         # Calculates the makespan of an observation or and estimate of it if the env is still running
@@ -71,16 +71,11 @@ class EnvObservation:
         self._task_completion_time = task_completion_time
         return self._makespan
 
-    def task_completion_time(self):
-        if self._task_completion_time is None:
-            self.makespan()
-        return self._task_completion_time
+    def power_consumption(self):
+        if self._power_consumption is not None:
+            return self._power_consumption
 
-    def energy_consumption(self):
-        if self._energy_consumption != -1:
-            return self._energy_consumption
-
-        from scheduler.rl_model.core.utils.helpers import energy_consumption_per_mi
+        from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
 
         # Calculates the energy consumption of an observation or and estimate of it if the env is still running
         # Uses minimum possible energy for each unscheduled task
@@ -93,12 +88,20 @@ class EnvObservation:
 
             compatible_vm_ids = [vid for tid, vid in self.compatibilities if tid == task_id]
             for vm_id in compatible_vm_ids:
-                energy_consumption_rate = energy_consumption_per_mi(self.vm_observations[vm_id])
+                energy_consumption_rate = active_energy_consumption_per_mi(self.vm_observations[vm_id])
                 new_energy_consumption = self.task_observations[task_id].length * energy_consumption_rate
                 task_energy_consumption[task_id] = min(new_energy_consumption, task_energy_consumption[task_id].item())
 
-        self._energy_consumption = task_energy_consumption.sum()
-        return self._energy_consumption
+        active_energy_consumption = task_energy_consumption.sum()
+        active_power_consumption = active_energy_consumption / self.makespan()
+
+        self._power_consumption = active_power_consumption
+        return self._power_consumption
+
+    def task_completion_time(self):
+        if self._task_completion_time is None:
+            self.makespan()
+        return self._task_completion_time
 
 
 @dataclass

@@ -1,5 +1,5 @@
 from scheduler.rl_model.core.types import TaskDto, VmDto
-from scheduler.rl_model.core.utils.helpers import energy_consumption_per_mi
+from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
 from scheduler.viz_results.algorithms.base_ready_queue import BaseReadyQueueScheduler
 
 
@@ -15,4 +15,4 @@ class PowerSavingScheduler(BaseReadyQueueScheduler):
         return ready_tasks[0]
 
     def select_vm(self, task: TaskDto, vms: list[VmDto]) -> VmDto:
-        return min(vms, key=energy_consumption_per_mi)
+        return min(vms, key=active_energy_consumption_per_mi)

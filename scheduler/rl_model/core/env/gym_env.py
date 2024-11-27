@@ -13,7 +13,7 @@ from scheduler.rl_model.core.env.observation import EnvObservation
 
 from scheduler.rl_model.core.env.state import EnvState, TaskState, VmState, StaticState
 from scheduler.rl_model.core.types import TaskDto, VmDto, VmAssignmentDto
-from scheduler.rl_model.core.utils.helpers import energy_consumption_per_mi, is_suitable
+from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi, is_suitable
 from scheduler.rl_model.core.utils.task_mapper import TaskMapper
 
 
@@ -160,7 +160,7 @@ class CloudSchedulingGymEnvironment(gym.Env):
 
         # Update energy consumption
         new_task_states[action.task_id].energy_consumption = (
-            energy_consumption_per_mi(self.state.static_state.vms[action.vm_id])
+            active_energy_consumption_per_mi(self.state.static_state.vms[action.vm_id])
             * self.state.static_state.tasks[action.task_id].length
         )
 

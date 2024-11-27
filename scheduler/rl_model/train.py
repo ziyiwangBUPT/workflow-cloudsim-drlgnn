@@ -118,7 +118,7 @@ class Args:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def make_env(idx: int, args: Args) -> gym.Env:
+def make_env(idx: int, args: Args):
     assert not args.capture_video, "Video capturing is not yet supported"
 
     env: gym.Env = CloudSchedulingGymEnvironment(dataset_args=args.dataset)
@@ -129,7 +129,7 @@ def make_env(idx: int, args: Args) -> gym.Env:
     return RecordEpisodeStatistics(env)
 
 
-def make_test_env(args: Args) -> gym.Env:
+def make_test_env(args: Args):
     env: gym.Env = CloudSchedulingGymEnvironment(dataset_args=args.dataset)
     return GinAgentWrapper(env)
 
@@ -374,9 +374,9 @@ def test_agent(agent: Agent, args: Args):
             if terminated or truncated:
                 break
 
-        state: EnvState = getattr(test_env, "state")
-        total_makespan += max(vm.completion_time for vm in state.vm_states)
-        total_power_consumption += sum(task.energy_consumption for task in state.task_states)
+        assert test_env.prev_obs is not None
+        total_makespan += test_env.prev_obs.makespan()
+        total_power_consumption += test_env.prev_obs.power_consumption()
         test_env.close()
 
     avg_makespan = total_makespan / args.test_iterations

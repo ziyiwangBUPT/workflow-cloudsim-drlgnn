@@ -2,12 +2,13 @@ from typing import SupportsFloat, Any
 
 import numpy as np
 import gymnasium as gym
+from mpmath import power
 
 from scheduler.config.settings import MAX_OBS_SIZE
 from scheduler.rl_model.agents.gin_agent.mapper import GinAgentMapper
 from scheduler.rl_model.core.env.action import EnvAction
 from scheduler.rl_model.core.env.observation import EnvObservation
-from scheduler.rl_model.core.utils.helpers import energy_consumption_per_mi
+from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
 
 
 class GinAgentWrapper(gym.Wrapper):
@@ -37,8 +38,8 @@ class GinAgentWrapper(gym.Wrapper):
         mapped_obs = self.map_observation(obs)
 
         makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
-        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
-        reward = makespan_reward + energy_reward
+        power_reward = -(obs.power_consumption() - self.prev_obs.power_consumption()) / obs.power_consumption()
+        reward = makespan_reward + power_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info
@@ -55,7 +56,7 @@ class GinAgentWrapper(gym.Wrapper):
 
         # VM observations
         vm_speed = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
-        vm_energy_rate = np.array([energy_consumption_per_mi(vm) for vm in observation.vm_observations])
+        vm_energy_rate = np.array([active_energy_consumption_per_mi(vm) for vm in observation.vm_observations])
         vm_completion_time = np.array([vm.completion_time for vm in observation.vm_observations])
 
         # Task-Task observations
