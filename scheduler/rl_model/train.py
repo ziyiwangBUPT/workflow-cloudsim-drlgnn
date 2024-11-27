@@ -22,7 +22,6 @@ from scheduler.rl_model.agents.agent import Agent
 from scheduler.rl_model.agents.gin_agent.agent import GinAgent
 from scheduler.rl_model.agents.gin_agent.wrapper import GinAgentWrapper
 from scheduler.rl_model.core.env.gym_env import CloudSchedulingGymEnvironment
-from scheduler.rl_model.core.env.state import EnvState
 
 
 @dataclass

@@ -2,7 +2,6 @@ from typing import SupportsFloat, Any
 
 import numpy as np
 import gymnasium as gym
-from mpmath import power
 
 from scheduler.config.settings import MAX_OBS_SIZE
 from scheduler.rl_model.agents.gin_agent.mapper import GinAgentMapper
