@@ -359,7 +359,7 @@ def train(args: Args):
 
 def test_agent(agent: Agent, args: Args):
     total_makespan = 0.0
-    total_power_consumption = 0.0
+    total_energy_consumption = 0.0
 
     for seed_index in range(args.test_iterations):
         test_env = make_test_env(args)
@@ -375,12 +375,12 @@ def test_agent(agent: Agent, args: Args):
 
         assert test_env.prev_obs is not None
         total_makespan += test_env.prev_obs.makespan()
-        total_power_consumption += test_env.prev_obs.power_consumption()
+        total_energy_consumption += test_env.prev_obs.energy_consumption()
         test_env.close()
 
     avg_makespan = total_makespan / args.test_iterations
-    avg_power_consumption = total_power_consumption / args.test_iterations
-    return avg_makespan, avg_power_consumption
+    avg_energy_consumption = total_energy_consumption / args.test_iterations
+    return avg_makespan, avg_energy_consumption
 
 
 if __name__ == "__main__":

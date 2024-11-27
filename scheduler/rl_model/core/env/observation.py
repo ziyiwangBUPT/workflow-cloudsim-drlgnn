@@ -14,7 +14,7 @@ class EnvObservation:
     compatibilities: list[tuple[int, int]]
 
     _makespan: float | None = None
-    _power_consumption: float | None = None
+    _energy_consumption: float | None = None
     _task_completion_time: np.ndarray | None = None
 
     def __init__(self, state: EnvState):
@@ -71,9 +71,9 @@ class EnvObservation:
         self._task_completion_time = task_completion_time
         return self._makespan
 
-    def power_consumption(self):
-        if self._power_consumption is not None:
-            return self._power_consumption
+    def energy_consumption(self):
+        if self._energy_consumption is not None:
+            return self._energy_consumption
 
         from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
 
@@ -93,10 +93,8 @@ class EnvObservation:
                 task_energy_consumption[task_id] = min(new_energy_consumption, task_energy_consumption[task_id].item())
 
         active_energy_consumption = task_energy_consumption.sum()
-        active_power_consumption = active_energy_consumption / self.makespan()
-
-        self._power_consumption = active_power_consumption
-        return self._power_consumption
+        self._energy_consumption = active_energy_consumption
+        return self._energy_consumption
 
     def task_completion_time(self):
         if self._task_completion_time is None:

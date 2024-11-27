@@ -2,6 +2,7 @@ from typing import SupportsFloat, Any
 
 import numpy as np
 import gymnasium as gym
+from icecream import ic
 
 from scheduler.config.settings import MAX_OBS_SIZE
 from scheduler.rl_model.agents.gin_agent.mapper import GinAgentMapper
@@ -37,8 +38,8 @@ class GinAgentWrapper(gym.Wrapper):
         mapped_obs = self.map_observation(obs)
 
         makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
-        power_reward = -(obs.power_consumption() - self.prev_obs.power_consumption()) / obs.power_consumption()
-        reward = makespan_reward + power_reward
+        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
+        reward = makespan_reward + energy_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info
