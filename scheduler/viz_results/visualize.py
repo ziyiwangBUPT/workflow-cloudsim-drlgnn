@@ -20,9 +20,10 @@ def main(args: Args):
     axes[0].set_ylabel("Makespan (s)")
     axes[0].set_xlabel("Algorithm")
     axes[0].tick_params(axis="x", rotation=45)
+    axes[0].set_yscale("log")
 
     sns.boxplot(data=df, x="Algorithm", y="EnergyJ", ax=axes[1], palette="Set2")
-    axes[1].set_title(f"Distribution of Energy Consumption")
+    axes[1].set_title(f"Distribution of Active Energy Consumption")
     axes[1].set_ylabel("Energy Consumption (J)")
     axes[1].set_xlabel("Algorithm")
     axes[1].tick_params(axis="x", rotation=45)

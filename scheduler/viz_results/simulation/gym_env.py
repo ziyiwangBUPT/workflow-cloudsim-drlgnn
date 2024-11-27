@@ -119,6 +119,9 @@ class CloudSimGymEnvironment(gym.Env):
         if raw_info.get("total_energy_consumption_j") is not None:
             power_cons_str = raw_info["total_energy_consumption_j"]
             parsed_info["total_energy_consumption_j"] = float(power_cons_str)
+        if raw_info.get("active_energy_consumption_j") is not None:
+            power_cons_str = raw_info["active_energy_consumption_j"]
+            parsed_info["active_energy_consumption_j"] = float(power_cons_str)
 
         return parsed_info
 

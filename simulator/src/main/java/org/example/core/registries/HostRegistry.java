@@ -43,6 +43,11 @@ public class HostRegistry extends AbstractRegistry<MonitoredHost> {
         return itemStream().mapToDouble(MonitoredHost::getTotalEnergyConsumption).sum();
     }
 
+    /// Get the total energy consumption of all hosts.
+    public double getActiveEnergyConsumptionJ() {
+        return itemStream().mapToDouble(MonitoredHost::getActiveEnergyConsumption).sum();
+    }
+
     @Override
     protected SummaryTable<MonitoredHost> buildSummaryTable() {
         var summaryTable = new SummaryTable<MonitoredHost>();

@@ -80,6 +80,7 @@ public class Application implements Callable<Integer> {
         AgentResult<StaticObservation> finalAgentResult = AgentResult.truncated(reward);
         finalAgentResult.addInfo("solution", solution.toJson());
         finalAgentResult.addInfo("total_energy_consumption_j", Double.toString(hostRegistry.getTotalEnergyConsumptionJ()));
+        finalAgentResult.addInfo("active_energy_consumption_j", Double.toString(hostRegistry.getActiveEnergyConsumptionJ()));
         gymSharedQueue.setObservation(finalAgentResult);
 
         var cloudletRegistry = CloudletRegistry.getInstance();

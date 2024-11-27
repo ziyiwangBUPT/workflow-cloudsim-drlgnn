@@ -1,6 +1,7 @@
 package org.example.core.entities;
 
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Pe;
@@ -16,8 +17,7 @@ import java.util.List;
 public class MonitoredHost extends Host {
     @Getter
     private final PowerModel powerModel;
-    private final ArrayList<Double> hostUtilizationHistory = new ArrayList<>();
-    private final ArrayList<Double> energyConsumptionHistory = new ArrayList<>();
+    private final ArrayList<Utilization> hostUtilizationHistory = new ArrayList<>();
 
     @Builder
     public MonitoredHost(int id, RamProvisioner ramProvisioner, BwProvisioner bwProvisioner, long storage,
@@ -36,23 +36,48 @@ public class MonitoredHost extends Host {
 
         // Assuming delta t = 1
         var utilization = totalAllocationMips / getTotalMips();
-        this.hostUtilizationHistory.add(utilization);
-        this.energyConsumptionHistory.add(powerModel.getPower(utilization));
+        var totalEnergyConsumption = powerModel.getPower(utilization);
+        var passiveEnergyConsumption = powerModel.getPower(0);
+
+        var utilizationEntry = Utilization.builder()
+                .utilization(utilization)
+                .passiveEnergyConsumption(passiveEnergyConsumption)
+                .totalEnergyConsumption(totalEnergyConsumption)
+                .build();
+        this.hostUtilizationHistory.add(utilizationEntry);
     }
 
     /// Get the average CPU utilization of the host.
     public double getAverageCpuUtilization() {
-        return this.hostUtilizationHistory.stream().mapToDouble(x -> x).average()
+        return this.hostUtilizationHistory.stream().mapToDouble(Utilization::getUtilization).average()
                 .orElse(0);
     }
 
     /// Get the average power consumption of the host.
     public double getAveragePowerConsumption() {
-        return this.energyConsumptionHistory.stream().mapToDouble(x -> x).average()
-                .orElse(0);
+        return this.hostUtilizationHistory.stream().mapToDouble(Utilization::getTotalEnergyConsumption)
+                .average().orElse(0);
     }
 
     public double getTotalEnergyConsumption() {
-        return this.energyConsumptionHistory.stream().mapToDouble(x -> x).sum();
+        return this.hostUtilizationHistory.stream().mapToDouble(Utilization::getTotalEnergyConsumption)
+                .sum();
+    }
+
+    public double getActiveEnergyConsumption() {
+        return this.hostUtilizationHistory.stream().mapToDouble(Utilization::getActiveEnergyConsumption)
+                .sum();
+    }
+
+    @Builder
+    @Data
+    private static class Utilization {
+        private double utilization;
+        private double totalEnergyConsumption;
+        private double passiveEnergyConsumption;
+
+        double getActiveEnergyConsumption() {
+            return totalEnergyConsumption - passiveEnergyConsumption;
+        }
     }
 }
