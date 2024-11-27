@@ -23,10 +23,6 @@ class Args:
     """path to the simulator JAR file"""
     seed: int
     """random seed"""
-    buffer_size: int
-    """size of the workflow scheduler buffer"""
-    buffer_timeout: int
-    """timeout of the workflow scheduler buffer"""
     export_csv: str
     """file to output the export CSV"""
     num_iterations: int = 10
@@ -63,7 +59,7 @@ def run_algorithm(scheduler: BaseScheduler, seed: int, args: Args) -> tuple[floa
         obs, reward, terminated, truncated, info = env.step(SimEnvAction(assignments))
         if terminated or truncated:
             solution: Solution = info["solution"]
-            energy_consumption: float = info.get("total_energy_consumption_j", 0)
+            energy_consumption: float = info.get("active_energy_consumption_j", 0)
             start_time = min([assignment.start_time for assignment in solution.vm_assignments])
             end_time = max([assignment.end_time for assignment in solution.vm_assignments])
             makespan = end_time - start_time
