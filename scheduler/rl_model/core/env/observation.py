@@ -92,8 +92,7 @@ class EnvObservation:
                 new_energy_consumption = self.task_observations[task_id].length * energy_consumption_rate
                 task_energy_consumption[task_id] = min(new_energy_consumption, task_energy_consumption[task_id].item())
 
-        active_energy_consumption = task_energy_consumption.sum()
-        self._energy_consumption = active_energy_consumption
+        self._energy_consumption = float(task_energy_consumption.sum())
         return self._energy_consumption
 
     def task_completion_time(self):
