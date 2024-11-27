@@ -26,8 +26,10 @@ DEFAULT_MODEL_DIR = ROOT_PATH / "logs"
 ALGORITHMS = [
     ("CP-SAT", "cp_sat"),
     ("Round Robin", "round_robin"),
-    ("Min-Min", "min_min"),
     ("Best Fit", "best_fit"),
+    ("Min-Min", "min_min"),
     ("Max-Min", "max_min"),
     ("HEFT", "heft"),
+    ("GA", "ga"),
+    # ("Model A", "gin_e:1732610612_local_10:model_61440.pt"),
 ]
