@@ -1,79 +1,71 @@
-from collections import defaultdict
-
-import networkx as nx
-from heft import heft
-import numpy as np
-
 from scheduler.rl_model.core.types import VmAssignmentDto, TaskDto, VmDto
 from scheduler.rl_model.core.utils.helpers import is_suitable
+from scheduler.rl_model.core.utils.task_mapper import TaskMapper
 from scheduler.viz_results.algorithms.base import BaseScheduler
-
-ScheduleType = dict[int, list[heft.ScheduleEvent]]
 
 
 class HeftScheduler(BaseScheduler):
-    """
-    Implementation of the HEFT scheduling algorithm.
-
-    HEFT is a scheduling algorithm that uses a combination of task-level and workflow-level scheduling.
-    Following implementation uses library: https://github.com/mackncheesiest/heft
-    """
+    """Implementation of the HEFT (Heterogeneous Earliest Finish Time) algorithm."""
 
     def schedule(self, tasks: list[TaskDto], vms: list[VmDto]) -> list[VmAssignmentDto]:
-        # Group tasks by workflow
-        grouped_tasks: defaultdict[int, list[TaskDto]] = defaultdict(list)
-        for task in tasks:
-            grouped_tasks[task.workflow_id].append(task)
+        mapper = TaskMapper(tasks)
+        mapped_tasks = mapper.map_tasks()
 
-        # Schedule each workflow
-        schedule: ScheduleType | None = None
-        assignments: list[tuple[float, VmAssignmentDto]] = []
-        assigning_task_start_id = 0
-        for workflow_id, task_list in grouped_tasks.items():
-            schedule = self.schedule_workflow(task_list, vms, schedule)
-            # Convert the schedule to a list of assignments
-            for vm_id, events in schedule.items():
-                for event in events:
-                    actual_task_id = event.task - assigning_task_start_id
-                    # We only care about tasks from the current workflow (events has old workflows + dummy tasks)
-                    if 0 <= actual_task_id < len(task_list):
-                        assignments.append((event.start, VmAssignmentDto(vm_id, workflow_id, actual_task_id)))
-            assigning_task_start_id += len(task_list) + 1
+        # Compute task priorities based on upward rank
+        task_rank = self.compute_task_priorities(mapped_tasks, vms)
+        sorted_m_tasks = sorted(mapped_tasks, key=lambda t: task_rank[t.id], reverse=True)
 
-        # Sort assignments by start time (make sure the order is correct)
-        assignments.sort(key=lambda x: x[0])
-        return [assignment for _, assignment in assignments]
+        vm_ready_times = {vm.id: 0.0 for vm in vms}
+        task_completion_times = {}
+        assignments = []
+        for m_task in sorted_m_tasks:
+            best_vm, earliest_finish_time = None, float("inf")
+
+            for vm in vms:
+                if not is_suitable(vm, m_task):
+                    continue
+
+                ready_time = vm_ready_times[vm.id]
+                parent_completion_times = [
+                    task_completion_times[parent_id]
+                    for parent_id in m_task.child_ids
+                    if parent_id in task_completion_times
+                ]
+                start_time = max(ready_time, max(parent_completion_times, default=0.0))
+
+                finish_time = start_time + (m_task.length / vm.cpu_speed_mips)
+                if finish_time < earliest_finish_time:
+                    best_vm = vm
+                    earliest_finish_time = finish_time
+
+            if best_vm is None:
+                raise Exception(f"Task {m_task.id} could not be scheduled on any VM.")
+
+            vm_ready_times[best_vm.id] = earliest_finish_time
+            task_completion_times[m_task.id] = earliest_finish_time
+            if m_task.id != mapper.dummy_start_task_id() and m_task.id != mapper.dummy_end_task_id():
+                u_workflow_id, u_task_id = mapper.unmap_id(m_task.id)
+                assignments.append(VmAssignmentDto(vm_id=best_vm.id, workflow_id=u_workflow_id, task_id=u_task_id))
+
+        return assignments
 
     @staticmethod
-    def schedule_workflow(tasks: list[TaskDto], vms: list[VmDto], schedule: ScheduleType | None) -> ScheduleType:
-        total_tasks = len(tasks) + 1  # Add a dummy task to represent the end of the workflow
-        total_vms = len(vms)
-        dummy_task_id = total_tasks - 1
+    def compute_task_priorities(tasks: list[TaskDto], vms: list[VmDto]) -> dict:
+        """Compute task priorities based on upward rank."""
 
-        # Computational cost between tasks and vms (+ dummy task)
-        comp_matrix = np.zeros((total_tasks, total_vms))
-        for i in range(total_tasks - 1):  # Exclude the dummy task
-            for j in range(total_vms):
-                if not is_suitable(vms[j], tasks[i]):
-                    comp_matrix[i, j] = np.inf
-                else:
-                    comp_matrix[i, j] = tasks[i].length / vms[j].cpu_speed_mips
-        # Communication cost between tasks - 0 if tasks are on the same VM, 1 otherwise
-        comm_matrix = 1 - np.eye(total_vms)
-        # Communication startup for VMs - 0 for all VMs
-        comm_startup = np.zeros(total_vms)
+        average_vm_speed = sum(vm.cpu_speed_mips for vm in vms) / len(vms)
+        task_rank = {}
 
-        dag: nx.DiGraph = nx.DiGraph()
-        dag.add_node(dummy_task_id)  # Add a dummy node to represent the end of the workflow
+        def compute_upward_rank(task: TaskDto):
+            if task.id in task_rank:
+                return task_rank[task.id]
 
-        for task in tasks:
-            dag.add_node(task.id)
-            if not task.child_ids:
-                dag.add_edge(task.id, dummy_task_id, weight=1)
-                continue
-            for child_id in task.child_ids:
-                dag.add_edge(task.id, child_id, weight=1)
+            child_ranks = [compute_upward_rank(child_task) for child_task in tasks if child_task.id in task.child_ids]
+            child_rank_max = max(child_ranks, default=0)
+            task_rank[task.id] = (task.length / average_vm_speed) + child_rank_max
+            return task_rank[task.id]
 
-        schedule, _, _ = heft.schedule_dag(dag, comp_matrix, comm_matrix, comm_startup, proc_schedules=schedule)
-        assert schedule is not None, "HEFT scheduling failed"
-        return schedule
+        for _task in tasks:
+            compute_upward_rank(_task)
+
+        return task_rank

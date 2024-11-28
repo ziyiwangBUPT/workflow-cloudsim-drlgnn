@@ -4,6 +4,7 @@ from scheduler.viz_results.algorithms.best_fit import BestFitScheduler
 from scheduler.viz_results.algorithms.cp_sat import CpSatScheduler
 from scheduler.viz_results.algorithms.ga import GAScheduler
 from scheduler.viz_results.algorithms.gin_agent import GinAgentScheduler
+from scheduler.viz_results.algorithms.heft_ins import InsertionHeftScheduler
 from scheduler.viz_results.algorithms.heft import HeftScheduler
 from scheduler.viz_results.algorithms.max_min import MaxMinScheduler
 from scheduler.viz_results.algorithms.min_min import MinMinScheduler
@@ -23,6 +24,8 @@ def get_scheduler(algorithm: str) -> BaseScheduler:
         return MaxMinScheduler()
     elif strategy == "cp_sat":
         return CpSatScheduler()
+    elif strategy == "insertion_heft":
+        return InsertionHeftScheduler()
     elif strategy == "heft":
         return HeftScheduler()
     elif strategy == "power_saving":

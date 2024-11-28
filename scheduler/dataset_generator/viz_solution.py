@@ -18,7 +18,7 @@ from scheduler.dataset_generator.visualizers.utils import save_agraph
 
 @dataclass
 class Args:
-    prefix: str = "tmp/viz_solution"
+    prefix: str = "logs/data/viz_solution"
     """file prefix to use (with directory)"""
 
 
