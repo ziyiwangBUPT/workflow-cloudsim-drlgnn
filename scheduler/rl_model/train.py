@@ -86,11 +86,10 @@ class Args:
 
     dataset: DatasetArgs = field(
         default_factory=lambda: DatasetArgs(
-            host_count=10,
-            vm_count=4,
-            workflow_count=10,
-            gnp_min_n=20,
-            gnp_max_n=20,
+            host_count=4,
+            vm_count=20,
+            max_tasks_per_workflow=20,
+            num_tasks=200,
             max_memory_gb=10,
             min_cpu_speed=500,
             max_cpu_speed=5000,

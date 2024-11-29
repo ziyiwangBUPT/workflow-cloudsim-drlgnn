@@ -8,26 +8,34 @@ import tyro
 @dataclasses.dataclass
 class Args:
     import_csv: str
-    """file to import the CSV"""
+    """File to import the CSV"""
 
 
 def main(args: Args):
-    fig, axes = plt.subplots(1, 2, figsize=(18, 9), sharey=False)
-
     df = pd.read_csv(args.import_csv)
-    sns.boxplot(data=df, x="Algorithm", y="Makespan", ax=axes[0], palette="Set2")
-    axes[0].set_title(f"Distribution of Makespan")
-    axes[0].set_ylabel("Makespan (s)")
-    axes[0].set_xlabel("Algorithm")
-    axes[0].tick_params(axis="x", rotation=45)
-    axes[0].set_yscale("log")
+    avg_df = df.groupby(["NumTasks", "Algorithm"], as_index=False).agg({"Makespan": "mean"})
 
-    sns.boxplot(data=df, x="Algorithm", y="EnergyJ", ax=axes[1], palette="Set2")
-    axes[1].set_title(f"Distribution of Active Energy Consumption")
-    axes[1].set_ylabel("Energy Consumption (J)")
-    axes[1].set_xlabel("Algorithm")
-    axes[1].tick_params(axis="x", rotation=45)
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.lineplot(
+        data=avg_df,
+        x="NumTasks",
+        y="Makespan",
+        hue="Algorithm",
+        style="Algorithm",
+        markers=True,
+        ax=ax,
+        linewidth=2,
+        palette="Set2",
+        legend=True,
+    )
 
+    # Customize the plot
+    ax.set_title("Average Makespan Trends Across Dataset Sizes")
+    ax.set_ylabel("Average Makespan (s)")
+    ax.set_xlabel("Dataset Size")
+    ax.tick_params(axis="x", rotation=45)
+    ax.legend(title="Algorithm")
     plt.tight_layout()
     plt.show()
 

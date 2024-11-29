@@ -20,14 +20,12 @@ class DatasetArgs:
     """minimum CPU speed in MIPS"""
     max_cpu_speed: int = 5000
     """maximum CPU speed in MIPS"""
-    workflow_count: int = 3
-    """number of workflows"""
+    max_tasks_per_workflow: int = 10
+    """maximum number of tasks per workflow"""
+    num_tasks: int = 20
+    """number of tasks"""
     dag_method: str = "gnp"
     """DAG generation method (pegasus, gnp)"""
-    gnp_min_n: int = 1
-    """minimum number of tasks per workflow (for G(n,p) method)"""
-    gnp_max_n: int = 5
-    """maximum number of tasks per workflow (for G(n,p) method)"""
     task_length_dist: str = "normal"
     """task length distribution (normal, uniform, left_skewed, right_skewed)"""
     min_task_length: int = 500
@@ -48,10 +46,9 @@ def main(args: DatasetArgs):
         max_memory_gb=args.max_memory_gb,
         min_cpu_speed_mips=args.min_cpu_speed,
         max_cpu_speed_mips=args.max_cpu_speed,
-        workflow_count=args.workflow_count,
+        max_tasks_per_workflow=args.max_tasks_per_workflow,
+        num_tasks=args.num_tasks,
         dag_method=args.dag_method,
-        gnp_min_n=args.gnp_min_n,
-        gnp_max_n=args.gnp_max_n,
         task_length_dist=args.task_length_dist,
         min_task_length=args.min_task_length,
         max_task_length=args.max_task_length,

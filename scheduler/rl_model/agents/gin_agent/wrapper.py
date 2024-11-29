@@ -32,13 +32,14 @@ class GinAgentWrapper(gym.Wrapper):
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
-        obs, _, terminated, truncated, info = super().step(mapped_action)
+        obs, reward, terminated, truncated, info = super().step(mapped_action)
         assert isinstance(obs, EnvObservation)
         mapped_obs = self.map_observation(obs)
 
-        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
-        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
-        reward = makespan_reward + energy_reward
+        if truncated:
+            makespan_reward = -obs.task_observations[-1].completion_time
+            energy_reward = -sum(t.energy_consumption for t in obs.task_observations)
+            reward = makespan_reward + energy_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info

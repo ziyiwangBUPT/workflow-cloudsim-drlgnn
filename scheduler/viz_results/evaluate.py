@@ -26,13 +26,13 @@ class Args:
     """path to the simulator JAR file"""
     export_csv: str
     """file to output the export CSV"""
-    num_samples_per_setting: int = 10
+    num_samples_per_setting: int = 3
     """number of iterations to evaluate in a setting"""
     settings: list["EvaluationSetting"] = field(
         default_factory=lambda: [
-            EvaluationSetting(id=0, num_tasks=200),
-            EvaluationSetting(id=1, num_tasks=300),
-            EvaluationSetting(id=2, num_tasks=400),
+            EvaluationSetting(id=0, num_tasks=100),
+            EvaluationSetting(id=1, num_tasks=200),
+            EvaluationSetting(id=2, num_tasks=300),
         ]
     )
     """number of tasks"""
@@ -43,28 +43,26 @@ class EvaluationSetting:
     id: int
     num_tasks: int
 
-
-def create_dataset(num_tasks: int) -> DatasetArgs:
-    return DatasetArgs(
-        host_count=10,
-        vm_count=4,
-        workflow_count=1,
-        gnp_min_n=num_tasks,
-        gnp_max_n=num_tasks,
-        max_memory_gb=10,
-        min_cpu_speed=500,
-        max_cpu_speed=5000,
-        min_task_length=500,
-        max_task_length=100_000,
-        task_arrival="static",
-        dag_method="gnp",
-    )
+    def to_dataset_args(self):
+        return DatasetArgs(
+            host_count=10,
+            vm_count=4,
+            max_tasks_per_workflow=20,
+            num_tasks=self.num_tasks,
+            max_memory_gb=10,
+            min_cpu_speed=500,
+            max_cpu_speed=5000,
+            min_task_length=500,
+            max_task_length=100_000,
+            task_arrival="static",
+            dag_method="gnp",
+        )
 
 
 def run_algorithm(
     scheduler: BaseScheduler, seed_id: int, setting: EvaluationSetting, args: Args
 ) -> tuple[float, float, float]:
-    env = CloudSimGymEnvironment(args.simulator, create_dataset(setting.num_tasks))
+    env = CloudSimGymEnvironment(args.simulator, setting.to_dataset_args())
 
     total_scheduling_time: float = 0
     obs, info = env.reset(seed=MIN_EVALUATING_DS_SEED + seed_id)
@@ -95,9 +93,9 @@ def main(args: Args):
         makespan, energy_consumption, total_scheduling_time = run_algorithm(scheduler, seed_id, setting, args)
         results.append(
             {
-                "Algorithm": algorithm_name,
-                "Index": setting.id,
                 "SeedId": seed_id,
+                "Algorithm": algorithm_name,
+                "NumTasks": setting.num_tasks,
                 "Makespan": makespan,
                 "EnergyJ": energy_consumption,
                 "Time": total_scheduling_time,
