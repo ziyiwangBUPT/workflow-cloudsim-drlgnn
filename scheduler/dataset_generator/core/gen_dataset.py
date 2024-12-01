@@ -14,9 +14,10 @@ def generate_dataset(
     max_memory_gb: int,
     min_cpu_speed_mips: int,
     max_cpu_speed_mips: int,
-    max_tasks_per_workflow: int,
-    num_tasks: int,
+    workflow_count: int,
     dag_method: str,
+    gnp_min_n: int,
+    gnp_max_n: int,
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
@@ -35,9 +36,10 @@ def generate_dataset(
     allocate_vms(vms, hosts)
 
     workflows = generate_workflows(
-        max_tasks_per_workflow=max_tasks_per_workflow,
-        num_tasks=num_tasks,
+        workflow_count=workflow_count,
         dag_method=dag_method,
+        gnp_min_n=gnp_min_n,
+        gnp_max_n=gnp_max_n,
         task_length_dist=task_length_dist,
         min_task_length=min_task_length,
         max_task_length=max_task_length,

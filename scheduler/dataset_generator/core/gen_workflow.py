@@ -5,9 +5,10 @@ from scheduler.dataset_generator.core.models import Task, Workflow
 
 
 def generate_workflows(
-    max_tasks_per_workflow: int,
-    num_tasks: int,
+    workflow_count: int,
     dag_method: str,
+    gnp_min_n: int,
+    gnp_max_n: int,
     task_length_dist: str,
     min_task_length: int,
     max_task_length: int,
@@ -28,19 +29,13 @@ def generate_workflows(
     def req_memory_gen() -> int:
         return random.randint(1, max_req_memory_mb // 1024) * 1024
 
-    def dag_gen(tasks_per_workflow: int) -> dict[int, set[int]]:
-        return generate_dag(dag_method, gnp_min_n=1, gnp_max_n=tasks_per_workflow)
+    def dag_gen() -> dict[int, set[int]]:
+        return generate_dag(dag_method, gnp_min_n=gnp_min_n, gnp_max_n=gnp_max_n)
 
     arrival_time = 0
     workflows: list[Workflow] = []
-    generated_task_count: int = 0
-    while generated_task_count < num_tasks:
-        if generated_task_count + max_tasks_per_workflow < num_tasks:
-            dag = dag_gen(random.randint(1, max_tasks_per_workflow))
-        else:
-            dag = dag_gen(num_tasks - generated_task_count)
-
-        workflow_id = len(workflows)
+    for workflow_id in range(workflow_count):
+        dag = dag_gen()
         tasks: list[Task] = [
             Task(
                 id=task_id,
@@ -53,6 +48,5 @@ def generate_workflows(
         ]
         arrival_time += delay_gen()
         workflows.append(Workflow(id=workflow_id, tasks=tasks, arrival_time=arrival_time))
-        generated_task_count += len(tasks)
 
     return workflows

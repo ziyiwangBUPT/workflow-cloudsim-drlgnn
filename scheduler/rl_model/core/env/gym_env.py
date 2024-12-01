@@ -199,16 +199,16 @@ class CloudSchedulingGymEnvironment(gym.Env):
 
     @staticmethod
     def gen_dataset(seed: int | None, dataset_args: DatasetArgs):
-        scaling_factor = 1 + max(0, int(global_reset_counter / 500 - 1))
         return generate_dataset(
             seed=seed if seed is not None else random.randint(1, MAX_TRAINING_DS_SEED),
             host_count=dataset_args.host_count,
-            vm_count=dataset_args.vm_count * scaling_factor,
+            vm_count=dataset_args.vm_count,
+            workflow_count=dataset_args.workflow_count,
+            gnp_max_n=dataset_args.gnp_max_n,
+            gnp_min_n=dataset_args.gnp_min_n,
             max_memory_gb=dataset_args.max_memory_gb,
             min_cpu_speed_mips=dataset_args.min_cpu_speed,
             max_cpu_speed_mips=dataset_args.max_cpu_speed,
-            max_tasks_per_workflow=dataset_args.max_tasks_per_workflow * scaling_factor,
-            num_tasks=dataset_args.num_tasks * scaling_factor,
             dag_method=dataset_args.dag_method,
             task_length_dist=dataset_args.task_length_dist,
             min_task_length=dataset_args.min_task_length,

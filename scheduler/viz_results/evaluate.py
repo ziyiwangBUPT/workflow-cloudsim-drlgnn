@@ -30,9 +30,9 @@ class Args:
     """number of iterations to evaluate in a setting"""
     settings: list["EvaluationSetting"] = field(
         default_factory=lambda: [
-            EvaluationSetting(id=0, num_tasks=100),
-            EvaluationSetting(id=1, num_tasks=200),
-            EvaluationSetting(id=2, num_tasks=300),
+            EvaluationSetting(id=0, num_workflows=5),
+            EvaluationSetting(id=1, num_workflows=10),
+            EvaluationSetting(id=2, num_workflows=20),
         ]
     )
     """number of tasks"""
@@ -41,14 +41,15 @@ class Args:
 @dataclass
 class EvaluationSetting:
     id: int
-    num_tasks: int
+    num_workflows: int
 
     def to_dataset_args(self):
         return DatasetArgs(
             host_count=10,
             vm_count=4,
-            max_tasks_per_workflow=20,
-            num_tasks=self.num_tasks,
+            workflow_count=self.num_workflows,
+            gnp_min_n=1,
+            gnp_max_n=20,
             max_memory_gb=10,
             min_cpu_speed=500,
             max_cpu_speed=5000,
@@ -95,7 +96,7 @@ def main(args: Args):
             {
                 "SeedId": seed_id,
                 "Algorithm": algorithm_name,
-                "NumTasks": setting.num_tasks,
+                "NumTasks": setting.num_workflows,
                 "Makespan": makespan,
                 "EnergyJ": energy_consumption,
                 "Time": total_scheduling_time,

@@ -18,18 +18,17 @@ WORKFLOW_FILES = [
 MAX_OBS_SIZE = 100_000
 MAX_TRAINING_DS_SEED = 1_000_000_000
 MIN_TESTING_DS_SEED = MAX_TRAINING_DS_SEED + 1
+MIN_EVALUATING_DS_SEED = 2 * MAX_TRAINING_DS_SEED + 1
 
 # Evaluation related
 # ----------------------------------------------------------------------------------------------------------------------
 
 DEFAULT_MODEL_DIR = ROOT_PATH / "logs"
 ALGORITHMS = [
-    ("CP-SAT", "cp_sat"),
-    ("Round Robin", "round_robin"),
-    ("Best Fit", "best_fit"),
-    ("Min-Min", "min_min"),
-    ("Max-Min", "max_min"),
-    ("HEFT", "heft"),
-    ("GA", "ga"),
-    # ("Model A", "gin_e:1732610612_local_10:model_61440.pt"),
+    # ("CP-SAT", "cp_sat"),
+    ("HEFT", "insertion_heft"),
+    # ("GA", "ga"),
+    ("GIN - 4x10x20 - 32H (1/speed)", "gin:1732731101_gin_inv_speed:model_645120.pt"),
+    # ("GIN 4x200 1024 STEPS", "gin:1732909949_gin_mke_r1024:model_399360.pt"),
+    # ("GIN 4x200 STEPPED", "gin:1733026564_gin_mk_tinc:model_102400.pt"),
 ]
