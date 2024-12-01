@@ -96,7 +96,7 @@ def main(args: Args):
             {
                 "SeedId": seed_id,
                 "Algorithm": algorithm_name,
-                "NumTasks": setting.num_workflows,
+                "NumWorkflows": setting.num_workflows,
                 "Makespan": makespan,
                 "EnergyJ": energy_consumption,
                 "Time": total_scheduling_time,
