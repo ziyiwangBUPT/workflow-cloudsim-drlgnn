@@ -32,7 +32,7 @@ class GinAgentWrapper(gym.Wrapper):
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
-        obs, reward, terminated, truncated, info = super().step(mapped_action)
+        obs, _, terminated, truncated, info = super().step(mapped_action)
         assert isinstance(obs, EnvObservation)
         mapped_obs = self.map_observation(obs)
 

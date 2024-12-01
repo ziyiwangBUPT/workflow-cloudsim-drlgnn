@@ -17,6 +17,9 @@ from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_
 from scheduler.rl_model.core.utils.task_mapper import TaskMapper
 
 
+global_reset_counter = 0
+
+
 class CloudSchedulingGymEnvironment(gym.Env):
     dataset_generator: Callable[[int | None], Dataset]
     state: EnvState | None = None
@@ -31,22 +34,7 @@ class CloudSchedulingGymEnvironment(gym.Env):
             self.dataset_generator = lambda _: dataset
         if dataset_args is not None:
             assert dataset is None, "When dataset_arg is passed, dataset must be None"
-            self.dataset_generator = lambda seed: generate_dataset(
-                seed=seed if seed is not None else random.randint(1, MAX_TRAINING_DS_SEED),
-                host_count=dataset_args.host_count,
-                vm_count=dataset_args.vm_count,
-                max_memory_gb=dataset_args.max_memory_gb,
-                min_cpu_speed_mips=dataset_args.min_cpu_speed,
-                max_cpu_speed_mips=dataset_args.max_cpu_speed,
-                max_tasks_per_workflow=dataset_args.max_tasks_per_workflow,
-                num_tasks=dataset_args.num_tasks,
-                dag_method=dataset_args.dag_method,
-                task_length_dist=dataset_args.task_length_dist,
-                min_task_length=dataset_args.min_task_length,
-                max_task_length=dataset_args.max_task_length,
-                task_arrival=dataset_args.task_arrival,
-                arrival_rate=dataset_args.arrival_rate,
-            )
+            self.dataset_generator = lambda seed: self.gen_dataset(seed, dataset_args)
 
     # Reset
     # ------------------------------------------------------------------------------------------------------------------
@@ -54,7 +42,10 @@ class CloudSchedulingGymEnvironment(gym.Env):
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[EnvObservation, dict[str, Any]]:
+        global global_reset_counter
+
         super().reset(seed=seed, options=options)
+        global_reset_counter += 1
 
         # Generate tasks and vms according to seed
         dataset = self.dataset_generator(seed)
@@ -205,3 +196,23 @@ class CloudSchedulingGymEnvironment(gym.Env):
         info = {"assignments": [assignment[1] for assignment in sorted_assignments]}
         reward = -max(vm.completion_time for vm in self.state.vm_states)
         return EnvObservation(self.state), reward, False, True, info
+
+    @staticmethod
+    def gen_dataset(seed: int | None, dataset_args: DatasetArgs):
+        scaling_factor = 1 + max(0, int(global_reset_counter / 500 - 1))
+        return generate_dataset(
+            seed=seed if seed is not None else random.randint(1, MAX_TRAINING_DS_SEED),
+            host_count=dataset_args.host_count,
+            vm_count=dataset_args.vm_count * scaling_factor,
+            max_memory_gb=dataset_args.max_memory_gb,
+            min_cpu_speed_mips=dataset_args.min_cpu_speed,
+            max_cpu_speed_mips=dataset_args.max_cpu_speed,
+            max_tasks_per_workflow=dataset_args.max_tasks_per_workflow * scaling_factor,
+            num_tasks=dataset_args.num_tasks * scaling_factor,
+            dag_method=dataset_args.dag_method,
+            task_length_dist=dataset_args.task_length_dist,
+            min_task_length=dataset_args.min_task_length,
+            max_task_length=dataset_args.max_task_length,
+            task_arrival=dataset_args.task_arrival,
+            arrival_rate=dataset_args.arrival_rate,
+        )

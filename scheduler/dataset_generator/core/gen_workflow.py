@@ -28,14 +28,18 @@ def generate_workflows(
     def req_memory_gen() -> int:
         return random.randint(1, max_req_memory_mb // 1024) * 1024
 
-    def dag_gen() -> dict[int, set[int]]:
-        return generate_dag(dag_method, gnp_min_n=1, gnp_max_n=random.randint(1, max_tasks_per_workflow))
+    def dag_gen(tasks_per_workflow: int) -> dict[int, set[int]]:
+        return generate_dag(dag_method, gnp_min_n=1, gnp_max_n=tasks_per_workflow)
 
     arrival_time = 0
     workflows: list[Workflow] = []
     generated_task_count: int = 0
     while generated_task_count < num_tasks:
-        dag = dag_gen()
+        if generated_task_count + max_tasks_per_workflow < num_tasks:
+            dag = dag_gen(random.randint(1, max_tasks_per_workflow))
+        else:
+            dag = dag_gen(num_tasks - generated_task_count)
+
         workflow_id = len(workflows)
         tasks: list[Task] = [
             Task(

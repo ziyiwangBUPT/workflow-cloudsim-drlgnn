@@ -34,9 +34,9 @@ class GAScheduler(BaseScheduler):
                     self.dependencies_idx[child_index].append(parent_index)
 
         ga_instance = pygad.GA(
-            num_generations=1000,
-            num_parents_mating=900,
-            sol_per_pop=1000,
+            num_generations=100,
+            num_parents_mating=400,
+            sol_per_pop=500,
             num_genes=len(tasks),
             gene_type=int,
             init_range_low=0,
@@ -46,7 +46,7 @@ class GAScheduler(BaseScheduler):
             mutation_type="random",
             mutation_percent_genes=10,
             fitness_func=lambda ga, sol, idx: self.fitness(sol),
-            on_generation=lambda x: ic(x.best_solution()[1]),
+            # on_generation=lambda x: ic(x.best_solution()[1]),
         )
 
         ga_instance.run()

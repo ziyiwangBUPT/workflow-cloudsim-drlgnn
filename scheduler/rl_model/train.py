@@ -88,8 +88,8 @@ class Args:
         default_factory=lambda: DatasetArgs(
             host_count=4,
             vm_count=10,
-            max_tasks_per_workflow=20,
-            num_tasks=200,
+            max_tasks_per_workflow=10,
+            num_tasks=100,
             max_memory_gb=10,
             min_cpu_speed=500,
             max_cpu_speed=5000,

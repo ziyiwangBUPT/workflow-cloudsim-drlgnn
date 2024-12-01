@@ -26,7 +26,7 @@ class Args:
     """path to the simulator JAR file"""
     export_csv: str
     """file to output the export CSV"""
-    num_samples_per_setting: int = 3
+    num_samples_per_setting: int = 1
     """number of iterations to evaluate in a setting"""
     settings: list["EvaluationSetting"] = field(
         default_factory=lambda: [

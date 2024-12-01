@@ -30,10 +30,16 @@ class BaseGinNetwork(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, embedding_dim),
         ).to(self.device)
         self.vm_encoder = nn.Sequential(
             nn.Linear(3, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
@@ -44,7 +50,7 @@ class BaseGinNetwork(nn.Module):
         self.graph_network = GIN(
             in_channels=embedding_dim,
             hidden_channels=hidden_dim,
-            num_layers=3,
+            num_layers=4,
             out_channels=embedding_dim,
         ).to(self.device)
 
@@ -103,6 +109,9 @@ class GinActor(nn.Module):
             nn.BatchNorm1d(2 * hidden_dim),
             nn.ReLU(),
             nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
@@ -175,8 +184,8 @@ class GinAgent(Agent, nn.Module):
         self.device = device
 
         self.mapper = GinAgentMapper(MAX_OBS_SIZE)
-        self.actor = GinActor(hidden_dim=32, embedding_dim=32, device=device)
-        self.critic = GinCritic(hidden_dim=32, embedding_dim=32, device=device)
+        self.actor = GinActor(hidden_dim=64, embedding_dim=64, device=device)
+        self.critic = GinCritic(hidden_dim=64, embedding_dim=64, device=device)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(self.device)
