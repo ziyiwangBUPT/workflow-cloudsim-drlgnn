@@ -36,7 +36,9 @@ class GinAgentWrapper(gym.Wrapper):
         assert isinstance(obs, EnvObservation)
         mapped_obs = self.map_observation(obs)
 
-        reward = -(obs.energy_consumption() + obs.makespan())
+        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
+        reward = makespan_reward + energy_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info

@@ -175,8 +175,8 @@ class GinAgent(Agent, nn.Module):
         self.device = device
 
         self.mapper = GinAgentMapper(MAX_OBS_SIZE)
-        self.actor = GinActor(hidden_dim=32, embedding_dim=32, device=device)
-        self.critic = GinCritic(hidden_dim=32, embedding_dim=32, device=device)
+        self.actor = GinActor(hidden_dim=64, embedding_dim=16, device=device)
+        self.critic = GinCritic(hidden_dim=64, embedding_dim=16, device=device)
 
     def get_value(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(self.device)
