@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from scheduler.dataset_generator.core.gen_vm import generate_hosts, generate_vms, allocate_vms
@@ -28,12 +26,11 @@ def generate_dataset(
     Generate a dataset.
     """
 
-    random.seed(seed)
-    np.random.seed(seed)
+    rng = np.random.RandomState(seed)
 
-    hosts = generate_hosts(host_count)
-    vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips)
-    allocate_vms(vms, hosts)
+    hosts = generate_hosts(host_count, rng)
+    vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips, rng)
+    allocate_vms(vms, hosts, rng)
 
     workflows = generate_workflows(
         workflow_count=workflow_count,
@@ -47,6 +44,7 @@ def generate_dataset(
         max_req_memory_mb=max(vm.memory_mb for vm in vms),
         task_arrival=task_arrival,
         arrival_rate=arrival_rate,
+        rng=rng,
     )
 
     return Dataset(workflows=workflows, vms=vms, hosts=hosts)

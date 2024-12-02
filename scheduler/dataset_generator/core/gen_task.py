@@ -1,6 +1,6 @@
-import random
 import math
 
+import numpy as np
 from scipy import stats
 
 from scheduler.config.settings import WORKFLOW_FILES
@@ -9,23 +9,23 @@ from scheduler.config.settings import WORKFLOW_FILES
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def generate_poisson_delay(lam: float) -> float:
+def generate_poisson_delay(lam: float, rng: np.random.RandomState) -> float:
     """
     Generate a random delay between workflows in a Poisson process.
     The delay is exponentially distributed with parameter lambda.
     """
 
-    return stats.expon.rvs(scale=1 / lam)
+    return stats.expon.rvs(scale=1 / lam, random_state=rng)
 
 
-def generate_delay(method: str, **kwargs) -> float:
+def generate_delay(method: str, rng: np.random.RandomState, **kwargs) -> float:
     """
     Generate a random delay between workflows based on the specified method.
     Available methods: dynamic, static
     """
 
     if method == "dynamic":
-        return generate_poisson_delay(kwargs["arrival_rate"])
+        return generate_poisson_delay(kwargs["arrival_rate"], rng)
     elif method == "static":
         return 0
     else:
@@ -36,7 +36,7 @@ def generate_delay(method: str, **kwargs) -> float:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def generate_task_length(dist: str, low: float, high: float) -> float:
+def generate_task_length(dist: str, low: float, high: float, rng: np.random.RandomState) -> float:
     """
     Generate a random task length based on the specified method. <br/>
     Available methods: uniform, normal, left_skewed, right_skewed <br/>
@@ -50,11 +50,11 @@ def generate_task_length(dist: str, low: float, high: float) -> float:
     mean = (low + high) / 2
     std = (high - low) / 6
     if dist == "normal":
-        method = lambda: stats.norm.rvs(loc=mean, scale=std)
+        method = lambda: stats.norm.rvs(loc=mean, scale=std, random_state=rng)
     elif dist == "left_skewed":
-        method = lambda: stats.skewnorm.rvs(-5, loc=mean, scale=std)
+        method = lambda: stats.skewnorm.rvs(-5, loc=mean, scale=std, random_state=rng)
     elif dist == "right_skewed":
-        method = lambda: stats.skewnorm.rvs(5, loc=mean, scale=std)
+        method = lambda: stats.skewnorm.rvs(5, loc=mean, scale=std, random_state=rng)
     else:
         raise ValueError(f"Invalid distribution: {dist}")
 
@@ -68,7 +68,7 @@ def generate_task_length(dist: str, low: float, high: float) -> float:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-def generate_dag_gnp(n: int, p: float | None = None) -> dict[int, set[int]]:
+def generate_dag_gnp(n: int, p: float | None, rng: np.random.RandomState) -> dict[int, set[int]]:
     """
     Generate a random Directed Acyclic Graph (DAG) using the G(n, p) model.
     The resulting graph is represented as an adjacency list. <br/>
@@ -87,7 +87,7 @@ def generate_dag_gnp(n: int, p: float | None = None) -> dict[int, set[int]]:
 
     for i in range(1, n):
         for j in range(i + 1, n):
-            if random.random() < p:
+            if rng.random() < p:
                 nodes[i].add(j)
                 start_nodes.discard(j)
 
@@ -128,18 +128,18 @@ def generate_dag_pegasus(dag_file: str) -> tuple[dict[int, set[int]], dict[str, 
     return nodes, node_numbers
 
 
-def generate_dag_pegasus_random() -> tuple[dict[int, set[int]], dict[str, int]]:
+def generate_dag_pegasus_random(rng: np.random.RandomState) -> tuple[dict[int, set[int]], dict[str, int]]:
     """
     Generate a random Directed Acyclic Graph (DAG) using the Pegasus workflow generator.
     The resulting graph is represented as an adjacency list. <br/>
     This will return 2 values: the nodes and the node numbers.
     Node numbers are the assigned numbers of the nodes in the DAG file.
     """
-    dag_file = random.choice(WORKFLOW_FILES)
-    return generate_dag_pegasus(str(dag_file))
+    dag_file = WORKFLOW_FILES[rng.randint(0, len(WORKFLOW_FILES))]
+    return generate_dag_pegasus(str(dag_file), rng)
 
 
-def generate_dag(method: str, **kwargs) -> dict[int, set[int]]:
+def generate_dag(method: str, rng: np.random.RandomState, **kwargs) -> dict[int, set[int]]:
     """
     Generate a Directed Acyclic Graph (DAG) using the specified method.
     """
@@ -148,10 +148,10 @@ def generate_dag(method: str, **kwargs) -> dict[int, set[int]]:
         gnp_min_n = kwargs["gnp_min_n"]
         gnp_max_n = kwargs["gnp_max_n"]
         gnp_p = kwargs.get("gnp_p", None)
-        task_count = random.randint(gnp_min_n, gnp_max_n)
-        return generate_dag_gnp(task_count, gnp_p)
+        task_count = rng.randint(gnp_min_n, gnp_max_n + 1)
+        return generate_dag_gnp(task_count, gnp_p, rng)
     elif method == "pegasus":
-        graph, _ = generate_dag_pegasus_random()
+        graph, _ = generate_dag_pegasus_random(rng)
         return graph
     else:
         raise ValueError(f"Invalid method: {method}")
