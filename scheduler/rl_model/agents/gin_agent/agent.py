@@ -127,7 +127,7 @@ class GinActor(nn.Module):
         task_vm_edge_scores = task_vm_edge_scores[: obs.compatibilities.shape[1]]
 
         # Actions scores should be the value in edge embedding, but -inf on invalid actions
-        action_scores = torch.ones((num_tasks, num_vms), dtype=torch.float32) * -1e8
+        action_scores = torch.ones((num_tasks, num_vms), dtype=torch.float32).to(self.device) * -1e8
         action_scores[obs.compatibilities[0], obs.compatibilities[1]] = task_vm_edge_scores
         action_scores[obs.task_state_ready == 0, :] = -1e8  # Remove scores of actions with not ready tasks
 

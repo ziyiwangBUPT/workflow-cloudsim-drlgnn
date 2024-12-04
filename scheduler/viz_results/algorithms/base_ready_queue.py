@@ -38,35 +38,36 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
 
         while self._ready_tasks:
             ready_task_objs = [self.get_task(task_id) for task_id in self._ready_tasks]
-            next_task = self.select_task(ready_task_objs)
-            next_task_id = self.tid(next_task)
-            self._ready_tasks.remove(next_task_id)
-            self._processed_tasks.add(next_task_id)
+            selected_task, selected_vm = self.select_task_and_vm(ready_task_objs, vms)
+            selected_task_id = self.tid(selected_task)
+            self._ready_tasks.remove(selected_task_id)
+            self._processed_tasks.add(selected_task_id)
 
-            task = self.get_task(next_task_id)
-            selected_vm = self.select_vm(task, vms)
-            assignments.append(VmAssignmentDto(selected_vm.id, task.workflow_id, task.id))
+            assignments.append(VmAssignmentDto(selected_vm.id, selected_task.workflow_id, selected_task.id))
 
             # Update the completion time of the VM and the min start time of the child tasks
-            computation_time = task.length / selected_vm.cpu_speed_mips
+            computation_time = selected_task.length / selected_vm.cpu_speed_mips
             completion_time = (
-                max(self.est_vm_completion_times[self.vid(selected_vm)], self.est_task_min_start_times[self.tid(task)])
+                max(
+                    self.est_vm_completion_times[self.vid(selected_vm)],
+                    self.est_task_min_start_times[self.tid(selected_task)],
+                )
                 + computation_time
             )
             self.est_vm_completion_times[self.vid(selected_vm)] = completion_time
-            for child_id in task.child_ids:
-                child_task_id_1: TaskIdType = (task.workflow_id, child_id)
+            for child_id in selected_task.child_ids:
+                child_task_id_1: TaskIdType = (selected_task.workflow_id, child_id)
                 self.est_task_min_start_times[child_task_id_1] = max(
                     completion_time, self.est_task_min_start_times[child_task_id_1]
                 )
 
             # Update the ready tasks
-            for child_id in task.child_ids:
-                child_task_id_2: TaskIdType = (task.workflow_id, child_id)
+            for child_id in selected_task.child_ids:
+                child_task_id_2: TaskIdType = (selected_task.workflow_id, child_id)
                 all_parents_processed = all(
                     self.tid(parent) in self._processed_tasks
                     for parent in tasks
-                    if parent.workflow_id == task.workflow_id and child_id in parent.child_ids
+                    if parent.workflow_id == selected_task.workflow_id and child_id in parent.child_ids
                 )
                 if all_parents_processed and child_task_id_2 not in self._ready_tasks:
                     self._ready_tasks.append(child_task_id_2)
@@ -75,6 +76,12 @@ class BaseReadyQueueScheduler(BaseScheduler, ABC):
         self.est_vm_completion_times = None
         self.est_task_min_start_times = None
         return assignments
+
+    def select_task_and_vm(self, ready_tasks: list[TaskDto], vms: list[VmDto]) -> tuple[TaskDto, VmDto]:
+        next_task = self.select_task(ready_tasks)
+        selected_vm = self.select_vm(next_task, vms)
+
+        return next_task, selected_vm
 
     @abstractmethod
     def select_task(self, ready_tasks: list[TaskDto]) -> TaskDto:

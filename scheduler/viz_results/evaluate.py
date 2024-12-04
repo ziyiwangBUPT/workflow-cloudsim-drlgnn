@@ -26,13 +26,61 @@ class Args:
     """path to the simulator JAR file"""
     export_csv: str
     """file to output the export CSV"""
-    num_samples_per_setting: int = 1
+    num_samples_per_setting: int = 10
     """number of iterations to evaluate in a setting"""
     settings: list["EvaluationSetting"] = field(
         default_factory=lambda: [
-            EvaluationSetting(id=0, num_workflows=5),
-            EvaluationSetting(id=1, num_workflows=10),
-            EvaluationSetting(id=2, num_workflows=20),
+            EvaluationSetting(
+                id=1,
+                dataset_args=DatasetArgs(
+                    host_count=2,
+                    vm_count=3,
+                    workflow_count=5,
+                    gnp_min_n=1,
+                    gnp_max_n=5,
+                    max_memory_gb=2,
+                    min_cpu_speed=2500,
+                    max_cpu_speed=5000,
+                    min_task_length=50_000,
+                    max_task_length=100_000,
+                    task_arrival="static",
+                    dag_method="gnp",
+                ),
+            ),
+            # EvaluationSetting(
+            #     id=2,
+            #     dataset_args=DatasetArgs(
+            #         host_count=10,
+            #         vm_count=4,
+            #         workflow_count=10,
+            #         gnp_min_n=1,
+            #         gnp_max_n=20,
+            #         max_memory_gb=10,
+            #         min_cpu_speed=500,
+            #         max_cpu_speed=5000,
+            #         min_task_length=500,
+            #         max_task_length=100_000,
+            #         task_arrival="static",
+            #         dag_method="gnp",
+            #     ),
+            # ),
+            # EvaluationSetting(
+            #     id=3,
+            #     dataset_args=DatasetArgs(
+            #         host_count=4,
+            #         vm_count=10,
+            #         workflow_count=5,
+            #         gnp_min_n=20,
+            #         gnp_max_n=30,
+            #         max_memory_gb=10,
+            #         min_cpu_speed=5_000,
+            #         max_cpu_speed=10_000,
+            #         min_task_length=50_000,
+            #         max_task_length=500_000,
+            #         task_arrival="static",
+            #         dag_method="gnp",
+            #     ),
+            # ),
         ]
     )
     """number of tasks"""
@@ -41,23 +89,10 @@ class Args:
 @dataclass
 class EvaluationSetting:
     id: int
-    num_workflows: int
+    dataset_args: DatasetArgs
 
     def to_dataset_args(self):
-        return DatasetArgs(
-            host_count=10,
-            vm_count=4,
-            workflow_count=self.num_workflows,
-            gnp_min_n=1,
-            gnp_max_n=20,
-            max_memory_gb=10,
-            min_cpu_speed=500,
-            max_cpu_speed=5000,
-            min_task_length=500,
-            max_task_length=100_000,
-            task_arrival="static",
-            dag_method="gnp",
-        )
+        return self.dataset_args
 
 
 def run_algorithm(
@@ -95,8 +130,8 @@ def main(args: Args):
         results.append(
             {
                 "SeedId": seed_id,
+                "SettingId": setting.id,
                 "Algorithm": algorithm_name,
-                "NumWorkflows": setting.num_workflows,
                 "Makespan": makespan,
                 "EnergyJ": energy_consumption,
                 "Time": total_scheduling_time,

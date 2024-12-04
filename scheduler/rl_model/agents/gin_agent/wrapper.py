@@ -15,6 +15,7 @@ class GinAgentWrapper(gym.Wrapper):
     action_space = gym.spaces.Discrete(MAX_OBS_SIZE)
 
     prev_obs: EnvObservation
+    initial_obs: EnvObservation
 
     def __init__(self, env: gym.Env[np.ndarray, int]):
         super().__init__(env)
@@ -28,6 +29,7 @@ class GinAgentWrapper(gym.Wrapper):
         mapped_obs = self.map_observation(obs)
 
         self.prev_obs = obs
+        self.initial_obs = obs
         return mapped_obs, info
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:

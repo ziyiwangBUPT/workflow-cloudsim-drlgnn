@@ -16,7 +16,7 @@ class CpSatScheduler(BaseScheduler):
     _is_optimal: bool | None = None
     _makespan: float | None = None
 
-    def __init__(self, timeout: int = 5) -> None:
+    def __init__(self, timeout: int = 10) -> None:
         super().__init__()
         self.timeout = timeout
 
