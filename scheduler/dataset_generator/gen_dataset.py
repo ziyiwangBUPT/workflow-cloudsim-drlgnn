@@ -12,7 +12,7 @@ class DatasetArgs:
     """random seed"""
     host_count: int = 2
     """number of hosts"""
-    vm_count: int = 4
+    vm_count: int = 1
     """number of VMs"""
     max_memory_gb: int = 10
     """maximum amount of RAM for a VM (in GB)"""
@@ -26,7 +26,7 @@ class DatasetArgs:
     """DAG generation method (pegasus, gnp)"""
     gnp_min_n: int = 1
     """minimum number of tasks per workflow (for G(n,p) method)"""
-    gnp_max_n: int = 5
+    gnp_max_n: int = 10
     """maximum number of tasks per workflow (for G(n,p) method)"""
     task_length_dist: str = "normal"
     """task length distribution (normal, uniform, left_skewed, right_skewed)"""

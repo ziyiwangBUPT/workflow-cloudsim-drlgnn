@@ -11,7 +11,7 @@ from icecream import ic
 from pandas import DataFrame
 from tqdm import tqdm
 
-from scheduler.config.settings import ALGORITHMS, MIN_EVALUATING_DS_SEED
+from scheduler.config.settings import ALGORITHMS, MIN_TESTING_DS_SEED
 from scheduler.dataset_generator.core.models import Solution
 from scheduler.dataset_generator.gen_dataset import DatasetArgs
 from scheduler.viz_results.algorithms import algorithm_strategy
@@ -32,55 +32,63 @@ class Args:
         default_factory=lambda: [
             EvaluationSetting(
                 id=1,
+                # dataset_args=DatasetArgs(
+                #     host_count=3,
+                #     vm_count=4,
+                #     workflow_count=10,
+                #     gnp_min_n=1,
+                #     gnp_max_n=5,
+                #     max_memory_gb=2,
+                #     min_cpu_speed=2500,
+                #     max_cpu_speed=5000,
+                #     min_task_length=50_000,
+                #     max_task_length=100_000,
+                #     task_arrival="static",
+                #     dag_method="gnp",
+                # ),
+                # dataset_args=DatasetArgs(
+                #     host_count=3,
+                #     vm_count=5,
+                #     workflow_count=10,
+                #     gnp_min_n=15,
+                #     gnp_max_n=20,
+                #     max_memory_gb=10,
+                #     min_cpu_speed=1000,
+                #     max_cpu_speed=5000,
+                #     min_task_length=500,
+                #     max_task_length=100_000,
+                #     task_arrival="static",
+                #     dag_method="gnp",
+                # ),
+                # dataset_args=DatasetArgs(
+                #     host_count=3,
+                #     vm_count=5,
+                #     workflow_count=10,
+                #     gnp_min_n=40,
+                #     gnp_max_n=50,
+                #     max_memory_gb=10,
+                #     min_cpu_speed=1000,
+                #     max_cpu_speed=5000,
+                #     min_task_length=500,
+                #     max_task_length=100_000,
+                #     task_arrival="static",
+                #     dag_method="gnp",
+                # ),
                 dataset_args=DatasetArgs(
-                    host_count=2,
-                    vm_count=3,
-                    workflow_count=5,
+                    host_count=3,
+                    vm_count=5,
+                    workflow_count=100,
                     gnp_min_n=1,
-                    gnp_max_n=5,
-                    max_memory_gb=2,
-                    min_cpu_speed=2500,
+                    gnp_max_n=1,
+                    max_memory_gb=10,
+                    min_cpu_speed=1000,
                     max_cpu_speed=5000,
-                    min_task_length=50_000,
+                    min_task_length=500,
                     max_task_length=100_000,
                     task_arrival="static",
                     dag_method="gnp",
                 ),
             ),
-            # EvaluationSetting(
-            #     id=2,
-            #     dataset_args=DatasetArgs(
-            #         host_count=10,
-            #         vm_count=4,
-            #         workflow_count=10,
-            #         gnp_min_n=1,
-            #         gnp_max_n=20,
-            #         max_memory_gb=10,
-            #         min_cpu_speed=500,
-            #         max_cpu_speed=5000,
-            #         min_task_length=500,
-            #         max_task_length=100_000,
-            #         task_arrival="static",
-            #         dag_method="gnp",
-            #     ),
-            # ),
-            # EvaluationSetting(
-            #     id=3,
-            #     dataset_args=DatasetArgs(
-            #         host_count=4,
-            #         vm_count=10,
-            #         workflow_count=5,
-            #         gnp_min_n=20,
-            #         gnp_max_n=30,
-            #         max_memory_gb=10,
-            #         min_cpu_speed=5_000,
-            #         max_cpu_speed=10_000,
-            #         min_task_length=50_000,
-            #         max_task_length=500_000,
-            #         task_arrival="static",
-            #         dag_method="gnp",
-            #     ),
-            # ),
         ]
     )
     """number of tasks"""
@@ -101,7 +109,7 @@ def run_algorithm(
     env = CloudSimGymEnvironment(args.simulator, setting.to_dataset_args())
 
     total_scheduling_time: float = 0
-    obs, info = env.reset(seed=MIN_EVALUATING_DS_SEED + seed_id)
+    obs, info = env.reset(seed=MIN_TESTING_DS_SEED + seed_id)
     while True:
         scheduling_start_time = time.time()
         assignments = scheduler.schedule(obs.tasks, obs.vms)

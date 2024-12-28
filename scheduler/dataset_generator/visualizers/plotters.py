@@ -13,7 +13,7 @@ from scheduler.dataset_generator.core.models import Workflow, VmAssignment, Vm
 
 
 def get_color(color_id: int) -> str:
-    color_map = ["#C96868", "#FADFA1", "#7EACB5", "#E6B9A6", "#939185", "#FFF078", "#939185"]
+    color_map = ["#FADFA1", "#7EACB5", "#E6B9A6", "#939185", "#FFF078", "#939185"]
     return color_map[color_id % len(color_map)]
 
 
@@ -33,11 +33,11 @@ def plot_workflow_graphs(g: nx.DiGraph, workflows: list[Workflow]) -> pgv.AGraph
     for workflow in workflows:
         for task in workflow.tasks:
             node_id = get_node_id(workflow.id, task.id)
-            node_label = f"W{workflow.id} T{task.id}\n{task.length} MI\n{task.req_memory_mb // 1024} GB"
+            node_label = f"{task.length} MI\n{task.req_memory_mb // 1024} GB"
             node_color = get_color(workflow.id)
             g.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial")
             for child_id in task.child_ids:
-                g.add_edge(node_id, get_node_id(workflow.id, child_id), color=node_color)
+                g.add_edge(node_id, get_node_id(workflow.id, child_id), color="black")
 
     return nx.nx_agraph.to_agraph(g)
 
@@ -69,7 +69,7 @@ def plot_execution_graph(g: nx.DiGraph, workflows: list[Workflow], vms: list[Vm]
         workflow_id, task_id = processing.pop()
         task = task_map[(workflow_id, task_id)]
         node_id = get_node_id(workflow_id, task_id)
-        node_label = f"W{workflow_id} T{task_id}\n{task.length} MI\n{task.req_memory_mb//1024} GB"
+        node_label = f"{task.length} MI\n{task.req_memory_mb//1024} GB"
         node_color = get_color(workflow_id)
         g.add_node(node_id, label=node_label, fillcolor=node_color, style="filled", fontname="Arial", shape="box")
         for child_id in task.child_ids:

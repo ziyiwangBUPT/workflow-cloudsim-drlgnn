@@ -25,10 +25,10 @@ MIN_EVALUATING_DS_SEED = 2 * MAX_TRAINING_DS_SEED + 1
 
 DEFAULT_MODEL_DIR = ROOT_PATH / "logs"
 ALGORITHMS = [
-    # ("CP-SAT", "cp_sat"),
+    ("Random", "random"),
+    ("Round Robin", "round_robin"),
+    ("Min-Min", "min_min"),
+    ("Max-Min", "max_min"),
     ("HEFT", "insertion_heft"),
-    # ("GA", "ga"),
-    ("GIN - 4x10x20 - 32H (1/speed)", "gin:1732731101_gin_inv_speed:model_645120.pt"),
-    # ("GIN 4x200 1024 STEPS", "gin:1732909949_gin_mke_r1024:model_399360.pt"),
-    # ("GIN 4x200 STEPPED", "gin:1733026564_gin_mk_tinc:model_102400.pt"),
+    ("Proposed", "gin:1733128027_gin_R=-diff:model_501760.pt"),
 ]

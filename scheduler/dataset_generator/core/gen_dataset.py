@@ -21,16 +21,20 @@ def generate_dataset(
     max_task_length: int,
     task_arrival: str,
     arrival_rate: float,
+    vm_rng_seed: int | None = 0,  # Set to None when training
 ) -> Dataset:
     """
     Generate a dataset.
     """
 
     rng = np.random.RandomState(seed)
+    vm_rng = rng
+    if vm_rng_seed is not None:
+        vm_rng = np.random.RandomState(vm_rng_seed)
 
-    hosts = generate_hosts(host_count, rng)
-    vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips, rng)
-    allocate_vms(vms, hosts, rng)
+    hosts = generate_hosts(host_count, vm_rng)
+    vms = generate_vms(vm_count, max_memory_gb, min_cpu_speed_mips, max_cpu_speed_mips, vm_rng)
+    allocate_vms(vms, hosts, vm_rng)
 
     workflows = generate_workflows(
         workflow_count=workflow_count,

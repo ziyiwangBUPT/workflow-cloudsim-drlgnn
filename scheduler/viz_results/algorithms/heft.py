@@ -27,9 +27,9 @@ class HeftScheduler(BaseScheduler):
 
                 ready_time = vm_ready_times[vm.id]
                 parent_completion_times = [
-                    task_completion_times[parent_id]
-                    for parent_id in m_task.child_ids
-                    if parent_id in task_completion_times
+                    task_completion_times[parent_task.id]
+                    for parent_task in mapped_tasks
+                    if m_task.id in parent_task.child_ids
                 ]
                 start_time = max(ready_time, max(parent_completion_times, default=0.0))
 
