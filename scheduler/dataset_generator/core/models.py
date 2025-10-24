@@ -9,6 +9,20 @@ class Task:
     length: int
     req_memory_mb: int
     child_ids: list[int]
+    
+    # 预调度阶段新增属性
+    avg_est: float = 0.0      # 任务在平均资源上的估计最早开始时间
+    avg_eft: float = 0.0      # 任务在平均资源上的估计最早完成时间
+    rank_dp: float = 0.0      # 任务的DP排名（用作优先级分数）
+    deadline: float = 0.0     # 任务的子截止时间
+    
+    # 用于算法计算的辅助属性
+    parent_ids: list[int] = None  # 父任务ID列表（从child_ids反推）
+    max_avg_transtime: float = 0.0  # 平均最大传输时间
+    
+    def __post_init__(self):
+        if self.parent_ids is None:
+            self.parent_ids = []
 
 
 @dataclass
@@ -16,6 +30,12 @@ class Workflow:
     id: int
     tasks: list[Task]
     arrival_time: int
+    
+    # 预调度阶段新增属性
+    avg_eft: float = 0.0        # 工作流在平均资源上的估计最早完成时间
+    avg_slacktime: float = 0.0  # 工作流的平均松弛时间 (deadline - avg_eft)
+    workload: float = 0.0       # 工作流的总计算负载 (所有任务负载之和)
+    deadline: float = 0.0       # 工作流的截止时间
 
     @staticmethod
     def from_json(data: dict) -> "Workflow":

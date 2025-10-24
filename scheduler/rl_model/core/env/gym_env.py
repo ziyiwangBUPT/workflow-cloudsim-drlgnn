@@ -16,6 +16,11 @@ from scheduler.rl_model.core.types import TaskDto, VmDto, VmAssignmentDto
 from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi, is_suitable
 from scheduler.rl_model.core.utils.task_mapper import TaskMapper
 
+# 预调度模块导入
+from scheduler.pre_scheduling.pre_computation import precompute_workflow_data
+from scheduler.pre_scheduling.ws_method import ContentionAwareWorkflowSequencing
+from scheduler.pre_scheduling.dp_method import BottleLayerAwareDeadlinePartition
+
 
 global_reset_counter = 0
 
@@ -49,6 +54,37 @@ class CloudSchedulingGymEnvironment(gym.Env):
 
         # Generate tasks and vms according to seed
         dataset = self.dataset_generator(seed)
+
+        # --- [预调度阶段开始] 工作流排序 (WS) 和 截止时间划分 (DP) ---
+        
+        # 初始化预调度算法
+        # alpha1, alpha2, alpha3 是 WS 算法的权重参数，分别对应：松弛时间、工作负载、竞争度
+        # beta 是 DP 算法的瓶颈层调整因子
+        ws_scheduler = ContentionAwareWorkflowSequencing(alpha1=0.33, alpha2=0.33, alpha3=0.33)
+        dp_scheduler = BottleLayerAwareDeadlinePartition(beta=0.5)
+        
+        # rho 是松弛因子，用于计算工作流截止时间：deadline = avg_eft * (1 + rho)
+        rho = 0.2
+        
+        # 阶段0：预计算每个工作流的平均完成时间和相关属性
+        for workflow in dataset.workflows:
+            precompute_workflow_data(workflow, dataset.vms, rho)
+        
+        # 阶段1：工作流排序 (Workflow Sequencing)
+        # 根据松弛时间、工作负载和竞争度对工作流进行排序
+        sorted_workflows = ws_scheduler.run(dataset.workflows, dataset.vms)
+        
+        # 阶段2：截止时间划分 (Deadline Partition)
+        # 为每个工作流中的任务分配子截止时间和优先级分数
+        for workflow in sorted_workflows:
+            dp_scheduler.run(workflow, dataset.vms)
+        
+        # 更新 dataset 中的工作流顺序（可选，如果后续需要使用排序后的顺序）
+        dataset.workflows = sorted_workflows
+        
+        print(f"[预调度完成] 已对 {len(dataset.workflows)} 个工作流完成 WS 和 DP 处理")
+        
+        # --- [预调度阶段结束] ---
 
         # Map the tasks and VMs from the dataset to the required format
         host_map = {host.id: host for host in dataset.hosts}

@@ -5,7 +5,5 @@
     <option name="enabledOnSave" value="true" />
     <option name="sdkName" value="Python 3.12 (gnn-cloud-scheduler)" />
   </component>
-  <component name="ProjectRootManager">
-    <output url="file://$PROJECT_DIR$/out" />
-  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="E:\anaconda3\envs\drlgnn" project-jdk-type="Python SDK" />
 </project>
