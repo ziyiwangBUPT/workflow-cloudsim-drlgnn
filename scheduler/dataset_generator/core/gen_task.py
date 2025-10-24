@@ -136,7 +136,7 @@ def generate_dag_pegasus_random(rng: np.random.RandomState) -> tuple[dict[int, s
     Node numbers are the assigned numbers of the nodes in the DAG file.
     """
     dag_file = WORKFLOW_FILES[rng.randint(0, len(WORKFLOW_FILES))]
-    return generate_dag_pegasus(str(dag_file), rng)
+    return generate_dag_pegasus(str(dag_file))
 
 
 def generate_dag(method: str, rng: np.random.RandomState, **kwargs) -> dict[int, set[int]]:

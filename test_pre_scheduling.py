@@ -24,19 +24,19 @@ def test_pre_scheduling():
     # 1. 生成测试数据集
     print("\n1. 生成测试数据集...")
     dataset = generate_dataset(
-        seed=42,
+        seed=43,
         host_count=3,
         vm_count=10,
         workflow_count=5,
         gnp_min_n=5,
         gnp_max_n=10,
         max_memory_gb=16,
-        min_cpu_speed_mips=1000,
-        max_cpu_speed_mips=3000,
-        dag_method='gnp',
+        min_cpu_speed_mips=500,
+        max_cpu_speed_mips=1500,
+        dag_method='pegasus',
         task_length_dist='uniform',
-        min_task_length=100,
-        max_task_length=1000,
+        min_task_length=500000,
+        max_task_length=5000000,
         task_arrival='static',  # 修正：使用 'static' 而不是 'fixed'
         arrival_rate=1.0
     )

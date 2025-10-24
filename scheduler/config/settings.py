@@ -8,7 +8,12 @@ ROOT_PATH = Path(__file__).parent.parent.parent
 DATA_PATH = ROOT_PATH / "data"
 HOST_SPECS_PATH = DATA_PATH / "host_specs.json"
 WORKFLOW_FILES = [
-    DATA_PATH / "pegasus_workflows" / "sipht.dag",
+    DATA_PATH / "pegasus_workflows" / "example.dag",      # Diamond 工作流（简单）
+    DATA_PATH / "pegasus_workflows" / "montage.dag",      # Montage 工作流（天文图像处理）
+    DATA_PATH / "pegasus_workflows" / "genome.dag",       # Genome 工作流（基因组学）
+    DATA_PATH / "pegasus_workflows" / "sipht.dag",        # SIPHT 工作流（生物信息学）
+    DATA_PATH / "pegasus_workflows" / "cybershake.dag",   # CyberShake 工作流（地震模拟）
+    DATA_PATH / "pegasus_workflows" / "inspiral.dag",     # Inspiral 工作流（引力波分析）
 ]
 
 
