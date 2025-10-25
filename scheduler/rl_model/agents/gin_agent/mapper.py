@@ -12,15 +12,15 @@ class GinAgentMapper:
         self,
         task_state_scheduled: np.ndarray,
         task_state_ready: np.ndarray,
-        task_length: np.ndarray,
-        task_completion_time: np.ndarray,
+        task_length: np.ndarray,  # 保留：任务计算量
+        task_normalized_deadline: np.ndarray,  # 替换 task_completion_time: Min-Max 归一化的子截止时间
         vm_speed: np.ndarray,
         vm_energy_rate: np.ndarray,
         vm_completion_time: np.ndarray,
         task_dependencies: np.ndarray,
         compatibilities: np.ndarray,
     ) -> np.ndarray:
-        num_tasks = task_completion_time.shape[0]
+        num_tasks = task_length.shape[0]
         num_vms = vm_completion_time.shape[0]
         num_task_deps = task_dependencies.shape[1]
         num_compatibilities = compatibilities.shape[1]
@@ -30,8 +30,8 @@ class GinAgentMapper:
                 np.array([num_tasks, num_vms, num_task_deps, num_compatibilities], dtype=np.int32),  # Header
                 np.array(task_state_scheduled, dtype=np.int32),  # num_tasks
                 np.array(task_state_ready, dtype=np.int32),  # num_tasks
-                np.array(task_length, dtype=np.float64),  # num_tasks
-                np.array(task_completion_time, dtype=np.float64),  # num_tasks
+                np.array(task_length, dtype=np.float64),  # num_tasks: 保留任务计算量
+                np.array(task_normalized_deadline, dtype=np.float64),  # num_tasks: Min-Max 归一化的子截止时间
                 np.array(vm_speed, dtype=np.float64),  # num_vms
                 np.array(vm_energy_rate, dtype=np.float64),  # num_vms
                 np.array(vm_completion_time, dtype=np.float64),  # num_vms
@@ -58,9 +58,9 @@ class GinAgentMapper:
         tensor = tensor[num_tasks:]
         task_state_ready = tensor[:num_tasks].long()
         tensor = tensor[num_tasks:]
-        task_length = tensor[:num_tasks]
+        task_length = tensor[:num_tasks]  # 保留：任务计算量
         tensor = tensor[num_tasks:]
-        task_completion_time = tensor[:num_tasks]
+        task_normalized_deadline = tensor[:num_tasks]  # Min-Max 归一化的子截止时间
         tensor = tensor[num_tasks:]
 
         vm_speed = tensor[:num_vms]
@@ -80,8 +80,8 @@ class GinAgentMapper:
         return GinAgentObsTensor(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_length=task_length,
-            task_completion_time=task_completion_time,
+            task_length=task_length,  # 保留
+            task_normalized_deadline=task_normalized_deadline,  # 替换 task_completion_time
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
@@ -94,8 +94,8 @@ class GinAgentMapper:
 class GinAgentObsTensor:
     task_state_scheduled: torch.Tensor
     task_state_ready: torch.Tensor
-    task_length: torch.Tensor
-    task_completion_time: torch.Tensor
+    task_length: torch.Tensor  # 保留：任务计算量
+    task_normalized_deadline: torch.Tensor  # Min-Max 归一化的子截止时间（替换 task_completion_time）
     vm_speed: torch.Tensor
     vm_energy_rate: torch.Tensor
     vm_completion_time: torch.Tensor

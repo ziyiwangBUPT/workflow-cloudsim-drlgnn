@@ -26,6 +26,7 @@ class EnvObservation:
                 completion_time=state.task_states[task_id].completion_time,
                 energy_consumption=state.task_states[task_id].energy_consumption,
                 length=state.static_state.tasks[task_id].length,
+                deadline=state.static_state.tasks[task_id].deadline,  # 添加：任务的子截止时间（用于特征提取）
             )
             for task_id in range(len(state.task_states))
         ]
@@ -109,6 +110,7 @@ class TaskObservation:
     completion_time: float
     energy_consumption: float
     length: float
+    deadline: float = 0.0  # 任务的子截止时间（来自预调度 DP 算法，用于 GNN 特征）
 
 
 @dataclass

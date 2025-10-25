@@ -55,7 +55,9 @@ class BaseGinNetwork(nn.Module):
         num_tasks = obs.task_state_scheduled.shape[0]
         num_vms = obs.vm_completion_time.shape[0]
 
-        task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_completion_time]
+        # GNN 任务节点特征：[是否已调度, 是否就绪, 任务计算量, 归一化截止时间]
+        # 使用 Min-Max 归一化的 deadline 替换 task_completion_time，让 GNN 感知任务的时间压力
+        task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_normalized_deadline]
         vm_features = [obs.vm_completion_time, 1 / (obs.vm_speed + 1e-8), obs.vm_energy_rate]
 
         # Encode tasks
@@ -112,7 +114,7 @@ class GinActor(nn.Module):
         return super().__call__(*args, **kwargs)
 
     def forward(self, obs: GinAgentObsTensor) -> torch.Tensor:
-        num_tasks = obs.task_completion_time.shape[0]
+        num_tasks = obs.task_length.shape[0]  # 修改：使用 task_length 获取任务数量
         num_vms = obs.vm_completion_time.shape[0]
 
         _, edge_embeddings, graph_embedding = self.network(obs)

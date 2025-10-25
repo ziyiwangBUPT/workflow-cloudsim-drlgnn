@@ -54,6 +54,27 @@ class GinAgentWrapper(gym.Wrapper):
         task_state_scheduled = np.array([task.assigned_vm_id is not None for task in observation.task_observations])
         task_state_ready = np.array([task.is_ready for task in observation.task_observations])
         task_length = np.array([task.length for task in observation.task_observations])
+        
+        # 计算 Min-Max 归一化的子截止时间（替换 task_completion_time）
+        # 参考 ecmws-experiments/tasks/workflow.py 的 make_stored_graph() 方法
+        # 使用 Min-Max 归一化: (deadline - min) / (max - min)
+        
+        # 第1步：从当前 State 的所有任务中提取 deadline 值
+        task_deadlines = np.array([task.deadline for task in observation.task_observations])
+        
+        # 第2步：动态计算 min 和 max
+        min_deadline = task_deadlines.min()
+        max_deadline = task_deadlines.max()
+        delta_deadline = max_deadline - min_deadline
+        
+        # 第3步：Min-Max 归一化，处理除零异常
+        eps = 1e-2  # 防止数值不稳定的小阈值（与 ecmws-experiments 一致）
+        if delta_deadline <= eps:
+            # 当所有任务的 deadline 相同或非常接近时，设为1
+            task_normalized_deadline = np.ones_like(task_deadlines)
+        else:
+            # 标准 Min-Max 归一化: (x - min) / (max - min)
+            task_normalized_deadline = (task_deadlines - min_deadline) / delta_deadline
 
         # VM observations
         vm_speed = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
@@ -66,15 +87,11 @@ class GinAgentWrapper(gym.Wrapper):
         # Task-VM observations
         compatibilities = np.array(observation.compatibilities).T
 
-        # Task completion times
-        task_completion_time = observation.task_completion_time()
-        assert task_completion_time is not None
-
         return self.mapper.map(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_length=task_length,
-            task_completion_time=task_completion_time,
+            task_length=task_length,  # 保留：任务计算量
+            task_normalized_deadline=task_normalized_deadline,  # 替换 task_completion_time
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
