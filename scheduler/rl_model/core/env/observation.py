@@ -38,6 +38,8 @@ class EnvObservation:
                 host_power_idle_watt=state.static_state.vms[vm_id].host_power_idle_watt,
                 host_power_peak_watt=state.static_state.vms[vm_id].host_power_peak_watt,
                 host_cpu_speed_mips=state.static_state.vms[vm_id].host_cpu_speed_mips,
+                host_id=state.static_state.vms[vm_id].host_id,  # 新增
+                host_carbon_intensity_curve=state.static_state.vms[vm_id].host_carbon_intensity_curve,  # 新增
             )
             for vm_id in range(len(state.vm_states))
         ]
@@ -100,6 +102,32 @@ class EnvObservation:
         if self._task_completion_time is None:
             self.makespan()
         return self._task_completion_time
+    
+    def carbon_cost(self) -> float:
+        """
+        计算碳成本（为奖励函数预留的接口）
+        
+        碳成本 = 能耗 * 碳强度
+        
+        Returns:
+            float: 总碳成本
+        """
+        total_carbon_cost = 0.0
+        
+        for task_id, task_obs in enumerate(self.task_observations):
+            # 只计算已调度任务的碳成本
+            if task_obs.assigned_vm_id is not None:
+                vm_obs = self.vm_observations[task_obs.assigned_vm_id]
+                
+                # 获取任务执行时间段的碳强度
+                # 使用任务开始时间的碳强度作为代表值
+                carbon_intensity = vm_obs.get_carbon_intensity_at(task_obs.start_time)
+                
+                # 碳成本 = 能耗 * 碳强度
+                carbon_cost = task_obs.energy_consumption * carbon_intensity
+                total_carbon_cost += carbon_cost
+        
+        return total_carbon_cost
 
 
 @dataclass
@@ -121,3 +149,12 @@ class VmObservation:
     host_power_idle_watt: float
     host_power_peak_watt: float
     host_cpu_speed_mips: float
+    host_id: int = 0  # 新增：Host ID
+    host_carbon_intensity_curve: list[float] = None  # 新增：Host的碳强度曲线
+    
+    def get_carbon_intensity_at(self, time_seconds: float) -> float:
+        """获取指定时间的碳强度值"""
+        if self.host_carbon_intensity_curve is None:
+            return 0.1  # 默认值
+        hour = int(time_seconds // 3600) % 24
+        return self.host_carbon_intensity_curve[hour]

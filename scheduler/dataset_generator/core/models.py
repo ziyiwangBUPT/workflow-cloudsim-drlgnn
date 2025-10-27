@@ -13,8 +13,9 @@ class Task:
     # 预调度阶段新增属性
     avg_est: float = 0.0      # 任务在平均资源上的估计最早开始时间
     avg_eft: float = 0.0      # 任务在平均资源上的估计最早完成时间
-    rank_dp: float = 0.0      # 任务的DP排名（用作优先级分数）
+    rank_dp: float = 0.0      # 任务的DP排名（用作任务内优先级分数）
     deadline: float = 0.0     # 任务的子截止时间
+    global_priority: float = 0.0  # 全局优先级分数（工作流优先级 × 任务优先级）
     
     # 用于算法计算的辅助属性
     parent_ids: list[int] = None  # 父任务ID列表（从child_ids反推）
@@ -36,6 +37,18 @@ class Workflow:
     avg_slacktime: float = 0.0  # 工作流的平均松弛时间 (deadline - avg_eft)
     workload: float = 0.0       # 工作流的总计算负载 (所有任务负载之和)
     deadline: float = 0.0       # 工作流的截止时间
+    workflow_priority: float = 0.0  # 工作流优先级分数（WS算法计算，值越小优先级越高）
+    
+    # 虚拟时钟管理（新增）
+    virtual_clock: float = 0.0  # 工作流的虚拟时钟（秒），从0开始
+    
+    def advance_clock(self, time_delta: float) -> None:
+        """推进工作流的虚拟时钟"""
+        self.virtual_clock += time_delta
+    
+    def get_current_hour(self) -> int:
+        """获取当前虚拟时钟对应的小时（0-23）"""
+        return int(self.virtual_clock // 3600) % 24
 
     @staticmethod
     def from_json(data: dict) -> "Workflow":
@@ -64,6 +77,14 @@ class Host:
     memory_mb: int = -1
     disk_mb: int = -1
     bandwidth_mbps: int = -1
+    carbon_intensity_curve: list[float] = None  # 新增：24小时碳强度曲线
+    
+    def get_carbon_intensity_at(self, time_seconds: float) -> float:
+        """获取指定时间的碳强度值"""
+        if self.carbon_intensity_curve is None:
+            return 0.1  # 默认值
+        hour = int(time_seconds // 3600) % 24
+        return self.carbon_intensity_curve[hour]
 
 
 @dataclass

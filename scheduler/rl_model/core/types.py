@@ -10,15 +10,20 @@ class TaskDto:
     length: int
     req_memory_mb: int
     child_ids: list[int]
+    deadline: float = 0.0  # 新增：任务的子截止时间
 
     @staticmethod
     def from_task(task: Task):
+        # 安全获取deadline，如果不存在则使用默认值0.0
+        deadline = getattr(task, 'deadline', 0.0)
+        
         return TaskDto(
             id=task.id,
             workflow_id=task.workflow_id,
             length=task.length,
             req_memory_mb=task.req_memory_mb,
             child_ids=task.child_ids,
+            deadline=deadline,  # 新增：传递deadline
         )
 
     def to_task(self):
@@ -28,6 +33,7 @@ class TaskDto:
             length=self.length,
             req_memory_mb=self.req_memory_mb,
             child_ids=self.child_ids,
+            deadline=self.deadline,  # 新增：传递deadline
         )
 
 
@@ -39,6 +45,8 @@ class VmDto:
     host_power_idle_watt: float
     host_power_peak_watt: float
     host_cpu_speed_mips: float
+    host_id: int  # 新增：Host ID，用于获取碳强度
+    host_carbon_intensity_curve: list[float]  # 新增：Host的24小时碳强度曲线
 
     @staticmethod
     def from_vm(vm: Vm, host: Host):
@@ -50,7 +58,14 @@ class VmDto:
             host_cpu_speed_mips=host.cpu_speed_mips,
             host_power_idle_watt=host.power_idle_watt,
             host_power_peak_watt=host.power_peak_watt,
+            host_id=host.id,  # 新增
+            host_carbon_intensity_curve=host.carbon_intensity_curve or [0.1] * 24,  # 新增
         )
+    
+    def get_carbon_intensity_at(self, time_seconds: float) -> float:
+        """获取指定时间的碳强度值"""
+        hour = int(time_seconds // 3600) % 24
+        return self.host_carbon_intensity_curve[hour]
 
     def to_vm(self):
         return Vm(

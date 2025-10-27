@@ -56,6 +56,7 @@ class TaskMapper:
             length=0,
             req_memory_mb=0,
             child_ids=[self.map_id(_task.workflow_id, 0) for _task in self._tasks if _task.id == 0],
+            deadline=0.0,  # dummy任务没有deadline
         )
         dummy_end_task = TaskDto(
             id=self.dummy_end_task_id(),
@@ -63,6 +64,7 @@ class TaskMapper:
             length=0,
             req_memory_mb=0,
             child_ids=[],
+            deadline=0.0,  # dummy任务没有deadline
         )
 
         mapped_tasks: list[TaskDto] = [dummy_start_task]
@@ -72,6 +74,9 @@ class TaskMapper:
                 # If there are no children, link to the dummy end task
                 mapped_child_ids = [dummy_end_task.id]
 
+            # 安全获取deadline，如果不存在则使用默认值0.0
+            deadline = getattr(task, 'deadline', 0.0)
+            
             mapped_tasks.append(
                 TaskDto(
                     id=self.map_id(task.workflow_id, task.id),
@@ -79,6 +84,7 @@ class TaskMapper:
                     length=task.length,
                     req_memory_mb=task.req_memory_mb,
                     child_ids=mapped_child_ids,
+                    deadline=deadline,  # 新增：传递deadline
                 )
             )
         mapped_tasks.append(dummy_end_task)

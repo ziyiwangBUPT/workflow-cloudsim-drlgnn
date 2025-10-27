@@ -58,7 +58,10 @@ class BaseGinNetwork(nn.Module):
         # GNN 任务节点特征：[是否已调度, 是否就绪, 任务计算量, 归一化截止时间]
         # 使用 Min-Max 归一化的 deadline 替换 task_completion_time，让 GNN 感知任务的时间压力
         task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_normalized_deadline]
-        vm_features = [obs.vm_completion_time, 1 / (obs.vm_speed + 1e-8), obs.vm_energy_rate]
+        
+        # GNN VM节点特征：[完成时间, 速度倒数, 能耗率, 碳强度]
+        # 新增：碳强度特征，使模型能够感知不同Host的碳排放差异
+        vm_features = [obs.vm_completion_time, 1 / (obs.vm_speed + 1e-8), obs.vm_energy_rate, obs.vm_carbon_intensity]
 
         # Encode tasks
         task_x = torch.stack(task_features, dim=-1)

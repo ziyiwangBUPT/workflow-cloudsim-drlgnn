@@ -17,6 +17,7 @@ class GinAgentMapper:
         vm_speed: np.ndarray,
         vm_energy_rate: np.ndarray,
         vm_completion_time: np.ndarray,
+        vm_carbon_intensity: np.ndarray,  # 新增：VM的碳强度特征
         task_dependencies: np.ndarray,
         compatibilities: np.ndarray,
     ) -> np.ndarray:
@@ -35,6 +36,7 @@ class GinAgentMapper:
                 np.array(vm_speed, dtype=np.float64),  # num_vms
                 np.array(vm_energy_rate, dtype=np.float64),  # num_vms
                 np.array(vm_completion_time, dtype=np.float64),  # num_vms
+                np.array(vm_carbon_intensity, dtype=np.float64),  # num_vms: 新增碳强度特征
                 np.array(task_dependencies.flatten(), dtype=np.int32),  # num_task_deps*2
                 np.array(compatibilities.flatten(), dtype=np.int32),  # num_compatibilities*2
             ]
@@ -69,6 +71,8 @@ class GinAgentMapper:
         tensor = tensor[num_vms:]
         vm_completion_time = tensor[:num_vms]
         tensor = tensor[num_vms:]
+        vm_carbon_intensity = tensor[:num_vms]  # 新增：碳强度特征
+        tensor = tensor[num_vms:]
 
         task_dependencies = tensor[: num_task_deps * 2].reshape(2, num_task_deps).long()
         tensor = tensor[num_task_deps * 2 :]
@@ -85,6 +89,7 @@ class GinAgentMapper:
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
+            vm_carbon_intensity=vm_carbon_intensity,  # 新增
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
@@ -99,5 +104,6 @@ class GinAgentObsTensor:
     vm_speed: torch.Tensor
     vm_energy_rate: torch.Tensor
     vm_completion_time: torch.Tensor
+    vm_carbon_intensity: torch.Tensor  # 新增：VM的碳强度特征
     task_dependencies: torch.Tensor
     compatibilities: torch.Tensor

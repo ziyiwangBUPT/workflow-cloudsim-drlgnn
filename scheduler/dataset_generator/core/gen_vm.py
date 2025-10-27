@@ -3,6 +3,7 @@ import json
 import numpy as np
 
 from scheduler.config.settings import HOST_SPECS_PATH
+from scheduler.config.carbon_intensity import FIXED_NUM_HOSTS, CARBON_INTENSITY_DATA
 from scheduler.dataset_generator.core.models import Host, Vm
 
 
@@ -13,14 +14,29 @@ from scheduler.dataset_generator.core.models import Host, Vm
 def generate_hosts(n: int, rng: np.random.RandomState) -> list[Host]:
     """
     Generate a list of hosts with the specified number of hosts.
-    Uses the host specifications from data/host_specs.json.
+    
+    注意：为了支持碳强度特征，现在强制生成固定数量（4个）的Host。
+    每个Host对应一个碳强度曲线。
+    
+    Args:
+        n: 请求的Host数量（将被忽略，始终生成4个Host）
+        rng: 随机数生成器
+        
+    Returns:
+        list[Host]: 固定4个Host的列表
     """
-
+    # 强制使用固定数量的Host
+    actual_n = FIXED_NUM_HOSTS
+    
+    if n != actual_n:
+        print(f"[警告] 请求生成 {n} 个Host，但为支持碳强度特征，强制生成 {actual_n} 个Host")
+    
     with open(HOST_SPECS_PATH) as f:
         available_hosts: list = json.load(f)
 
     hosts: list[Host] = []
-    for i in range(n):
+    for i in range(actual_n):
+        # 为每个Host选择规格（可以使用不同的规格）
         spec = available_hosts[rng.randint(0, len(available_hosts))]
         hosts.append(
             Host(
@@ -32,6 +48,7 @@ def generate_hosts(n: int, rng: np.random.RandomState) -> list[Host]:
                 bandwidth_mbps=int(spec["bandwidth_gbps"] * 1024),
                 power_idle_watt=int(spec["power_idle_watt"]),
                 power_peak_watt=int(spec["power_peak_watt"]),
+                carbon_intensity_curve=CARBON_INTENSITY_DATA[i],  # 新增：分配碳强度曲线
             )
         )
     return hosts

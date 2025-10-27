@@ -81,17 +81,19 @@ class ContentionAwareWorkflowSequencing(WorkflowSequencing):
     
     def run(self, workflows: List[Workflow], vms: List[Vm]) -> List[Workflow]:
         """
-        运行工作流排序算法
+        运行工作流优先级计算算法
+        
+        注意：本方法不再对工作流进行排序，只计算优先级分数并写入workflow.workflow_priority
         
         Args:
             workflows: 工作流列表
             vms: 虚拟机列表（在此算法中未直接使用，但保留接口一致性）
             
         Returns:
-            排序后的工作流列表
+            原始工作流列表（未排序，但每个workflow的workflow_priority已更新）
         """
         if not workflows:
-            return []
+            return workflows
         
         # 1. 计算每个工作流的竞争度
         ct_lst = [compute_contention(wf) for wf in workflows]
@@ -105,17 +107,13 @@ class ContentionAwareWorkflowSequencing(WorkflowSequencing):
         max_st = max(st_lst) if max(st_lst) > 0 else 1
         max_wl = max(wl_lst) if max(wl_lst) > 0 else 1
         
-        # 4. 计算每个工作流的排序分数
-        ranks = [
-            (wf, self.a1 * st / max_st + self.a2 * wl / max_wl + self.a3 * ct / max_ct)
-            for st, wl, ct, wf in zip(st_lst, wl_lst, ct_lst, workflows)
-        ]
+        # 4. 计算每个工作流的优先级分数并写入workflow.workflow_priority
+        # 分数越小优先级越高
+        for wf, st, wl, ct in zip(workflows, st_lst, wl_lst, ct_lst):
+            wf.workflow_priority = self.a1 * st / max_st + self.a2 * wl / max_wl + self.a3 * ct / max_ct
         
-        # 5. 按分数升序排序（分数越小优先级越高）
-        ranks.sort(key=lambda x: x[1])
-        
-        # 6. 返回排序后的工作流列表
-        return [wf for wf, _ in ranks]
+        # 5. 返回原始列表（不排序）
+        return workflows
 
 
 class RandomWorkflowSequencing(WorkflowSequencing):

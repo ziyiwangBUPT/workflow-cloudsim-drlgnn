@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from scheduler.rl_model.core.types import TaskDto, VmDto
 from scheduler.rl_model.core.utils.task_mapper import TaskMapper
+from scheduler.rl_model.core.env.clock_manager import ClockManager
 
 
 @dataclass
@@ -10,6 +11,7 @@ class EnvState:
     task_states: list["TaskState"]
     vm_states: list["VmState"]
     task_dependencies: set[tuple[int, int]]
+    clock_manager: ClockManager | None = None  # 新增：虚拟时钟管理器
 
 
 @dataclass

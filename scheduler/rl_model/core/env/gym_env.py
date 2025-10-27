@@ -12,6 +12,7 @@ from scheduler.rl_model.core.env.action import EnvAction
 from scheduler.rl_model.core.env.observation import EnvObservation
 
 from scheduler.rl_model.core.env.state import EnvState, TaskState, VmState, StaticState
+from scheduler.rl_model.core.env.clock_manager import ClockManager
 from scheduler.rl_model.core.types import TaskDto, VmDto, VmAssignmentDto
 from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi, is_suitable
 from scheduler.rl_model.core.utils.task_mapper import TaskMapper
@@ -70,19 +71,27 @@ class CloudSchedulingGymEnvironment(gym.Env):
         for workflow in dataset.workflows:
             precompute_workflow_data(workflow, dataset.vms, rho)
         
-        # 阶段1：工作流排序 (Workflow Sequencing)
-        # 根据松弛时间、工作负载和竞争度对工作流进行排序
-        sorted_workflows = ws_scheduler.run(dataset.workflows, dataset.vms)
+        # 阶段1：工作流优先级计算 (Workflow Sequencing)
+        # 根据松弛时间、工作负载和竞争度计算工作流优先级分数
+        # 注意：WS算法不再排序，只计算优先级分数并写入workflow.workflow_priority
+        ws_scheduler.run(dataset.workflows, dataset.vms)
         
         # 阶段2：截止时间划分 (Deadline Partition)
         # 为每个工作流中的任务分配子截止时间和优先级分数
-        for workflow in sorted_workflows:
+        for workflow in dataset.workflows:
             dp_scheduler.run(workflow, dataset.vms)
         
-        # 更新 dataset 中的工作流顺序（可选，如果后续需要使用排序后的顺序）
-        dataset.workflows = sorted_workflows
+        # 阶段3：计算全局任务优先级
+        # global_priority = workflow_priority × task_rank_dp
+        # 这样可以在所有工作流的任务中比较相对优先级
+        for workflow in dataset.workflows:
+            for task in workflow.tasks:
+                # workflow_priority越小优先级越高，rank_dp越大优先级越高
+                # 为了保持一致性，我们使用：global_priority = workflow_priority + (1.0 / (rank_dp + 1))
+                # 这样global_priority越小，整体优先级越高
+                task.global_priority = workflow.workflow_priority * task.rank_dp
         
-        print(f"[预调度完成] 已对 {len(dataset.workflows)} 个工作流完成 WS 和 DP 处理")
+        print(f"[预调度完成] 已对 {len(dataset.workflows)} 个工作流完成 WS 和 DP 处理，并计算了全局任务优先级")
         
         # --- [预调度阶段结束] ---
 
@@ -121,6 +130,30 @@ class CloudSchedulingGymEnvironment(gym.Env):
             for child_id in mapped_tasks[task_id].child_ids
         )
 
+        # 初始化虚拟时钟管理器
+        # 注意：需要使用mapped_task_id建立映射
+        clock_manager = ClockManager()
+        clock_manager.workflow_clocks.clear()
+        clock_manager.task_to_workflow.clear()
+        
+        # 为每个工作流创建时钟
+        from scheduler.rl_model.core.env.clock_manager import WorkflowClock
+        for workflow in dataset.workflows:
+            clock_manager.workflow_clocks[workflow.id] = WorkflowClock(workflow_id=workflow.id)
+        
+        # 建立mapped_task_id -> workflow_id的映射
+        # 由于不再重新分配workflow_id，可以直接使用task_mapper.unmap_id
+        for mapped_task_id in range(len(mapped_tasks)):
+            try:
+                # 跳过dummy任务（id=0和最后一个）
+                if mapped_task_id == 0 or mapped_task_id == len(mapped_tasks) - 1:
+                    continue
+                # 通过task_mapper反向映射获取workflow_id
+                workflow_id, _ = task_mapper.unmap_id(mapped_task_id)
+                clock_manager.task_to_workflow[mapped_task_id] = workflow_id
+            except:
+                pass  # dummy任务可能无法unmap，忽略
+        
         # Map to the state
         self.state = EnvState(
             static_state=StaticState(
@@ -132,6 +165,7 @@ class CloudSchedulingGymEnvironment(gym.Env):
             task_states=task_states,
             vm_states=vm_states,
             task_dependencies=dependencies,
+            clock_manager=clock_manager,  # 添加时钟管理器
         )
 
         return EnvObservation(self.state), {}
@@ -189,6 +223,17 @@ class CloudSchedulingGymEnvironment(gym.Env):
             active_energy_consumption_per_mi(self.state.static_state.vms[action.vm_id])
             * self.state.static_state.tasks[action.task_id].length
         )
+        
+        # 更新虚拟时钟：推进对应工作流的时钟
+        if self.state.clock_manager is not None:
+            # 获取任务所属的工作流ID
+            workflow_id = new_task_states[action.task_id].workflow_id if hasattr(new_task_states[action.task_id], 'workflow_id') else None
+            if workflow_id is None:
+                # 从task_mapper获取workflow_id
+                workflow_id, _ = self.state.static_state.task_mapper.unmap_id(action.task_id)
+            
+            # 更新工作流时钟为任务的完成时间
+            self.state.clock_manager.update_clock_for_task_completion(action.task_id, new_task_states[action.task_id].completion_time)
 
         # New dependencies (a new edge between the old task in the VM and this task)
         new_task_dependencies = copy.deepcopy(self.state.task_dependencies)
@@ -210,6 +255,7 @@ class CloudSchedulingGymEnvironment(gym.Env):
             task_states=new_task_states,
             vm_states=new_vm_states,
             task_dependencies=new_task_dependencies,
+            clock_manager=self.state.clock_manager,  # 传递时钟管理器
         )
 
         # If the final task is not submitted yet, we can give the immediate rewards (if any)

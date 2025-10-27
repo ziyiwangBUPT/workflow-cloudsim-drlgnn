@@ -80,6 +80,13 @@ class GinAgentWrapper(gym.Wrapper):
         vm_speed = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
         vm_energy_rate = np.array([active_energy_consumption_per_mi(vm) for vm in observation.vm_observations])
         vm_completion_time = np.array([vm.completion_time for vm in observation.vm_observations])
+        
+        # 新增：VM碳强度特征
+        # 使用VM完成时间对应的碳强度值
+        vm_carbon_intensity = np.array([
+            vm.get_carbon_intensity_at(vm.completion_time) 
+            for vm in observation.vm_observations
+        ])
 
         # Task-Task observations
         task_dependencies = np.array(observation.task_dependencies).T
@@ -95,6 +102,7 @@ class GinAgentWrapper(gym.Wrapper):
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
+            vm_carbon_intensity=vm_carbon_intensity,  # 新增：碳强度特征
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
