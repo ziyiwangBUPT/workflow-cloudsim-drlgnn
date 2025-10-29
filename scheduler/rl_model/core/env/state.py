@@ -27,6 +27,7 @@ class TaskState:
     start_time: float = 0
     completion_time: float = 0
     energy_consumption: float = 0
+    carbon_cost: float = 0  # 新增：任务的碳成本（gCO2）
 
 
 @dataclass

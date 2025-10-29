@@ -34,13 +34,49 @@ class GinAgentWrapper(gym.Wrapper):
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
-        obs, _, terminated, truncated, info = super().step(mapped_action)
+        obs, env_reward, terminated, truncated, info = super().step(mapped_action)
         assert isinstance(obs, EnvObservation)
+        
+        # ✅ 检查是否有错误（无效动作）
+        if terminated and "error" in info:
+            # 底层环境已经检测到无效动作，返回了penalty作为负反馈
+            # 直接使用这个penalty，不要修改
+            mapped_obs = self.map_observation(obs)
+            self.prev_obs = obs
+            return mapped_obs, env_reward, terminated, truncated, info
+        
+        # ✅ 额外的安全边界检查
+        if mapped_action.task_id >= len(obs.task_observations):
+            # 如果 task_id 仍然超出范围（虽然理论上不应该发生），使用env_reward
+            mapped_obs = self.map_observation(obs)
+            self.prev_obs = obs
+            return mapped_obs, env_reward, terminated, truncated, info
+        
+        # 正常情况下的奖励计算
         mapped_obs = self.map_observation(obs)
-
-        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
-        energy_reward = -(obs.energy_consumption() - self.prev_obs.energy_consumption()) / obs.energy_consumption()
-        reward = makespan_reward + energy_reward
+        task_obs = obs.task_observations[mapped_action.task_id]
+        
+        # 新奖励函数：参考 ecmws 模式
+        # reward = -carbon_cost + deadline_penalty
+        carbon_cost = task_obs.carbon_cost
+        reward = -carbon_cost
+        
+        # Deadline 惩罚（参考 ecmws）
+        # delta = finish_time - deadline
+        # 如果超时，增加惩罚
+        delta = task_obs.completion_time - task_obs.deadline
+        
+        if delta > 0:
+            # 超时惩罚：reward * (1 + delta / duration)
+            # duration = completion_time - start_time
+            duration = task_obs.completion_time - task_obs.start_time
+            if duration > 0:
+                # 超时会让负奖励变得更负（惩罚加重）
+                reward = reward * (1.0 + delta / duration)
+            # 如果 duration == 0（理论上不应该发生），保持原 reward
+        
+        # 如果超时很严重，可以施加额外惩罚
+        # reward 已经是负值，不需要额外处理
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info

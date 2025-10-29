@@ -29,16 +29,16 @@ def gen_carbon_intensity_data(num_hosts: int = 4) -> list[list[float]]:
     
     # 4个Host的碳强度曲线（可以理解为不同地区的数据中心）
     # Host 1: 高碳强度区域（煤电为主）
-    host1 = [0.15, 0.10, 0.11, 0.11, 0.19, 0.22, 0.19, 0.11, 0.12, 0.07, 0.08, 0.10, 0.14]
+    host1 = [1500, 1000, 1100, 1100, 1900, 2200, 1900, 1100, 1200, 700, 800, 1000, 1400]
     
     # Host 2: 低碳强度区域（水电/核电为主）
-    host2 = [0.07, 0.08, 0.09, 0.07, 0.13, 0.14, 0.13, 0.13, 0.12, 0.12, 0.09, 0.09, 0.09]
+    host2 = [700, 800, 900, 700, 1300, 1400, 1300, 1300, 1200, 1200, 900, 900, 900]
     
     # Host 3: 中等碳强度区域（混合能源）
-    host3 = [0.10, 0.09, 0.11, 0.11, 0.09, 0.09, 0.10, 0.10, 0.15, 0.15, 0.15, 0.13, 0.12]
+    host3 = [1000, 900, 1100, 1100, 900, 900, 1000, 1000, 1500, 1500, 1500, 1300, 1200]
     
     # Host 4: 高碳强度区域（天然气为主）
-    host4 = [0.13, 0.13, 0.15, 0.15, 0.17, 0.19, 0.21, 0.21, 0.21, 0.18, 0.18, 0.17, 0.13]
+    host4 = [1300, 1300, 1500, 1500, 1700, 1900, 2100, 2100, 2100, 1800, 1800, 1700, 1300]
     
     carbon_intensity = [host1, host2, host3, host4]
     
@@ -121,25 +121,88 @@ def get_carbon_intensity_features(host_id: int, start_time: float, end_time: flo
         return ((features_array - min_val) / delta).tolist()
 
 
-def calculate_carbon_cost(energy_consumption: float, host_id: int, 
+def get_average_carbon_intensity(host_id: int, start_time: float, end_time: float) -> float:
+    """
+    计算指定Host在指定时间段的平均碳强度
+    
+    Args:
+        host_id: Host的ID (0-3)
+        start_time: 任务开始时间（秒）
+        end_time: 任务结束时间（秒）
+        
+    Returns:
+        float: 平均碳强度值
+    """
+    if host_id < 0 or host_id >= FIXED_NUM_HOSTS:
+        raise ValueError(f"Invalid host_id: {host_id}. Must be in range [0, {FIXED_NUM_HOSTS-1}]")
+    
+    if start_time >= end_time:
+        # 如果任务执行时间为0，使用开始时间的碳强度
+        return get_carbon_intensity_at_time(host_id, start_time)
+    
+    # 将时间转换为小时
+    start_hour = start_time / 3600.0
+    end_hour = end_time / 3600.0
+    
+    # 计算跨越的小时数
+    duration_hours = end_hour - start_hour
+    
+    # 如果任务在一个小时内完成，使用开始时间的碳强度
+    if duration_hours < 1.0:
+        return get_carbon_intensity_at_time(host_id, start_time)
+    
+    # 如果任务跨越多个小时，计算加权平均
+    total_weighted_intensity = 0.0
+    total_weight = 0.0
+    
+    # 第一个小时的部分时间
+    current_hour = int(start_hour) % 24
+    next_hour_time = (int(start_hour) + 1) * 3600
+    first_duration = min(next_hour_time - start_time, end_time - start_time)
+    total_weighted_intensity += CARBON_INTENSITY_DATA[host_id][current_hour] * first_duration
+    total_weight += first_duration
+    
+    # 中间的完整小时
+    current_time = next_hour_time
+    while current_time + 3600 <= end_time:
+        current_hour = int(current_time / 3600) % 24
+        total_weighted_intensity += CARBON_INTENSITY_DATA[host_id][current_hour] * 3600
+        total_weight += 3600
+        current_time += 3600
+    
+    # 最后一个小时的部分时间
+    if current_time < end_time:
+        current_hour = int(current_time / 3600) % 24
+        last_duration = end_time - current_time
+        total_weighted_intensity += CARBON_INTENSITY_DATA[host_id][current_hour] * last_duration
+        total_weight += last_duration
+    
+    return total_weighted_intensity / total_weight if total_weight > 0 else get_carbon_intensity_at_time(host_id, start_time)
+
+
+def calculate_carbon_cost(energy_joules: float, host_id: int, 
                           start_time: float, end_time: float) -> float:
     """
     计算碳成本
     
     Args:
-        energy_consumption: 能耗（Joules或其他单位）
+        energy_joules: 能耗（Joules）
         host_id: Host的ID
         start_time: 任务开始时间（秒）
         end_time: 任务结束时间（秒）
         
     Returns:
-        float: 碳成本
+        float: 碳成本（gCO2）
     """
-    # 计算平均碳强度（简化处理：使用起始时间的碳强度）
-    avg_carbon_intensity = get_carbon_intensity_at_time(host_id, start_time)
+    # 将能耗从 Joules 转换为 kWh
+    # 1 kWh = 3,600,000 Joules
+    energy_kwh = energy_joules / 3_600_000.0
     
-    # 碳成本 = 能耗 * 碳强度
-    carbon_cost = energy_consumption * avg_carbon_intensity
+    # 计算平均碳强度（gCO2/kWh）
+    avg_carbon_intensity = get_average_carbon_intensity(host_id, start_time, end_time)
+    
+    # 碳成本 = 能耗(kWh) * 碳强度(gCO2/kWh) = gCO2
+    carbon_cost = energy_kwh * avg_carbon_intensity
     
     return carbon_cost
 

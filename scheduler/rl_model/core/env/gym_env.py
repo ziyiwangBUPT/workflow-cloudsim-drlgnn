@@ -224,6 +224,16 @@ class CloudSchedulingGymEnvironment(gym.Env):
             * self.state.static_state.tasks[action.task_id].length
         )
         
+        # Update carbon cost
+        from scheduler.config.carbon_intensity import calculate_carbon_cost
+        vm = self.state.static_state.vms[action.vm_id]
+        new_task_states[action.task_id].carbon_cost = calculate_carbon_cost(
+            energy_joules=new_task_states[action.task_id].energy_consumption,
+            host_id=vm.host_id,
+            start_time=new_task_states[action.task_id].start_time,
+            end_time=new_task_states[action.task_id].completion_time
+        )
+        
         # 更新虚拟时钟：推进对应工作流的时钟
         if self.state.clock_manager is not None:
             # 获取任务所属的工作流ID

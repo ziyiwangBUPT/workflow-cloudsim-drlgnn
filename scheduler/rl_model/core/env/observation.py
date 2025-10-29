@@ -27,6 +27,7 @@ class EnvObservation:
                 energy_consumption=state.task_states[task_id].energy_consumption,
                 length=state.static_state.tasks[task_id].length,
                 deadline=state.static_state.tasks[task_id].deadline,  # 添加：任务的子截止时间（用于特征提取）
+                carbon_cost=state.task_states[task_id].carbon_cost,  # 添加：任务的碳成本
             )
             for task_id in range(len(state.task_states))
         ]
@@ -105,27 +106,19 @@ class EnvObservation:
     
     def carbon_cost(self) -> float:
         """
-        计算碳成本（为奖励函数预留的接口）
+        计算总碳成本
         
-        碳成本 = 能耗 * 碳强度
+        直接累加所有已调度任务的碳成本（在 gym_env.py 中已计算）
         
         Returns:
-            float: 总碳成本
+            float: 总碳成本（gCO2）
         """
         total_carbon_cost = 0.0
         
-        for task_id, task_obs in enumerate(self.task_observations):
-            # 只计算已调度任务的碳成本
+        for task_obs in self.task_observations:
+            # 累加所有已调度任务的碳成本
             if task_obs.assigned_vm_id is not None:
-                vm_obs = self.vm_observations[task_obs.assigned_vm_id]
-                
-                # 获取任务执行时间段的碳强度
-                # 使用任务开始时间的碳强度作为代表值
-                carbon_intensity = vm_obs.get_carbon_intensity_at(task_obs.start_time)
-                
-                # 碳成本 = 能耗 * 碳强度
-                carbon_cost = task_obs.energy_consumption * carbon_intensity
-                total_carbon_cost += carbon_cost
+                total_carbon_cost += task_obs.carbon_cost
         
         return total_carbon_cost
 
@@ -139,6 +132,7 @@ class TaskObservation:
     energy_consumption: float
     length: float
     deadline: float = 0.0  # 任务的子截止时间（来自预调度 DP 算法，用于 GNN 特征）
+    carbon_cost: float = 0.0  # 任务的碳成本（gCO2）
 
 
 @dataclass

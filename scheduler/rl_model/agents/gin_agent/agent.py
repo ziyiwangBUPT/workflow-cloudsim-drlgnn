@@ -33,7 +33,7 @@ class BaseGinNetwork(nn.Module):
             nn.Linear(hidden_dim, embedding_dim),
         ).to(self.device)
         self.vm_encoder = nn.Sequential(
-            nn.Linear(3, hidden_dim),
+            nn.Linear(4, hidden_dim),  # 更新：VM特征现在有4个（添加了碳强度）
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
