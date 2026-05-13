@@ -35,5 +35,6 @@ ALGORITHMS = [
     ("Min-Min", "min_min"),
     ("Max-Min", "max_min"),
     ("HEFT", "insertion_heft"),
-    ("Proposed", "gin:1733128027_gin_R=-diff:model_501760.pt"),
+    # ("Proposed", "gin:1762696529_testnew:model.pt"),
+    ("Proposed", "gin:1766427165_testnew1231:model.pt"),
 ]

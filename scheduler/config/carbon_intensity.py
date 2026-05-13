@@ -27,22 +27,40 @@ def gen_carbon_intensity_data(num_hosts: int = 4) -> list[list[float]]:
                   ['0:00', '2:00', '6:00', '7:00', '11:00', '12:00', '14:00', '16:00', 
                    '17:00', '19:00', '20:00', '22:00', '23:00']]
     
-    # 4个Host的碳强度曲线（可以理解为不同地区的数据中心）
-    # Host 1: 高碳强度区域（煤电为主）
+   # 4个Host的碳强度曲线（可以理解为不同地区的数据中心）
+   #Host1: 高碳强度区域（煤电为主）
     host1 = [1500, 1000, 1100, 1100, 1900, 2200, 1900, 1100, 1200, 700, 800, 1000, 1400]
-    
+
     # Host 2: 低碳强度区域（水电/核电为主）
     host2 = [700, 800, 900, 700, 1300, 1400, 1300, 1300, 1200, 1200, 900, 900, 900]
-    
+
     # Host 3: 中等碳强度区域（混合能源）
     host3 = [1000, 900, 1100, 1100, 900, 900, 1000, 1000, 1500, 1500, 1500, 1300, 1200]
-    
+
     # Host 4: 高碳强度区域（天然气为主）
     host4 = [1300, 1300, 1500, 1500, 1700, 1900, 2100, 2100, 2100, 1800, 1800, 1700, 1300]
-    
+
+    # host1 =[640.1, 645.2, 650.3, 655.4, 660.5, 670.6, 680.7, 685.8, 690.9, 680.0,
+    #  670.1, 660.2, 650.3, 655.4, 665.5, 675.6, 685.7, 695.8, 690.9, 680.0,
+    #  670.1, 660.2, 650.3, 645.4]
+    #
+    # # Host 2: 低碳强度区域（水电/核电为主）
+    # host2 =[700.1, 705.2, 710.3, 715.4, 710.5, 690.6, 620.7, 500.8, 350.9, 220.0,
+    #  120.1, 90.2, 85.3, 95.4, 125.5, 200.6, 330.7, 480.8, 600.9, 650.0,
+    #  680.1, 695.2, 705.3, 708.4]
+    #
+    # # Host 3: 中等碳强度区域（混合能源）
+    # host3 = [450.3, 452.4, 455.5, 453.6, 448.7, 445.8, 430.9, 410.0, 380.1, 340.2,
+    #  300.3, 285.4, 280.5, 288.6, 305.7, 330.8, 360.9, 390.0, 410.1, 425.2,
+    #  430.3, 435.4, 440.5, 442.6]
+    # # Host 4: 高碳强度区域（天然气为主）
+    # host4 = [400.2, 320.3, 250.4, 280.5, 390.6, 520.7, 650.8, 700.9, 720.0, 650.1,
+    #  510.2, 380.3, 250.4, 180.5, 230.6, 390.7, 530.8, 680.9, 710.0, 620.1,
+    #  550.2, 480.3, 400.4, 350.5]
+
     carbon_intensity = [host1, host2, host3, host4]
     
-    # 插值填充24小时的完整数据
+    #插值填充24小时的完整数据
     new_carbon_intensity = [[0.0 for _ in range(24)] for _ in range(4)]
     for i, tick in enumerate(time_ticks):
         if tick > 0:
@@ -180,6 +198,36 @@ def get_average_carbon_intensity(host_id: int, start_time: float, end_time: floa
     return total_weighted_intensity / total_weight if total_weight > 0 else get_carbon_intensity_at_time(host_id, start_time)
 
 
+def get_min_future_carbon_intensity(host_id: int, start_time: float) -> float:
+    """
+    获取从指定时间开始到当天24点的最低碳强度
+    用于未调度任务的乐观估计
+    
+    Args:
+        host_id: Host的ID (0-3)
+        start_time: 开始时间（秒）
+        
+    Returns:
+        float: 从start_time到24点的最低碳强度值
+    """
+    if host_id < 0 or host_id >= FIXED_NUM_HOSTS:
+        raise ValueError(f"Invalid host_id: {host_id}. Must be in range [0, {FIXED_NUM_HOSTS-1}]")
+    
+    # 将秒转换为小时
+    start_hour = int(start_time // 3600) % 24
+    
+    # 获取从start_hour到23点的所有碳强度值
+    remaining_hours = list(range(start_hour, 24))
+    
+    # 如果start_hour已经是23点或更晚，只考虑当前小时
+    if not remaining_hours:
+        remaining_hours = [23]
+    
+    # 返回最小值
+    min_intensity = min(CARBON_INTENSITY_DATA[host_id][h] for h in remaining_hours)
+    return min_intensity
+
+
 def calculate_carbon_cost(energy_joules: float, host_id: int, 
                           start_time: float, end_time: float) -> float:
     """
@@ -205,4 +253,29 @@ def calculate_carbon_cost(energy_joules: float, host_id: int,
     carbon_cost = energy_kwh * avg_carbon_intensity
     
     return carbon_cost
+
+
+def get_future_6h_carbon_intensity_curve(host_id: int, start_time: float) -> list[float]:
+    """
+    获取从指定时间开始未来6小时的碳强度曲线
+    用于GNN特征提取（在编码前放入主机特征）
+    
+    Args:
+        host_id: Host的ID (0-3)
+        start_time: 开始时间（秒）
+        
+    Returns:
+        list[float]: 未来6小时的碳强度值列表（长度为6）
+    """
+    if host_id < 0 or host_id >= FIXED_NUM_HOSTS:
+        raise ValueError(f"Invalid host_id: {host_id}. Must be in range [0, {FIXED_NUM_HOSTS-1}]")
+    
+    # 将秒转换为小时
+    start_hour = int(start_time // 3600) % 24
+    
+    # 获取从start_hour开始的未来6小时（循环24小时）
+    future_hours = [(start_hour + i) % 24 for i in range(6)]
+    
+    # 返回这6个小时的碳强度值
+    return [CARBON_INTENSITY_DATA[host_id][h] for h in future_hours]
 

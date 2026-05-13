@@ -24,7 +24,7 @@ class BaseGinNetwork(nn.Module):
         self.device = device
 
         self.task_encoder = nn.Sequential(
-            nn.Linear(4, hidden_dim),
+            nn.Linear(4, hidden_dim),  # 任务特征：是否已调度, 是否就绪, 任务计算量, 任务完成时间（删除deadline）
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
@@ -33,7 +33,7 @@ class BaseGinNetwork(nn.Module):
             nn.Linear(hidden_dim, embedding_dim),
         ).to(self.device)
         self.vm_encoder = nn.Sequential(
-            nn.Linear(4, hidden_dim),  # 更新：VM特征现在有4个（添加了碳强度）
+            nn.Linear(9, hidden_dim),  # VM特征：3个基础特征（完成时间, 速度倒数, 能耗率） + 6个未来碳强度曲线（替换单个碳强度值）
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
@@ -55,20 +55,27 @@ class BaseGinNetwork(nn.Module):
         num_tasks = obs.task_state_scheduled.shape[0]
         num_vms = obs.vm_completion_time.shape[0]
 
-        # GNN 任务节点特征：[是否已调度, 是否就绪, 任务计算量, 归一化截止时间]
-        # 使用 Min-Max 归一化的 deadline 替换 task_completion_time，让 GNN 感知任务的时间压力
-        task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_normalized_deadline]
-        
-        # GNN VM节点特征：[完成时间, 速度倒数, 能耗率, 碳强度]
-        # 新增：碳强度特征，使模型能够感知不同Host的碳排放差异
-        vm_features = [obs.vm_completion_time, 1 / (obs.vm_speed + 1e-8), obs.vm_energy_rate, obs.vm_carbon_intensity]
+        # GNN 任务节点特征：[是否已调度, 是否就绪, 任务计算量, 任务完成时间]（删除deadline）
+        task_features = [obs.task_state_scheduled, obs.task_state_ready, obs.task_length, obs.task_completion_time]
+
+        # GNN VM节点特征：[完成时间, 速度倒数, 能耗率, 未来6小时碳强度曲线]
+        # 未来6小时碳强度曲线替换原来的单个碳强度值，使模型能够感知不同时间段的碳排放趋势
+        vm_features = [
+            obs.vm_completion_time,
+            1 / (obs.vm_speed + 1e-8),
+            obs.vm_energy_rate
+        ]
+        # 将未来6小时碳强度曲线的每个值作为独立特征添加
+        # obs.vm_carbon_intensity_curve_6h shape: (num_vms, 6)
+        for i in range(6):
+            vm_features.append(obs.vm_carbon_intensity_curve_6h[:, i])
 
         # Encode tasks
-        task_x = torch.stack(task_features, dim=-1)
+        task_x = torch.stack(task_features, dim=-1)  # shape: (num_tasks, 4)
         task_h: torch.Tensor = self.task_encoder(task_x)
 
         # Encode VMs
-        vm_x = torch.stack(vm_features, dim=-1)
+        vm_x = torch.stack(vm_features, dim=-1)  # shape: (num_vms, 9)
         vm_h: torch.Tensor = self.vm_encoder(vm_x)
 
         # Structuring nodes as [0, 1, ..., T-1] [T, T+1, ..., T+VM-1], edges are between Tasks -> Compatible VMs
@@ -196,7 +203,7 @@ class GinAgent(Agent, nn.Module):
         return torch.stack(values).to(self.device)
 
     def get_action_and_value(
-        self, x: torch.Tensor, action: Optional[torch.Tensor] = None
+            self, x: torch.Tensor, action: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         x = x.to(self.device)
         batch_size = x.shape[0]

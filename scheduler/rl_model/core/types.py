@@ -70,7 +70,7 @@ class VmDto:
     def to_vm(self):
         return Vm(
             id=self.id,
-            host_id=self.id,
+            host_id=self.host_id,  # 修复：使用实际的host_id，而不是VM的id
             cpu_speed_mips=int(self.cpu_speed_mips),
             memory_mb=self.memory_mb,
         )

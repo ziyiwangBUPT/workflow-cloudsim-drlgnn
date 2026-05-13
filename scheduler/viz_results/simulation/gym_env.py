@@ -14,6 +14,7 @@ from scheduler.viz_results.simulation.observation import SimEnvObservation, SimE
 class CloudSimGymEnvironment(gym.Env):
     simulator: EmbeddedCloudSimSimulator
     last_obs: SimEnvObservation | None = None
+    current_dataset: Any = None  # 保存当前数据集，用于获取host信息
 
     def __init__(self, simulator_jar_path: str, dataset_args: DatasetArgs, verbose=False, remote_debug=False):
         super().__init__()
@@ -45,6 +46,9 @@ class CloudSimGymEnvironment(gym.Env):
             task_arrival=self.dataset_args.task_arrival,
             arrival_rate=self.dataset_args.arrival_rate,
         )
+
+        # 保存数据集以便后续获取host信息
+        self.current_dataset = dataset
 
         # Send the reset command to the simulator
         result = self.simulator.reset(dataset)
@@ -80,6 +84,50 @@ class CloudSimGymEnvironment(gym.Env):
                 return self.last_obs
             return SimEnvObservation(tasks=[], vms=[])
 
+        # 创建host映射，用于查找host信息
+        host_map = {}
+        if self.current_dataset is not None:
+            host_map = {host.id: host for host in self.current_dataset.hosts}
+        
+        def create_vm_dto(vm_obj):
+            """从Java VM对象创建VmDto"""
+            try:
+                java_host = vm_obj.getHost()
+                java_host_id = int(java_host.getId())
+                
+                # 将host_id映射到有效范围 [0, FIXED_NUM_HOSTS-1]
+                # 使用取模运算确保host_id始终在有效范围内
+                from scheduler.config.carbon_intensity import FIXED_NUM_HOSTS
+                host_id = java_host_id % FIXED_NUM_HOSTS
+                carbon_intensity_curve = [0.1] * 24  # 默认值
+                
+                # 优先从Python端的dataset中查找host的碳强度曲线
+                if java_host_id in host_map:
+                    host = host_map[java_host_id]
+                    if host.carbon_intensity_curve is not None:
+                        carbon_intensity_curve = host.carbon_intensity_curve
+                elif host_id in host_map:
+                    # 如果映射后的host_id存在，也尝试使用
+                    host = host_map[host_id]
+                    if host.carbon_intensity_curve is not None:
+                        carbon_intensity_curve = host.carbon_intensity_curve
+            except Exception:
+                # 如果无法获取，使用默认值
+                from scheduler.config.carbon_intensity import FIXED_NUM_HOSTS
+                host_id = 0
+                carbon_intensity_curve = [0.1] * 24
+            
+            return VmDto(
+                id=int(vm_obj.getId()),
+                memory_mb=int(vm_obj.getMemoryMb()),
+                cpu_speed_mips=float(vm_obj.getCpuSpeedMips()),
+                host_power_idle_watt=float(vm_obj.getHost().getPowerIdleWatt()),
+                host_power_peak_watt=float(vm_obj.getHost().getPowerPeakWatt()),
+                host_cpu_speed_mips=float(vm_obj.getHost().getCpuSpeedMips()),
+                host_id=host_id,
+                host_carbon_intensity_curve=carbon_intensity_curve,
+            )
+
         return SimEnvObservation(
             tasks=[
                 TaskDto(
@@ -91,17 +139,7 @@ class CloudSimGymEnvironment(gym.Env):
                 )
                 for task in obs.getTasks()
             ],
-            vms=[
-                VmDto(
-                    id=int(vm.getId()),
-                    memory_mb=int(vm.getMemoryMb()),
-                    cpu_speed_mips=float(vm.getCpuSpeedMips()),
-                    host_power_idle_watt=float(vm.getHost().getPowerIdleWatt()),
-                    host_power_peak_watt=float(vm.getHost().getPowerPeakWatt()),
-                    host_cpu_speed_mips=float(vm.getHost().getCpuSpeedMips()),
-                )
-                for vm in obs.getVms()
-            ],
+            vms=[create_vm_dto(vm) for vm in obs.getVms()],
         )
 
     # Parse Info

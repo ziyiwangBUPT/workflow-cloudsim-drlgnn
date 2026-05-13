@@ -56,44 +56,47 @@ class CloudSchedulingGymEnvironment(gym.Env):
         # Generate tasks and vms according to seed
         dataset = self.dataset_generator(seed)
 
-        # --- [预调度阶段开始] 工作流排序 (WS) 和 截止时间划分 (DP) ---
-        
-        # 初始化预调度算法
-        # alpha1, alpha2, alpha3 是 WS 算法的权重参数，分别对应：松弛时间、工作负载、竞争度
-        # beta 是 DP 算法的瓶颈层调整因子
-        ws_scheduler = ContentionAwareWorkflowSequencing(alpha1=0.33, alpha2=0.33, alpha3=0.33)
-        dp_scheduler = BottleLayerAwareDeadlinePartition(beta=0.5)
-        
-        # rho 是松弛因子，用于计算工作流截止时间：deadline = avg_eft * (1 + rho)
-        rho = 0.2
-        
-        # 阶段0：预计算每个工作流的平均完成时间和相关属性
-        for workflow in dataset.workflows:
-            precompute_workflow_data(workflow, dataset.vms, rho)
-        
-        # 阶段1：工作流优先级计算 (Workflow Sequencing)
-        # 根据松弛时间、工作负载和竞争度计算工作流优先级分数
-        # 注意：WS算法不再排序，只计算优先级分数并写入workflow.workflow_priority
-        ws_scheduler.run(dataset.workflows, dataset.vms)
-        
-        # 阶段2：截止时间划分 (Deadline Partition)
-        # 为每个工作流中的任务分配子截止时间和优先级分数
-        for workflow in dataset.workflows:
-            dp_scheduler.run(workflow, dataset.vms)
-        
-        # 阶段3：计算全局任务优先级
-        # global_priority = workflow_priority × task_rank_dp
-        # 这样可以在所有工作流的任务中比较相对优先级
-        for workflow in dataset.workflows:
-            for task in workflow.tasks:
-                # workflow_priority越小优先级越高，rank_dp越大优先级越高
-                # 为了保持一致性，我们使用：global_priority = workflow_priority + (1.0 / (rank_dp + 1))
-                # 这样global_priority越小，整体优先级越高
-                task.global_priority = workflow.workflow_priority * task.rank_dp
-        
-        print(f"[预调度完成] 已对 {len(dataset.workflows)} 个工作流完成 WS 和 DP 处理，并计算了全局任务优先级")
-        
-        # --- [预调度阶段结束] ---
+        # skip_prescheduling = options is not None and options.get("skip_prescheduling", True)  # 默认True
+        # if not skip_prescheduling:
+        #     # --- [预调度阶段开始] 工作流排序 (WS) 和 截止时间划分 (DP) ---
+        #
+        #     # 初始化预调度算法
+        #     # alpha1, alpha2, alpha3 是 WS 算法的权重参数，分别对应：松弛时间、工作负载、竞争度
+        #     # beta 是 DP 算法的瓶颈层调整因子
+        #     ws_scheduler = ContentionAwareWorkflowSequencing(alpha1=0.33, alpha2=0.33, alpha3=0.33)
+        #     dp_scheduler = BottleLayerAwareDeadlinePartition(beta=0.5)
+        #
+        #     # rho 是松弛因子，用于计算工作流截止时间：deadline = avg_eft * (1 + rho)
+        #     rho = 0.2
+        #
+        #     # 阶段0：预计算每个工作流的平均完成时间和相关属性
+        #     for workflow in dataset.workflows:
+        #         precompute_workflow_data(workflow, dataset.vms, rho)
+        #
+        #     # 阶段1：工作流优先级计算 (Workflow Sequencing)
+        #     # 根据松弛时间、工作负载和竞争度计算工作流优先级分数
+        #     # 注意：WS算法不再排序，只计算优先级分数并写入workflow.workflow_priority
+        #     ws_scheduler.run(dataset.workflows, dataset.vms)
+        #
+        #     # 阶段2：截止时间划分 (Deadline Partition)
+        #     # 为每个工作流中的任务分配子截止时间和优先级分数
+        #     for workflow in dataset.workflows:
+        #         dp_scheduler.run(workflow, dataset.vms)
+        #
+        #     # 阶段3：计算全局任务优先级
+        #     # global_priority = workflow_priority × task_rank_dp
+        #     # 这样可以在所有工作流的任务中比较相对优先级
+        #     for workflow in dataset.workflows:
+        #         for task in workflow.tasks:
+        #             # workflow_priority越小优先级越高，rank_dp越大优先级越高
+        #             # 为了保持一致性，我们使用：global_priority = workflow_priority + (1.0 / (rank_dp + 1))
+        #             # 这样global_priority越小，整体优先级越高
+        #             task.global_priority = workflow.workflow_priority * task.rank_dp
+        #
+        #     # 使用日志而不是直接print，避免在训练时频繁打印干扰tqdm进度条
+        #     # print(f"[预调度完成] 已对 {len(dataset.workflows)} 个工作流完成 WS 和 DP 处理，并计算了全局任务优先级")
+        #
+        #     # --- [预调度阶段结束] ---
 
         # Map the tasks and VMs from the dataset to the required format
         host_map = {host.id: host for host in dataset.hosts}
@@ -225,11 +228,13 @@ class CloudSchedulingGymEnvironment(gym.Env):
         )
         
         # Update carbon cost
-        from scheduler.config.carbon_intensity import calculate_carbon_cost
+        from scheduler.config.carbon_intensity import calculate_carbon_cost, FIXED_NUM_HOSTS
         vm = self.state.static_state.vms[action.vm_id]
+        # 确保host_id在有效范围内，使用取模映射
+        safe_host_id = vm.host_id % FIXED_NUM_HOSTS
         new_task_states[action.task_id].carbon_cost = calculate_carbon_cost(
             energy_joules=new_task_states[action.task_id].energy_consumption,
-            host_id=vm.host_id,
+            host_id=safe_host_id,
             start_time=new_task_states[action.task_id].start_time,
             end_time=new_task_states[action.task_id].completion_time
         )

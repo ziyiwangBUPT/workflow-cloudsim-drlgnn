@@ -26,7 +26,7 @@ class EnvObservation:
                 completion_time=state.task_states[task_id].completion_time,
                 energy_consumption=state.task_states[task_id].energy_consumption,
                 length=state.static_state.tasks[task_id].length,
-                deadline=state.static_state.tasks[task_id].deadline,  # 添加：任务的子截止时间（用于特征提取）
+              # deadline=state.static_state.tasks[task_id].deadline,  # 添加：任务的子截止时间（用于特征提取）
                 carbon_cost=state.task_states[task_id].carbon_cost,  # 添加：任务的碳成本
             )
             for task_id in range(len(state.task_states))
@@ -106,7 +106,7 @@ class EnvObservation:
     
     def carbon_cost(self) -> float:
         """
-        计算总碳成本
+        计算总碳成本（仅已调度任务）
         
         直接累加所有已调度任务的碳成本（在 gym_env.py 中已计算）
         
@@ -121,6 +121,67 @@ class EnvObservation:
                 total_carbon_cost += task_obs.carbon_cost
         
         return total_carbon_cost
+    
+    def carbon_cost_optimistic(self) -> float:
+        """
+        计算总碳成本的乐观估计
+        
+        参考 workflow-cloudsim-drlgnn-master 的 energy_consumption() 方法：
+        - 已调度任务：使用实际碳成本
+        - 未调度任务：使用乐观估计 = 最小能耗 × 从当前时间到24点的最低碳强度
+        
+        优化：为每个Host缓存最低碳强度，避免重复计算
+        
+        Returns:
+            float: 总碳成本的乐观估计（gCO2）
+        """
+        from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
+        from scheduler.config.carbon_intensity import get_min_future_carbon_intensity, FIXED_NUM_HOSTS
+        
+        # 计算每个Host从当前最早VM完成时间到24点的最低碳强度（缓存优化）
+        # 找出每个Host的最早VM完成时间
+        host_min_completion_time = {}
+        for vm_obs in self.vm_observations:
+            host_id = vm_obs.host_id % FIXED_NUM_HOSTS
+            if host_id not in host_min_completion_time:
+                host_min_completion_time[host_id] = vm_obs.completion_time
+            else:
+                host_min_completion_time[host_id] = min(host_min_completion_time[host_id], vm_obs.completion_time)
+        
+        # 为每个Host计算最低碳强度（缓存）
+        host_min_carbon_intensity = {}
+        for host_id, start_time in host_min_completion_time.items():
+            host_min_carbon_intensity[host_id] = get_min_future_carbon_intensity(host_id, start_time)
+        
+        # 计算总碳成本
+        task_carbon_cost = np.ones(len(self.task_observations)) * 1e8
+        for task_id in range(len(self.task_observations)):
+            # 已调度任务：使用实际碳成本
+            if self.task_observations[task_id].assigned_vm_id is not None:
+                task_carbon_cost[task_id] = self.task_observations[task_id].carbon_cost
+                continue
+            
+            # 未调度任务：遍历所有兼容VM，计算乐观估计
+            compatible_vm_ids = [vid for tid, vid in self.compatibilities if tid == task_id]
+            for vm_id in compatible_vm_ids:
+                vm_obs = self.vm_observations[vm_id]
+                
+                # 计算该VM上的能耗（Joules）
+                energy_consumption_rate = active_energy_consumption_per_mi(vm_obs)
+                energy_joules = self.task_observations[task_id].length * energy_consumption_rate
+                
+                # 转换为 kWh
+                energy_kwh = energy_joules / 3_600_000.0
+                
+                # 使用该Host的最低碳强度（乐观估计）
+                host_id = vm_obs.host_id % FIXED_NUM_HOSTS
+                min_carbon_intensity = host_min_carbon_intensity.get(host_id, 1000.0)  # 默认1000
+                
+                # 计算碳成本
+                new_carbon_cost = energy_kwh * min_carbon_intensity
+                task_carbon_cost[task_id] = min(new_carbon_cost, task_carbon_cost[task_id].item())
+        
+        return float(task_carbon_cost.sum())
 
 
 @dataclass
@@ -131,7 +192,7 @@ class TaskObservation:
     completion_time: float
     energy_consumption: float
     length: float
-    deadline: float = 0.0  # 任务的子截止时间（来自预调度 DP 算法，用于 GNN 特征）
+    #deadline: float = 0.0  # 任务的子截止时间（来自预调度 DP 算法，用于 GNN 特征）
     carbon_cost: float = 0.0  # 任务的碳成本（gCO2）
 
 
@@ -149,6 +210,6 @@ class VmObservation:
     def get_carbon_intensity_at(self, time_seconds: float) -> float:
         """获取指定时间的碳强度值"""
         if self.host_carbon_intensity_curve is None:
-            return 0.1  # 默认值
+            return 500  # 默认值
         hour = int(time_seconds // 3600) % 24
         return self.host_carbon_intensity_curve[hour]

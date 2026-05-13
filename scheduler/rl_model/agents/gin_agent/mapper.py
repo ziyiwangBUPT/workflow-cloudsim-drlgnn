@@ -12,16 +12,16 @@ class GinAgentMapper:
         self,
         task_state_scheduled: np.ndarray,
         task_state_ready: np.ndarray,
-        task_length: np.ndarray,  # 保留：任务计算量
-        task_normalized_deadline: np.ndarray,  # 替换 task_completion_time: Min-Max 归一化的子截止时间
+        task_length: np.ndarray,
+        task_completion_time: np.ndarray,
         vm_speed: np.ndarray,
         vm_energy_rate: np.ndarray,
         vm_completion_time: np.ndarray,
-        vm_carbon_intensity: np.ndarray,  # 新增：VM的碳强度特征
+        vm_carbon_intensity_curve_6h: np.ndarray,  # VM未来6小时碳强度曲线 (num_vms, 6)，替换单个碳强度值
         task_dependencies: np.ndarray,
         compatibilities: np.ndarray,
     ) -> np.ndarray:
-        num_tasks = task_length.shape[0]
+        num_tasks = task_completion_time.shape[0]
         num_vms = vm_completion_time.shape[0]
         num_task_deps = task_dependencies.shape[1]
         num_compatibilities = compatibilities.shape[1]
@@ -31,12 +31,12 @@ class GinAgentMapper:
                 np.array([num_tasks, num_vms, num_task_deps, num_compatibilities], dtype=np.int32),  # Header
                 np.array(task_state_scheduled, dtype=np.int32),  # num_tasks
                 np.array(task_state_ready, dtype=np.int32),  # num_tasks
-                np.array(task_length, dtype=np.float64),  # num_tasks: 保留任务计算量
-                np.array(task_normalized_deadline, dtype=np.float64),  # num_tasks: Min-Max 归一化的子截止时间
+                np.array(task_length, dtype=np.float64),  # num_tasks
+                np.array(task_completion_time, dtype=np.float64),  # num_tasks
                 np.array(vm_speed, dtype=np.float64),  # num_vms
                 np.array(vm_energy_rate, dtype=np.float64),  # num_vms
                 np.array(vm_completion_time, dtype=np.float64),  # num_vms
-                np.array(vm_carbon_intensity, dtype=np.float64),  # num_vms: 新增碳强度特征
+                np.array(vm_carbon_intensity_curve_6h.flatten(), dtype=np.float64),  # num_vms*6: 未来6小时碳强度曲线（替换单个碳强度值）
                 np.array(task_dependencies.flatten(), dtype=np.int32),  # num_task_deps*2
                 np.array(compatibilities.flatten(), dtype=np.int32),  # num_compatibilities*2
             ]
@@ -60,9 +60,9 @@ class GinAgentMapper:
         tensor = tensor[num_tasks:]
         task_state_ready = tensor[:num_tasks].long()
         tensor = tensor[num_tasks:]
-        task_length = tensor[:num_tasks]  # 保留：任务计算量
+        task_length = tensor[:num_tasks]
         tensor = tensor[num_tasks:]
-        task_normalized_deadline = tensor[:num_tasks]  # Min-Max 归一化的子截止时间
+        task_completion_time = tensor[:num_tasks]
         tensor = tensor[num_tasks:]
 
         vm_speed = tensor[:num_vms]
@@ -71,8 +71,8 @@ class GinAgentMapper:
         tensor = tensor[num_vms:]
         vm_completion_time = tensor[:num_vms]
         tensor = tensor[num_vms:]
-        vm_carbon_intensity = tensor[:num_vms]  # 新增：碳强度特征
-        tensor = tensor[num_vms:]
+        vm_carbon_intensity_curve_6h = tensor[:num_vms * 6].reshape(num_vms, 6)  # 未来6小时碳强度曲线（替换单个碳强度值）
+        tensor = tensor[num_vms * 6:]
 
         task_dependencies = tensor[: num_task_deps * 2].reshape(2, num_task_deps).long()
         tensor = tensor[num_task_deps * 2 :]
@@ -84,12 +84,12 @@ class GinAgentMapper:
         return GinAgentObsTensor(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_length=task_length,  # 保留
-            task_normalized_deadline=task_normalized_deadline,  # 替换 task_completion_time
+            task_length=task_length,
+            task_completion_time=task_completion_time,
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
-            vm_carbon_intensity=vm_carbon_intensity,  # 新增
+            vm_carbon_intensity_curve_6h=vm_carbon_intensity_curve_6h,  # 未来6小时碳强度曲线（替换单个碳强度值）
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
@@ -99,11 +99,11 @@ class GinAgentMapper:
 class GinAgentObsTensor:
     task_state_scheduled: torch.Tensor
     task_state_ready: torch.Tensor
-    task_length: torch.Tensor  # 保留：任务计算量
-    task_normalized_deadline: torch.Tensor  # Min-Max 归一化的子截止时间（替换 task_completion_time）
+    task_length: torch.Tensor
+    task_completion_time: torch.Tensor
     vm_speed: torch.Tensor
     vm_energy_rate: torch.Tensor
     vm_completion_time: torch.Tensor
-    vm_carbon_intensity: torch.Tensor  # 新增：VM的碳强度特征
+    vm_carbon_intensity_curve_6h: torch.Tensor  # VM未来6小时碳强度曲线 (num_vms, 6)，替换单个碳强度值
     task_dependencies: torch.Tensor
     compatibilities: torch.Tensor

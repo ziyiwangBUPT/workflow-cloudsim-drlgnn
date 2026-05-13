@@ -8,6 +8,7 @@ from scheduler.rl_model.agents.gin_agent.mapper import GinAgentMapper
 from scheduler.rl_model.core.env.action import EnvAction
 from scheduler.rl_model.core.env.observation import EnvObservation
 from scheduler.rl_model.core.utils.helpers import active_energy_consumption_per_mi
+from scheduler.config.carbon_intensity import get_future_6h_carbon_intensity_curve, FIXED_NUM_HOSTS
 
 
 class GinAgentWrapper(gym.Wrapper):
@@ -22,7 +23,7 @@ class GinAgentWrapper(gym.Wrapper):
         self.mapper = GinAgentMapper(MAX_OBS_SIZE)
 
     def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+            self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         obs, info = super().reset(seed=seed, options=options)
         assert isinstance(obs, EnvObservation)
@@ -34,49 +35,28 @@ class GinAgentWrapper(gym.Wrapper):
 
     def step(self, action: int) -> tuple[np.ndarray, SupportsFloat, bool, bool, dict[str, Any]]:
         mapped_action = self.map_action(action)
-        obs, env_reward, terminated, truncated, info = super().step(mapped_action)
+        obs, _, terminated, truncated, info = super().step(mapped_action)
         assert isinstance(obs, EnvObservation)
-        
-        # ✅ 检查是否有错误（无效动作）
-        if terminated and "error" in info:
-            # 底层环境已经检测到无效动作，返回了penalty作为负反馈
-            # 直接使用这个penalty，不要修改
-            mapped_obs = self.map_observation(obs)
-            self.prev_obs = obs
-            return mapped_obs, env_reward, terminated, truncated, info
-        
-        # ✅ 额外的安全边界检查
-        if mapped_action.task_id >= len(obs.task_observations):
-            # 如果 task_id 仍然超出范围（虽然理论上不应该发生），使用env_reward
-            mapped_obs = self.map_observation(obs)
-            self.prev_obs = obs
-            return mapped_obs, env_reward, terminated, truncated, info
-        
-        # 正常情况下的奖励计算
         mapped_obs = self.map_observation(obs)
-        task_obs = obs.task_observations[mapped_action.task_id]
-        
-        # 新奖励函数：参考 ecmws 模式
-        # reward = -carbon_cost + deadline_penalty
-        carbon_cost = task_obs.carbon_cost
-        reward = -carbon_cost
-        
-        # Deadline 惩罚（参考 ecmws）
-        # delta = finish_time - deadline
-        # 如果超时，增加惩罚
-        delta = task_obs.completion_time - task_obs.deadline
-        
-        if delta > 0:
-            # 超时惩罚：reward * (1 + delta / duration)
-            # duration = completion_time - start_time
-            duration = task_obs.completion_time - task_obs.start_time
-            if duration > 0:
-                # 超时会让负奖励变得更负（惩罚加重）
-                reward = reward * (1.0 + delta / duration)
-            # 如果 duration == 0（理论上不应该发生），保持原 reward
-        
-        # 如果超时很严重，可以施加额外惩罚
-        # reward 已经是负值，不需要额外处理
+
+        # 奖励函数：参考 workflow-cloudsim-drlgnn-master 的相对改善量模式
+        # reward = makespan_reward + carbon_reward
+        # 其中 makespan_reward = -(Δmakespan / makespan)
+        #      carbon_reward = -(Δcarbon / carbon)
+
+        makespan_reward = -(obs.makespan() - self.prev_obs.makespan()) / obs.makespan()
+
+        # 使用 carbon_cost_optimistic() 替代 energy_consumption()
+        # 计算碳成本的乐观估计（已调度任务用实际值，未调度任务用最低碳强度估计）
+        current_carbon = obs.carbon_cost_optimistic()
+        prev_carbon = self.prev_obs.carbon_cost_optimistic()
+
+        if current_carbon > 0:
+            carbon_reward = -(current_carbon - prev_carbon) / current_carbon
+        else:
+            carbon_reward = 0.0
+
+        reward = makespan_reward + carbon_reward
 
         self.prev_obs = obs
         return mapped_obs, reward, terminated, truncated, info
@@ -90,39 +70,21 @@ class GinAgentWrapper(gym.Wrapper):
         task_state_scheduled = np.array([task.assigned_vm_id is not None for task in observation.task_observations])
         task_state_ready = np.array([task.is_ready for task in observation.task_observations])
         task_length = np.array([task.length for task in observation.task_observations])
-        
-        # 计算 Min-Max 归一化的子截止时间（替换 task_completion_time）
-        # 参考 ecmws-experiments/tasks/workflow.py 的 make_stored_graph() 方法
-        # 使用 Min-Max 归一化: (deadline - min) / (max - min)
-        
-        # 第1步：从当前 State 的所有任务中提取 deadline 值
-        task_deadlines = np.array([task.deadline for task in observation.task_observations])
-        
-        # 第2步：动态计算 min 和 max
-        min_deadline = task_deadlines.min()
-        max_deadline = task_deadlines.max()
-        delta_deadline = max_deadline - min_deadline
-        
-        # 第3步：Min-Max 归一化，处理除零异常
-        eps = 1e-2  # 防止数值不稳定的小阈值（与 ecmws-experiments 一致）
-        if delta_deadline <= eps:
-            # 当所有任务的 deadline 相同或非常接近时，设为1
-            task_normalized_deadline = np.ones_like(task_deadlines)
-        else:
-            # 标准 Min-Max 归一化: (x - min) / (max - min)
-            task_normalized_deadline = (task_deadlines - min_deadline) / delta_deadline
 
         # VM observations
         vm_speed = np.array([vm.cpu_speed_mips for vm in observation.vm_observations])
         vm_energy_rate = np.array([active_energy_consumption_per_mi(vm) for vm in observation.vm_observations])
         vm_completion_time = np.array([vm.completion_time for vm in observation.vm_observations])
-        
-        # 新增：VM碳强度特征
-        # 使用VM完成时间对应的碳强度值
-        vm_carbon_intensity = np.array([
-            vm.get_carbon_intensity_at(vm.completion_time) 
+
+        # VM未来6小时碳强度曲线特征
+        # 从VM完成时间开始，获取未来6小时的碳强度曲线（替换原来的单个碳强度值）
+        vm_carbon_intensity_curve_6h = np.array([
+            get_future_6h_carbon_intensity_curve(
+                host_id=vm.host_id % FIXED_NUM_HOSTS,
+                start_time=vm.completion_time
+            )
             for vm in observation.vm_observations
-        ])
+        ])  # shape: (num_vms, 6)
 
         # Task-Task observations
         task_dependencies = np.array(observation.task_dependencies).T
@@ -130,15 +92,19 @@ class GinAgentWrapper(gym.Wrapper):
         # Task-VM observations
         compatibilities = np.array(observation.compatibilities).T
 
+        # Task completion times
+        task_completion_time = observation.task_completion_time()
+        assert task_completion_time is not None
+
         return self.mapper.map(
             task_state_scheduled=task_state_scheduled,
             task_state_ready=task_state_ready,
-            task_length=task_length,  # 保留：任务计算量
-            task_normalized_deadline=task_normalized_deadline,  # 替换 task_completion_time
+            task_length=task_length,
+            task_completion_time=task_completion_time,
             vm_speed=vm_speed,
             vm_energy_rate=vm_energy_rate,
             vm_completion_time=vm_completion_time,
-            vm_carbon_intensity=vm_carbon_intensity,  # 新增：碳强度特征
+            vm_carbon_intensity_curve_6h=vm_carbon_intensity_curve_6h,  # 未来6小时碳强度曲线（替换单个碳强度值）
             task_dependencies=task_dependencies,
             compatibilities=compatibilities,
         )
